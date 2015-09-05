@@ -4,7 +4,7 @@
   <title><![CDATA[之行海涯]]></title>
   <link href="http://csbzhixing.github.io/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-09-05T16:30:53+08:00</updated>
+  <updated>2015-09-05T16:35:41+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,5 +12,14 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[新的开始]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/09/05/%E5%BC%80%E5%A7%8B/"/>
+    <updated>2015-09-05T16:32:12+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/09/05/开始</id>
+    <content type="html"><![CDATA[<p>这是我的新的github的博客，挖坑，看自己能保持更新多久</p>
+]]></content>
+  </entry>
   
 </feed>
