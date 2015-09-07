@@ -3,8 +3,13 @@ layout: post
 title: "用markdown来写博客"
 date: 2015-09-05 22:05:38 +0800
 comments: true
-categories: 
+categories: markdown
 ---
+
+##用Markdown来写作
+
+在实习的时候第一次接触了这种语法，在CSDN中也用过一些。感觉用这种语法来写作更有利自己的编写格式，能够根据不同的场景进行一定的标记。在这里借用 *markdown.tw*的语法说明，为自己以后更好的写作作一个小小的开始
+
 #### Markdown: 语法
 ================
 
