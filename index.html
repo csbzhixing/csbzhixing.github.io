@@ -9,7 +9,7 @@
 
 <meta name="author" content="之行"> 
 
-<meta name="description" content="从学习Objective-C以来，有两个地方一直搞不明白。一个是KVO和KVC的应用和与Delegate的应用场景的区别，一个是Block的应用场景。总结起来就死对Objective-C的数据传送的应用不理解。乘着放假几天对这个知识点进行了一些学习和总结，学习了一个小demo， &hellip;"> <meta name="keywords" content="">
+<meta name="description" content="Block是个什么 和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码， &hellip;"> <meta name="keywords" content="">
 
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -95,6 +95,198 @@ $(document).ready(
 </header>
 
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2015/09/07/block/">
+		
+			Block</a>
+	</h2>
+	<div class="entry-content">
+		<h2>Block是个什么</h2>
+
+<p>和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。</p>
+
+<h3>Blcok 是什么</h3>
+
+<p>block是在iOS SDK 4.0引入的黑魔法。从他诞生的时候，Apple就倾注了大量的心血。字面上看，block就是一个代码块。在许多语言中都可以看到相似的语法设计。但是block自身由于可以在内联执行的时候还可以传递参数，同时自身可以作为参数在函数之间来传递，所有有了许多神奇的用法（好吧是我觉得很神奇）</p>
+
+<p>一个典型的block的应用如下</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> BOOL (^isName)(NSString *) = ^(NSString *name) {
+</span><span class='line'>      if ([name isEqualToString:@"csb"])
+</span><span class='line'>      {
+</span><span class='line'>          return YES;
+</span><span class='line'>      }
+</span><span class='line'>      else
+</span><span class='line'>      {
+</span><span class='line'>          return NO;
+</span><span class='line'>      }
+</span><span class='line'>    };</span></code></pre></td></tr></table></div></figure>
+
+
+<p>定义一个block开头是和函数一样是返回类型，（^）跟着是block的名字，后面跟着是传入的数据类型。括号里面是代码块。</p>
+
+<p>一个完整的例子</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>
+</span><span class='line'>- (void)blockTest
+</span><span class='line'>{
+</span><span class='line'>    BOOL (^isName)(NSString *) = ^(NSString *name) {
+</span><span class='line'>      if ([name isEqualToString:@"csb"])
+</span><span class='line'>      {
+</span><span class='line'>          return YES;
+</span><span class='line'>      }
+</span><span class='line'>      else
+</span><span class='line'>      {
+</span><span class='line'>          return NO;
+</span><span class='line'>      }
+</span><span class='line'>    };
+</span><span class='line'>
+</span><span class='line'>    self.sark.name = @"csb";
+</span><span class='line'>    NSLog(@"is csb ? %@", isName(self.sark.name) ? @"yes" : @"no");
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>那么block有什么特别之处？前面提到了，block能够使用block外的参数，我们来实验下</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)blockTest
+</span><span class='line'>{
+</span><span class='line'>    NSString *csbName = @"csbzhixing";
+</span><span class='line'>    BOOL (^isName)(NSString *) = ^(NSString *name) {
+</span><span class='line'>      if ([name isEqualToString:csbName])
+</span><span class='line'>      {
+</span><span class='line'>          return YES;
+</span><span class='line'>      }
+</span><span class='line'>      else
+</span><span class='line'>      {
+</span><span class='line'>          return NO;
+</span><span class='line'>      }
+</span><span class='line'>    };
+</span><span class='line'>
+</span><span class='line'>    self.sark.name = @"csbzhixing";
+</span><span class='line'>    NSLog(@"is csb ? %@", isName(self.sark.name) ? @"yes" : @"no");
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>输出
+<code>
+2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes
+</code></p>
+
+<p>注意到，定义了block后，修改了block中引用的局部变量，那么block中的局部变量仍然会保持不变。</p>
+
+<p><img src="http://i3.tietuku.com/a60eb087f6bfd358.png" alt="pic1" /></p>
+
+<p>好吧，如果我们的确有这个需求怎么弄呢？使用<code>_block</code>修饰符来修饰局部变量可以解决这个问题</p>
+
+<p><img src="http://i3.tietuku.com/ba1814837f233066.png" alt="pic2" /></p>
+
+<p>block调用实例变量，这个没有好说的。。直接用就是了。</p>
+
+<h2>小小的问题，循环引用</h2>
+
+<p>需要注意的一个问题是block的retain cycle问题，即循环引用。</p>
+
+<p>如果要细究这个问题，要回到老生常谈的引用计数的问题上。有许多很详细的文章解释了为何存在这种问题，在这里我只简单的谈下我的理解。</p>
+
+<p>retain cycle的问题根源在于block和object可能会互相强引用，互相retain了对方，这样就导致了retain cycle的问题。到了最后就发现两者谁也释放不了谁，导致了崩溃。（你不让我，我不让你怎么行）。</p>
+
+<p>解决的方法就是打破这种循环，使用弱引用。这点可以参考最有名的第三方库AFNetworking的源码，在block上afn的写法最值得参考学习。</p>
+
+<h2>Block该用在什么地方</h2>
+
+<p>在项目中，主要应用block的地方有场景之间的数据传输，UI刷新，网络请求等等。在参考官方的建议和大神的博客后，总结了一下几个方面</p>
+
+<ol>
+<li>枚举 &ndash; 通过block获取对象和控制枚举进程</li>
+<li>View动画 &ndash; 规定动画，参考官方的demo可以很快的了解</li>
+<li>通知 &ndash; 事件完成后执行block内的代码，比如网络请求成功后</li>
+<li>完成 &ndash; 同上</li>
+<li>GCD多线程 &ndash; 这个是下一篇想要去了解学习的内容</li>
+<li>错误处理 &ndash; 错误发生的时候执行</li>
+<li>排序</li>
+</ol>
+
+
+<p>深入学习block还有很多的内容，比如block是怎么实现，block的类型等等。这里只是我目前学习的一个小结，有机会还要再深入的学习。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-07T17:25:40+08:00" pubdate data-updated="true"></time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/objective-c/'>objective-c</a>
+
+</div>
+
+
+	
+</div></article>
 
 
     <article class="post">
