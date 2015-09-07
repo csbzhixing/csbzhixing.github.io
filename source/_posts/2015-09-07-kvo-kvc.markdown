@@ -3,7 +3,7 @@ layout: post
 title: "kvo/kvc小结"
 date: 2015-09-07 11:50:52 +0800
 comments: true
-categories: Objective-C
+categories: 
 ---
 
 

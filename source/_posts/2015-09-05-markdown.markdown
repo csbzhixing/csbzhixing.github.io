@@ -3,7 +3,7 @@ layout: post
 title: "用markdown来写博客"
 date: 2015-09-05 22:05:38 +0800
 comments: true
-categories: markdown
+categories: 
 ---
 
 ##用Markdown来写作
