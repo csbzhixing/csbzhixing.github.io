@@ -1,0 +1,120 @@
+---
+layout: post
+title: "block"
+date: 2015-09-07 17:25:40 +0800
+comments: true
+categories: Objective-C
+---
+
+
+##Block是个什么
+
+和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。
+
+###Blcok 是什么
+
+block是在iOS SDK 4.0引入的黑魔法。从他诞生的时候，Apple就倾注了大量的心血。字面上看，block就是一个代码块。在许多语言中都可以看到相似的语法设计。但是block自身由于可以在内联执行的时候还可以传递参数，同时自身可以作为参数在函数之间来传递，所有有了许多神奇的用法（好吧是我觉得很神奇）
+
+一个典型的block的应用如下
+
+```
+ BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@"csb"])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+```
+
+定义一个block开头是和函数一样是返回类型，（^）跟着是block的名字，后面跟着是传入的数据类型。括号里面是代码块。
+
+一个完整的例子
+
+```
+
+- (void)blockTest
+{
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@"csb"])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @"csb";
+    NSLog(@"is csb ? %@", isName(self.sark.name) ? @"yes" : @"no");
+}
+```
+
+那么block有什么特别之处？前面提到了，block能够使用block外的参数，我们来实验下
+
+```
+- (void)blockTest
+{
+    NSString *csbName = @"csbzhixing";
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:csbName])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @"csbzhixing";
+    NSLog(@"is csb ? %@", isName(self.sark.name) ? @"yes" : @"no");
+}
+```
+
+输出
+``
+2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes
+``
+
+注意到，定义了block后，修改了block中引用的局部变量，那么block中的局部变量仍然会保持不变。
+
+![pic1](http://i3.tietuku.com/a60eb087f6bfd358.png)
+
+好吧，如果我们的确有这个需求怎么弄呢？使用``_block``修饰符来修饰局部变量可以解决这个问题
+
+![pic2](http://i3.tietuku.com/ba1814837f233066.png)
+
+block调用实例变量，这个没有好说的。。直接用就是了。
+
+##小小的问题，循环引用
+
+需要注意的一个问题是block的retain cycle问题，即循环引用。
+
+如果要细究这个问题，要回到老生常谈的引用计数的问题上。有许多很详细的文章解释了为何存在这种问题，在这里我只简单的谈下我的理解。
+
+retain cycle的问题根源在于block和object可能会互相强引用，互相retain了对方，这样就导致了retain cycle的问题。到了最后就发现两者谁也释放不了谁，导致了崩溃。（你不让我，我不让你怎么行）。
+
+解决的方法就是打破这种循环，使用弱引用。这点可以参考最有名的第三方库AFNetworking的源码，在block上afn的写法最值得参考学习。
+
+##Block该用在什么地方
+
+在项目中，主要应用block的地方有场景之间的数据传输，UI刷新，网络请求等等。在参考官方的建议和大神的博客后，总结了一下几个方面
+
+1. 枚举 -- 通过block获取对象和控制枚举进程
+2. View动画 -- 规定动画，参考官方的demo可以很快的了解
+3. 通知 -- 事件完成后执行block内的代码，比如网络请求成功后
+4. 完成 -- 同上
+5. GCD多线程 -- 这个是下一篇想要去了解学习的内容
+6. 错误处理 -- 错误发生的时候执行
+7. 排序 
+
+
+
+深入学习block还有很多的内容，比如block是怎么实现，block的类型等等。这里只是我目前学习的一个小结，有机会还要再深入的学习。
+
+
