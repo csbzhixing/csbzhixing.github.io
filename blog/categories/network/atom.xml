@@ -4,7 +4,7 @@
   <title><![CDATA[Category: network | 之行海涯]]></title>
   <link href="http://csbzhixing.github.io/blog/categories/network/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-09-11T00:35:14+08:00</updated>
+  <updated>2015-09-11T09:15:42+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -42,7 +42,9 @@
 <p>简单的来说 HTTP请求可以分为三部分</p>
 
 <ol>
-<li>请求行2. 消息报头3. 请求正文</li>
+<li><p>请求行</p></li>
+<li><p>消息报头</p></li>
+<li><p>请求正文</p></li>
 </ol>
 
 
