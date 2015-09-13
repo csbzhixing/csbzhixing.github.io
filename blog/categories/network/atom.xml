@@ -4,7 +4,7 @@
   <title><![CDATA[Category: network | 之行海涯]]></title>
   <link href="http://csbzhixing.github.io/blog/categories/network/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-09-13T00:37:24+08:00</updated>
+  <updated>2015-09-13T10:41:55+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,6 +12,92 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[socket]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/09/13/socket/"/>
+    <updated>2015-09-13T05:27:26+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/09/13/socket</id>
+    <content type="html"><![CDATA[<h2>写在前面</h2>
+
+<p>最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。对与socket的认识还是学习java的时候知道可以使用socket进行客户端与服务器端的通信，可是当时并没有去实践。欠下的债都是要还的。</p>
+
+<p>此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。</p>
+
+<h2>正文</h2>
+
+<p>socket，套接字，是基于TCP/IP协议族下的一种网络通信方式。我们知道，在本地，进程之间有多种方法去通信。在网络中，我们同样可以使用socket进行通信。接下来一步步来看socket是如何使网络上的进程相互通信的。</p>
+
+<p>我们知道，要像让进程通信，首先必须确认进程的身份。如同我们只有知道了和自己谈话的是谁，我们才知道谈什么。在本地，进程拥有唯一的标识PID。在网络上，基于TCP/IP协议，通过<em>IP，协议，端口号</em>，我们可以确认一个进程的唯一身份。</p>
+
+<p>使用TCP/IP协议的应用程序通常采用应用编程接口，有本文讲到的socket（套接字）和TIL（被淘汰了）。目前而言，绝多大数的应用程序都是基于socket进行网络通信的，所以了解socket是一个程序员必备的。</p>
+
+<h2>scocket 究竟是什么</h2>
+
+<p>socket起源于UNIX。我们知道UNIX的设计原理就是<em>一切皆文件</em>，操作都是<em>open -> read/write -> close</em>。所以说，我们可以认为socket也是一个文件，是基于上述设计原理的实现。socket函数就是专门来完成相应操作的。</p>
+
+<h2>socket 操作</h2>
+
+<p>在上面我们知道了socket是一个文件，那么socket自然有对应的操作方法，下面是基于TCP的几个基本操作。
+(注，本文的方法是使用Objective-C写的，其实socket在任何语言都是差不多的)</p>
+
+<pre><code class="objective-c">
+// 创建并初始化socket，返回socket的文件描述符，如果返回值为-1则创建失败
+int socket(int addresFamily, int type, int protocol)
+
+// 关闭socket
+int close(int socketFileDescriptor)
+
+// 将socket与特定的IP地址和端口号绑定，成功返回0，失败返回-1
+int bind(int socketFileDescriptor, sockadd *addressToBind)
+
+// 接受客户端的请求并且将客户端的网络地址信息存入clientAddress
+// 当客户端的连接请求被接受后，双方的通信链路就建立好了，两者就可以开始通信了。
+
+int accept(int socketFileDescriptor, sockaddr *clientAddress, int clientAddressStructLength)
+
+// 客户端向特定的IP的服务器发送连接请求，成功返回0，失败返回-1
+// 当服务器建立好后，客户端就可以通过这个函数与服务器端建立连接。
+// 对于UDP来说，该接口是可选的，如果调用了这个接口表明设置了UDP socket默认的网络地址.
+// 对于TCP来说，这里就是三次握手发生的地方
+
+int connect(int socketFileDescriptor, sockaddr *serverAddress, int serverAddressLength)
+
+// 通过DNS查找特定的IP，如果找不到返回NULL
+hostent *gethostbyname(char *hostname)
+
+// 发送数据，发送成功后返回成功发送的字节数，否则返回-1
+int send(int socketFileDescriptor,char *buffer, int flags)
+
+// 接收数据，成功后返回成功读取的字节数，否则返回-1
+int receive(int socketFileDesciptor,char *buffer,int flags)
+
+// 下面两个方法是UDP的方法
+
+// UDP发送,返回状态同上
+int sendto(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *destinationAddress, int destinationAddressLength)
+
+// UDP读取，返回状态同上
+int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *fromAddress, int fromAddressLength)
+</code></pre>
+
+<p>通过观察方法，我们发现socket其实就是<em>确认目标 ->建立连接 -> 传送/读取 -> 断开</em> 的过程</p>
+
+<p>我们再来看看TCP和UDP下socket操作的不同的地方</p>
+
+<h4>TCP</h4>
+
+<p><img src="http://www.coderyi.com//qiniu/429/image/5269612b25e6df1b3ee5ab8352b2c3b6.jpg" alt="TCP" /></p>
+
+<h4>UDP</h4>
+
+<p><img src="http://www.coderyi.com//qiniu/429/image/cd6d1690d3d6eefd300987e590c1483f.jpg" alt="UDP" /></p>
+
+<h2>最后</h2>
+
+<p>到此，对于socket编程的概念有了个一个初步的认识了。在实际开发中，我们一般不会直接调用这些底层的API。借助于一些开源的第三方库更有利于项目的开发运行。不过，对于基本的理论知识还是必须要掌握的。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[HTTP学习]]></title>
