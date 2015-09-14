@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "warning blog"
+title: "warning是个好朋友"
 date: 2015-09-14 22:40:16 +0800
 comments: true
-categories: 
+categories:other,iOS 
 ---
 
 ## 开头
