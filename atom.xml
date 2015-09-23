@@ -4,7 +4,7 @@
   <title><![CDATA[之行海涯]]></title>
   <link href="http://csbzhixing.github.io/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-09-22T09:25:55+08:00</updated>
+  <updated>2015-09-23T16:41:23+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,6 +12,141 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[重新认识ARC]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/09/22/arc/"/>
+    <updated>2015-09-22T17:48:06+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/09/22/arc</id>
+    <content type="html"><![CDATA[<p>第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下</p>
+
+<ol>
+<li>增加网络编程的相关知识
+
+<ul>
+<li>TCP/IP HTTP HTTPS 协议的学习和了解</li>
+<li>JSON和XML的解析</li>
+<li>iOS自身关于网络请求相关的类和API</li>
+<li>第三方库AFNetWorking源码阅读</li>
+</ul>
+</li>
+<li>增加iOS内核方面的知识
+
+<ul>
+<li>内存基本知识和管理方式</li>
+<li>ARC</li>
+<li>进程线程</li>
+<li>RunTime</li>
+</ul>
+</li>
+</ol>
+
+
+<p>简单的看是两个大类七个点，但是感觉每一个点都非常多东西。目前暂时把1.1的点给补完了。不过任然需要投入大量的时间去复习。这里打算整合2.1和2.2。</p>
+
+<h2>内存管理</h2>
+
+<p>学过计算机基础的人对于内存都不陌生，哪怕是没有计算机基础的人也明白内存对于电脑（终端）的重要性。内存管理，就是在程序运行的过程中，申请，使用，释放内存的过程。程序写的好不好，就看你在完成功能的同时是不是使用了尽可能少的内存。</p>
+
+<p><em>堆和栈</em></p>
+
+<p>在内存中，有两个重要的概念，分别是<code>堆和栈</code>。这里不仅仅指代他们的数据结构。我们知道，一个函数执行的时候，他会被压入栈中。栈中的内存单元保存了函数的返回地址，局部变量，传参等数据。当函数被弹出栈的时候，一切数据都会被销毁。而<code>堆</code>上的数据是由开发者自行申请管理的，生命周期由开发者自行掌握。</p>
+
+<p><em>引用计数</em></p>
+
+<p>学过OC的人都知道，在OC中管理内存的方法是<code>引用计数</code>(Retain Counting)。通过对堆和栈的了解，我们可以得出OC上的对象<em>都是在堆上</em>的。</p>
+
+<p>在苹果开发文档里面有一张图很好的说明的通过引用计数来管理对象生命周期的过程。</p>
+
+<p><img src="http://csbzhixing.github.io/media/14429735006902.jpg" alt="引用计数" /></p>
+
+<p>同样，引用计数也遵循几大内存管理原则</p>
+
+<ol>
+<li>谁申请谁拥有</li>
+<li>肯以申请拥有一个存在的对象</li>
+<li>当不需要的再拥有对象的时候，申请释放</li>
+<li>不能释放不属于自己没有拥有的对象</li>
+</ol>
+
+
+<h2>Automatic Reference Counting (ARC)</h2>
+
+<p>在学习iOS开发半年后，ARC给我留下了很深的印象。ARC是苹果在引用计数的基础上改善了编译器实现的功能。要了解ARC，首先要看看在没有ARC之前开发者是怎么去通过引用计数管理的。</p>
+
+<p>在ARC之前，我们统称为<code>MRC（Manual Reference Counting</code>，即手动引用技术。通过调用<code>retain</code>和<code>release</code>来管理对象的生命周期。有了ARC之后，在编译的过程中，编译器可以根据上下文估算对象的生命周期，以此来自动的添加<code>retain</code>和<code>release</code>。</p>
+
+<p>注意，ARC只对OC对象有作用，对于C的类型对象不则按照C的内存管理的方法去管理。</p>
+
+<p>如果在工程中开启了使用ARC，那么就要遵循ARC定义的一些规范</p>
+
+<ol>
+<li>不能显示的调用<code>dealloc</code>,<code>ratain</code>,<code>release</code>,<code>retainCount</code>,<code>autoRelease</code>。</li>
+<li>如果要复写<code>dealloc</code>方法，不需要显示调用<code>[super dealloc]</code>方法。</li>
+<li>不能再使用<code>AutoReleasepool</code></li>
+</ol>
+
+
+<p><em>ARC下的修饰符</em></p>
+
+<p>在@Property 中，有四种修饰符是ARC提供的，他们分别是
+1. strong
+2. weak
+3. unsafe_unretained
+4. __autoreleasing</p>
+
+<p>其中，重点来谈谈strong和weak</p>
+
+<ul>
+<li>strong。我们理解为强引用。当前的对象实际拥有这个对象。默认情况下ARC使用的strong来修饰。</li>
+<li>weak。相对于strong的强引用，weak指的是弱引用。当引用的对象被释放掉的时候，当前引用对象会被自动置nil。weak通常被用来解决循环引用的问题。</li>
+</ul>
+
+
+<p><code>__autoreleasing</code>和<code>__unsafe_unretained</code>在实际应用中是很少的。<code>__unsafe_unretained</code>是为了兼容iOS4之前的版本，现在基本上不会使用了，主要是为了实现weak的功能。<code>__autoreleasing</code>是表示在autorelease pool中自动释放对象的引用。</p>
+
+<h2>block 在ARC下</h2>
+
+<p>block在之前已经小小的讨论过了，出现的几个问题都有谈论到，这里主要从ARC的角度上再谈一谈。</p>
+
+<p>block在ARC下最特殊的地方就是怎么去解决循环引用。在block的篇章中没有很详细讨论，原因也是没从内存的角度来看。这里详细讲下循环引用产生原因和在ARC下解决循环引用的方法。</p>
+
+<blockquote><p>You can use lifetime qualifiers to avoid strong reference cycles. For example, typically if you have a graph of objects arranged in a parent-child hierarchy and parents need to refer to their children and vice versa, then you make the parent-to-child relationship strong and the child-to-parent relationship weak. Other situations may be more subtle, particularly when they involve block objects.</p>
+
+<p>In manual reference counting mode, <strong>block id x; has the effect of not retaining x. In ARC mode, </strong>block id x; defaults to retaining x (just like all other values). To get the manual reference counting mode behavior under ARC, you could use <strong>unsafe_unretained </strong>block id x;. As the name <strong>unsafe_unretained implies, however, having a non-retained variable is dangerous (because it can dangle) and is therefore discouraged. Two better options are to either use </strong>weak (if you don’t need to support iOS 4 or OS X v10.6), or set the __block value to nil to break the retain cycle.</p>
+
+<p>The following code fragment illustrates this issue using a pattern that is sometimes used in manual reference counting.</p></blockquote>
+
+<p>上面是苹果官方文档对循环引用的解释。通过引用计数，我们了解到，如果有两个对象，对彼此都是强引用的话，双方都无法释放对方，也就无法释放delloc对象，最终就造成了死循环。在iOS5以下的版本里面，我们可以通过手动使用<code>unsafe_unretained</code>来使其中一个变量变成野指针。而在ARC下，我们通过使用weak来修饰其中一个变量，这样在block中就不存在双方强引用的抢矿。</p>
+
+<p>但是，上面的处理方法有个问题。我们不知道weak修饰的对象什么时候会被释放掉了，有可能在执行block里面的对象在之前就已经被释放掉了。在AFNetWorking中，提供了一个非常好的解决思路</p>
+
+<p><img src="http://csbzhixing.github.io/media/14429947239639.jpg" alt="" /></p>
+
+<p>上面方法中，在block外先将self用<code>weak</code>引用一个weakSelf，进入block后再使用一个<code>_strong_typeof</code>去创建一个strong引用对象。这样的做法既能避免产生循环引用，也能避免weak对象提前被释放掉。</p>
+
+<h2>ARC与Toll-Free Bridging</h2>
+
+<p>Toll-Free Briding保证了在程序中，可以方便和谐的使用Core Foundation类型的对象和Objective-C类型的对象。但是，我们知道，到了ARC的时候，两者的内存管理方法不同了。对于一种对象，我们不能用该两种内存管理方法去管理。所以在进入ARC之后，Toll-Free Bridging也进行了相应的变化。</p>
+
+<p><em>__bridge</em></p>
+
+<p>只是申明了类型转变，并没有改变内存管理方法。</p>
+
+<p><em>__bridge_retained（修饰符） or CFBridgingRetain（函数）</em></p>
+
+<p>表示将指针类型转变的同时，将内存管理的责任由原来的Objective-C交给Core Foundation来处理，也就是，将ARC转变为MRC。</p>
+
+<p><em>__bridge_transfer（修饰符） or CFBridgingRelease（函数）</em></p>
+
+<p>这个修饰符和函数的功能和上面那个__bridge_retained相反，它表示将管理的责任由Core Foundation转交给Objective-C，即将管理方式由MRC转变为ARC。</p>
+
+<p>上面就是要谈的ARC的内容了。其实ARC的坑比起MRC已经少了很多了，对于我们可怜的程序员来说已经是很大的解放了。</p>
+
+<p>这里对于内存管理仅仅是基于OC简单的谈了谈，觉得还是不够深刻，主要是自己在这方面的知识的确很欠缺。读了
+<a href="http://casatwy.com/ccheng-xu-de-nei-cun-guan-li.html">C程序的内存管理</a>这篇文章学到了很多，在这里也安利一下。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[IP TCP HTTPs 随便谈]]></title>
