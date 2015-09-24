@@ -8,6 +8,7 @@ categories: Objective-C
 
 第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下
 
+<!--more-->  
 1. 增加网络编程的相关知识
 	+ TCP/IP HTTP HTTPS 协议的学习和了解
 	+ JSON和XML的解析

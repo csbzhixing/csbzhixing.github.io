@@ -14,7 +14,7 @@ categories:
  
 1. -- http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/
 2. -- http://objccn.io/issue-7-3/
-
+<!--more-->  
 #KVO
 
 ## KVO简单使用
