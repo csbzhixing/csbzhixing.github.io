@@ -4,7 +4,7 @@
   <title><![CDATA[Category: network | 之行海涯]]></title>
   <link href="http://csbzhixing.github.io/blog/categories/network/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-09-24T16:52:33+08:00</updated>
+  <updated>2015-09-24T17:07:17+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -269,6 +269,11 @@ XML中的所有空格和换行，都会当做具体内容处理
 
 <p>在总结自己的技能书的缺点后，决定优先补充自己在计算机网络上知识的漏洞。现在互联网企业，离开了互联网什么都不是。对互联网，普通人可能停留在概念和使用上，而开发人员应该去深入的了解运行进制，进而去优化自己开发的产品。这篇文章，主要是记录自己最近看的一些资料的笔记。</p>
 
+<!--more-->
+
+
+<p></p>
+
 <h2>IP 协议</h2>
 
 <p>IP协议，是网络协议（Internet Protocol）的缩写。IP协议是互联网众多协议的基础。</p>
@@ -477,6 +482,11 @@ requestOperationManager.securityPolicy = securityPolicy;
 
 <p>此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。</p>
 
+<!--more-->
+
+
+<p></p>
+
 <h2>正文</h2>
 
 <p>socket，套接字，是基于TCP/IP协议族下的一种网络通信方式。我们知道，在本地，进程之间有多种方法去通信。在网络中，我们同样可以使用socket进行通信。接下来一步步来看socket是如何使网络上的进程相互通信的。</p>
@@ -561,9 +571,11 @@ int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags,
 
 <p>HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去总结了一下，做一个备忘。</p>
 
-<h2>HTTP简单分析</h2>
+<!--more-->
 
-<p>HTTP是一个基于请求/响应模式的、无状态的协议。即，浏览器与服务端连接之后，浏览器向服务器发送一个请求，服务器返回响应信息之后，双方的链接就被关闭。</p>
+
+<p>  ##HTTP简单分析
+HTTP是一个基于请求/响应模式的、无状态的协议。即，浏览器与服务端连接之后，浏览器向服务器发送一个请求，服务器返回响应信息之后，双方的链接就被关闭。</p>
 
 <p>HTTP1.0是典型的请求/响应模式。</p>
 

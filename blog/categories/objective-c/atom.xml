@@ -4,7 +4,7 @@
   <title><![CDATA[Category: objective-c | 之行海涯]]></title>
   <link href="http://csbzhixing.github.io/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-09-24T16:52:33+08:00</updated>
+  <updated>2015-09-24T17:07:17+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -20,27 +20,20 @@
     <id>http://csbzhixing.github.io/blog/2015/09/22/arc</id>
     <content type="html"><![CDATA[<p>第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下</p>
 
-<ol>
-<li>增加网络编程的相关知识
+<!--more-->
 
-<ul>
-<li>TCP/IP HTTP HTTPS 协议的学习和了解</li>
-<li>JSON和XML的解析</li>
-<li>iOS自身关于网络请求相关的类和API</li>
-<li>第三方库AFNetWorking源码阅读</li>
-</ul>
-</li>
-<li>增加iOS内核方面的知识
 
-<ul>
-<li>内存基本知识和管理方式</li>
-<li>ARC</li>
-<li>进程线程</li>
-<li>RunTime</li>
-</ul>
-</li>
-</ol>
-
+<p>
+1. 增加网络编程的相关知识
+    + TCP/IP HTTP HTTPS 协议的学习和了解
+    + JSON和XML的解析
+    + iOS自身关于网络请求相关的类和API
+    + 第三方库AFNetWorking源码阅读
+2. 增加iOS内核方面的知识
+    + 内存基本知识和管理方式
+    + ARC
+    + 进程线程
+    + RunTime</p>
 
 <p>简单的看是两个大类七个点，但是感觉每一个点都非常多东西。目前暂时把1.1的点给补完了。不过任然需要投入大量的时间去复习。这里打算整合2.1和2.2。</p>
 
@@ -157,6 +150,11 @@
 
 <p>最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。</p>
 
+<!--more-->
+
+
+<p></p>
+
 <h1>正文</h1>
 
 <h2>GCD是什么鬼</h2>
@@ -251,6 +249,11 @@
     <content type="html"><![CDATA[<h2>Block是个什么</h2>
 
 <p>和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。</p>
+
+<!--more-->
+
+
+<p></p>
 
 <h3>Blcok 是什么</h3>
 
