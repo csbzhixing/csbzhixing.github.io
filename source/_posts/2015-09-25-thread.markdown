@@ -1,0 +1,55 @@
+---
+layout: post
+title: "多线程开发详谈"
+date: 2015-09-25 09:49:52 +0800
+comments: true
+categories: 
+---
+
+
+按照计划，这篇文章主要谈iOS下的并发编程。
+
+之前的文章已经谈过了GCD的实现，包括苹果在GCD之上实现的NSOperation。但是在几次面试后发现，仅仅了解API还不够，要去深入的了解整个运行的机制。只有对整个系统有了更深刻的了解，才能不被API给限制住。
+
+##并发
+
+并发，概念就是同时运行多个任务。这些任务可以以分时的方式运行在单核CPU上面，也可以以真正的并发运行在多核CPU上面。
+
+实现并发，不仅可以最大化地利用硬件的性能，也可以提高程序的功能。
+
+###线程
+
+`线程(thread)`是组成进程的子单元，操作系统可以对线程进行单独的调用。在苹果系统上的API都是以线程为单元进行调度的。
+
+多线程运行不仅能够在多核CPU上运行，也可以仅仅运行在单核CPU上。通过CPU分时，系统将极小的时间片分配给不同线程，让用户以为是多任务运行的。但是通过分时的效果不如多线程直接运行在多核CPU上。
+
+通过使用`Instruments`中的`CPU strategy view`可以观察代码如何在多核CPU运行的。
+
+##并发变成的API
+
+在之前的文章已经谈过了高层封装的两种，这里的重点不是如何使用API。
+
+在苹果的多线程中，有以下API供我们使用，从底层到高层一次如下:
+
+1. pthread
+2. NSThread, 苹果在pthread上的封装
+3. Grand Central Dispatch（GCD）
+4. Operation Queues
+5. Run Loops
+
+这里想重点谈一下Run Loops。
+
+`Run Loops`不同于`GCD`或者`Operation Queues`一样的并发机制，因为`Run Loops`并不能并行执行任务。不过在主dispatch/operation中，Run Loops提供了一种异步执行代码的机制。通过Run Loops，我们不必担心并发中的各种陷阱，就能`异步`执行任务。
+
+在主线程中，每一个 Cocoa 和 CocoaTouch 程序中，Main run loop都是扮演了最重要的角色。因为是run loop 来处理相关的内核事件的。
+
+线程和run loop是一一对应的。线程在创建的时候并没有run loop，如果不主动获取，那run loop就不会存在。Run Loop的创建在第一次获取的时候，销毁在线程结束的时候。除了主线程外，只能在一个线程的内部获取run loop。
+
+对于run loop的详细，又是一篇很长的文章来说了。这里就不详细说了。
+
+
+
+
+
+
+
