@@ -99,3 +99,8 @@ google_analytics_tracking_id:
 
 # Facebook Like
 #facebook_like: false
+
+# Jiathis
+jiathis_user: 2062275
+jiathis_share: true
+
