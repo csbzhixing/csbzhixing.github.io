@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://csbzhixing.github.io/blog/2015/09/29/update-self/</loc>
+    <lastmod>2015-09-29T14:27:00+08:00</lastmod>
+  </url>
+  <url>
+    <loc>http://csbzhixing.github.io/blog/2015/09/25/thread/</loc>
+    <lastmod>2015-09-25T09:49:52+08:00</lastmod>
+  </url>
+  <url>
     <loc>http://csbzhixing.github.io/blog/2015/09/24/json-and-xml/</loc>
     <lastmod>2015-09-24T16:44:36+08:00</lastmod>
   </url>
@@ -68,5 +76,8 @@
   </url>
   <url>
     <loc>http://csbzhixing.github.io/blog/categories/network/</loc>
+  </url>
+  <url>
+    <loc>http://csbzhixing.github.io/blog/categories/personal/</loc>
   </url>
 </urlset>
