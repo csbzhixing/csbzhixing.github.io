@@ -3,7 +3,7 @@ layout: post
 title: "多线程开发详谈"
 date: 2015-09-25 09:49:52 +0800
 comments: true
-categories: 
+categories: base
 ---
 
 

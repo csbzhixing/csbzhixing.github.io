@@ -10,11 +10,12 @@ footer: true
 
 ##基本信息
 
+* 姓名 : 陈思博
 * 求职意向 : iOS开发
 * 性别 : 男
-* 邮箱 : 494125545@qq.com / goolecsbxxwxw@gmail.com
+* 邮箱 : 494125545@qq.com / csbzhixing@gmail.com
 * 博客地址 : <http://csbzhixing.github.io>
-* 联系方式 : 13580425192
+* 联系方式 : 13168051971
 
 ##教育经历
 
@@ -29,27 +30,24 @@ footer: true
 3. 熟悉常用设计模式
 4. 熟悉使用story board,xib 进行界面开发
 4. 熟悉HTTP协议，TCP/IP协议，了解socket通信
-5. 熟悉主流第三方库（AFNetWorking, FMDB, Mantle, SVPullRefresh等）
+5. 熟悉主流第三方库（AFNetWorking, FMDB, Mantle, SVPullRefresh, MBProgrssHUD等）
 6. 熟悉友盟第三方SDK使用（社交集成，事件统计, 推送）
 7. 了解第三方支付SDK接入(支付宝)
 
 
 ## 项目经验
 
-1. 学院教师薪资管理系统。
-	+ 使用技术 ：JAVA WEB , JQuery , MySQL
-	+ 项目收获 ：第一次完成完整的项目，学习了项目开发的流程，学会使用了版本控制工具（git）,实践了学习的理论知识
-	+ 项目结果 ： 通过学院创新项目验收
 
 
-2. 广州业速互联网科技有限公司（2015.3 - 至今）
+- 广州业速互联网科技有限公司（2015.3 - 2015.10）
 	+ 职位 ：iOS实习工程师。
 	+ 职责 ：参与开发”369考证神器“ iOS客户端。参与app设计，与后台接口设计联调。
 	+ 项目收获
 		* 获得实际商业项目开发经验。
 		* 熟悉了iOS客户端开发流程。
 		* 了解支付业务
-   + 项目结果 ： app store上线版本2.1。即将上线2.2版本（接入支付功能）
+   + 项目结果 ： 上线2.2版本（接入支付功能）
+ 
 
 
 ##自我评价
