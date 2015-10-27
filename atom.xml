@@ -4,7 +4,7 @@
   <title><![CDATA[之行海涯]]></title>
   <link href="http://csbzhixing.github.io/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-10-23T10:37:09+08:00</updated>
+  <updated>2015-10-28T00:42:49+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,6 +12,133 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[list]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/10/25/list/"/>
+    <updated>2015-10-25T23:38:26+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/10/25/list</id>
+    <content type="html"><![CDATA[<h1>开始内功！</h1>
+
+<p>前几日和前老大谈了谈，总结起来内功不能不练。实习以来有三次想好好复习数据结构和算法，但是最后都半途而废。现在不应该再有任何理由了，不然以后再也没有时间好好去复习这些东西。从现在开始刷好题目，打好基础。</p>
+
+<h2>链表</h2>
+
+<p>链表是线性表的一种。</p>
+
+<p>线性表是最简单基础的一种数据结构。线性表中的数据元素之间的关系是一对一的，除了头元素和尾元素之外，其他元素首尾相连。线性表有两种存储方式</p>
+
+<ol>
+<li>顺序存储方式</li>
+<li>链式存储方式</li>
+</ol>
+
+
+<p>数组是典型的顺序存储方式。链表是典型的链式存储方式。</p>
+
+<p>链式存储结构，指的是相邻的两个元素在内存中可能不是相邻的，每一个元素都有一个指针域，指针域存放的是下一个元素的指针。</p>
+
+<p>链式结构的优缺点：</p>
+
+<ul>
+<li>优点</li>
+<li>插入和删除的复杂度为O(1)</li>
+<li><p>不会浪费太多内存，在需要添加元素的时候才会申请内存，删除元素后释放内存。</p></li>
+<li><p>缺点</p></li>
+<li>访问元素的时间复杂度最坏为O(N)</li>
+</ul>
+
+
+<p> 链表就是链式存储的线性表。根据指针域的不同，链表分为单项链表，双向链表，循环链表等等</p>
+
+<p> 一个简单的List定义</p>
+
+<pre><code class="`C">struct list {
+    int ver;
+    struct list *next;
+};
+typedef struct list *listLink;
+// 插入
+void insert_list(listLink *, int);
+// 打印
+void print_list(listLink *, int);
+// 链表长
+int list_length(listLink);
+// 搜索一个特定的值
+listLink search_list(listLink, int);
+</code></pre>
+
+<p>四个方法的实现</p>
+
+<p><img src="http://csbzhixing.github.io/media/14459585444278.jpg" alt="" /></p>
+
+<h2>指针常出现的问题</h2>
+
+<h3>反转链表</h3>
+
+<p>反转链表，分为两种情况讨论，单向链表和双向链表</p>
+
+<ul>
+<li><p>单向链表</p>
+
+<ul>
+<li><p>考虑到访问某个节点的时候，要检查下一个节点是否为空。</p></li>
+<li><p>要把反转后的最后一个节点（头节点）的指针指向null</p></li>
+</ul>
+</li>
+</ul>
+
+
+<p>实现代码如下</p>
+
+<p><img src="http://csbzhixing.github.io/media/14459590472638.jpg" alt="" /></p>
+
+<ul>
+<li>双向链表</li>
+</ul>
+
+
+<p>双向链表比较麻烦的地方在于Next和pre要呼唤，需要主要当前节点和上个节点的问题。</p>
+
+<h3>删除节点</h3>
+
+<p>删除节点必须要知道被删除节点的前置节点，时间复杂度为O(1)</p>
+
+<p><img src="http://csbzhixing.github.io/media/14459596886157.jpg" alt="" /></p>
+
+<h3>循环链表</h3>
+
+<p>循环链表表现于尾元素的next指针指向head元素，所以我们可以通过快慢指针去校验。具体的方法会在下面的链表的技巧中提到.</p>
+
+<h2>链表的技巧</h2>
+
+<h3>鲁棒性</h3>
+
+<ul>
+<li>当访问链表中某个节点的next节点的时候，一点要先判断当前节点是否为空。</li>
+<li>全部操作结束后，判断是否有环。若有环，则置其中一端为Null;</li>
+</ul>
+
+
+<h3>Dummy Node</h3>
+
+<p>假节点，伪头节点。Dummy <code>Node</code> 可以认为是一个假的头结点。我们可以构造一个<code>Dummy Node</code> ，使他的next指针指向Head node。使用<code>Dummy Node</code>目的是，在单向链表中，保正head不会再删除操作中丢失。此外，比较特殊的方法是用来进行删除head。</p>
+
+<p>Dummy Node可以处理对于head Node变化的情况。</p>
+
+<h2>快慢指针</h2>
+
+<p>快慢指针式解决很多链表的问题的关键。快慢指的是指针每次移动的步长。常用的快指针步长为2，慢指针步长为1.快慢指针同时从头结点开始移动陪你过。</p>
+
+<p>快慢指针的应用可以解决以下问题</p>
+
+<ol>
+<li>快速找出为止长度的链表的中间节点。我们让快指针的步长是慢指针的两倍。当快指针到达尾节点的时候，慢指针所指向的节点就是中间节点。</li>
+<li>判断单向链表是否成环。同样的原理，如果快指针 <code>*fase =NULL</code>的时候，说明链表是NULL结尾的。如果快指针等于慢指针的时候，则说明该链表成环。</li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[AFNetworking 学习笔记 1]]></title>
