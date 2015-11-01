@@ -4,7 +4,7 @@
   <title><![CDATA[之行海涯]]></title>
   <link href="http://csbzhixing.github.io/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-10-28T00:49:33+08:00</updated>
+  <updated>2015-11-02T01:03:24+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,6 +12,736 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[runtime]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/11/01/runtime/"/>
+    <updated>2015-11-01T10:07:27+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/11/01/runtime</id>
+    <content type="html"><![CDATA[<p>从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- &mdash;&ndash;（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。</p>
+
+<h2>runtime 关联对象</h2>
+
+<p>从关联对象说起，是因为在最近的项目中用到了这个方法。当时的场景是，我需要创建一个category，里面需要一个block对象。然而我们知道，我们不能在category中添加成员变量。如果我们尝试添加的话，编译器会报错。当然，使用全局变量能解决这个问题，但明显是一个很优雅的方法，也很容易造成错误。Objective-C针对这一中问题，提供了一个解决方案，就是<code>关联对象(Associated Object)。</code></p>
+
+<p>我们可以想象，关联对象就是一个key - value的模型，把对象通过特定的Key链接到相关的实例上。不过由于使用的是C的借口，所以key是一个void指针。同时，我们要需要为这个关联对象设定内存管理策略。相关的内存的管理策略如下:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OBJC_ASSOCIATION_ASSIGN
+</span><span class='line'>
+</span><span class='line'>OBJC_ASSOCIATION_RETAIN_NONATOMIC
+</span><span class='line'>
+</span><span class='line'>OBJC_ASSOCIATION_COPY_NONATOMIC
+</span><span class='line'>
+</span><span class='line'>OBJC_ASSOCIATION_RETAIN
+</span><span class='line'>
+</span><span class='line'>OBJC_ASSOCIATION_COPY
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>对<code>OBJC_ASSOCIATION_ASSIGN</code>的，当关联对象所关联的实例被释放掉后，对象不会被释放掉。而<code>OBJC_ASSOCIATION_RETAIN
+</code>和<code>
+OBJC_ASSOCIATION_COPY</code>两个的话，在实例被释放掉同时，关联对象也会被release掉。当我们用同一个key去关联另外的实例对象的时候，也会自动释放掉之前关联的对象。这种情况下，先前的关联对象会被妥善地处理掉，并且新的对象会使用它的内存。</p>
+
+<p>关联对象的的runtime函数如下</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// 设置关联对象
+</span><span class='line'>
+</span><span class='line'>void objc_setAssociatedObject ( id object, const void *key, id value, objc_AssociationPolicy policy );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 获取关联对象
+</span><span class='line'>
+</span><span class='line'>id objc_getAssociatedObject ( id object, const void *key );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 移除关联对象
+</span><span class='line'>
+</span><span class='line'>void objc_removeAssociatedObjects ( id object );</span></code></pre></td></tr></table></div></figure>
+
+
+<p>下面就给出在项目中实际遇到的问题给做一个例子。</p>
+
+<p>首先在头文件中定义了以下内容。</p>
+
+<p><img src="http://csbzhixing.github.io/media/14463463210542.jpg" alt="" /></p>
+
+<p>可以看到，这个category是为了扩展vc，让vc具有一个弹出系统通讯录的功能。</p>
+
+<p>在.m文件中，如下实现block关联对象</p>
+
+<p><img src="http://csbzhixing.github.io/media/14463464447032.jpg" alt="" /></p>
+
+<p>然后就像正常的对象一样操作就行了</p>
+
+<p><img src="http://csbzhixing.github.io/media/14463464914602.jpg" alt="" /></p>
+
+<p><img src="http://csbzhixing.github.io/media/14463464837182.jpg" alt="" /></p>
+
+<p>在上面看到，我对关联对象使用的key是用了<code>@selector()</code>。那为什么可以使用SEL来代替设定一个固定的key呢？</p>
+
+<h2>方法与消息</h2>
+
+<ul>
+<li>SEL</li>
+</ul>
+
+
+<p>又叫选择器，是表示一个方法的selector的指针，其定义如下：</p>
+
+<p><code>typedef struct objc_selector *SEL;</code>
+objc_selector结构体的详细定义没有在&lt;objc/runtime.h>头文件中找到。方法的selector用于表示运行时方法的名字。Objective-C在编译时，会依据每一个方法的名字、参数序列，生成一个唯一的整型标识(Int类型的地址)，这个标识就是SEL。</p>
+
+<ul>
+<li>IMP</li>
+</ul>
+
+
+<p>通过SEL找到函数后，就可以获取到该函数的IMP。IMP实际上是一个函数指针，指向方法实现的首地址。其定义如下</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>id (*IMP)(id, SEL, ...)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过取得IMP，我们可以跳过runtime的消息传递机制，直接通过IMP执行指向的函数实现。这样一来可以提高效率，省去了消息传递中的一系列过程</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>回答上面的问题
+</span><span class='line'>
+</span><span class='line'>我们知道，在同一个类文件里面，不能存在同一个名字的方法，即使是参数类型不同业不行。同理，同一个类文件里面不能存在同一个名字的对象，所以set方法是唯一的，所以可以使用SEL来获取唯一的整理标识来作为key。
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>下面是看的一些文章的摘录和自己的一项心得，主要是给自己做一个备忘。</h2>
+
+<p>选择器相关的操作函数包括：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// 返回给定选择器指定的方法的名称
+</span><span class='line'>const char * sel_getName ( SEL sel );
+</span><span class='line'>// 在Objective-C Runtime系统中注册一个方法，将方法名映射到一个选择器，并返回这个选择器
+</span><span class='line'>
+</span><span class='line'>SEL sel_registerName ( const char *str );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 在Objective-C Runtime系统中注册一个方法
+</span><span class='line'>
+</span><span class='line'>SEL sel_getUid ( const char *str );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 比较两个选择器
+</span><span class='line'>
+</span><span class='line'>BOOL sel_isEqual ( SEL lhs, SEL rhs );
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>方法操作的函数如下</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// 调用指定方法的实现
+</span><span class='line'>// receiver不能为空
+</span><span class='line'>// 比method_getImplementation和method_getName更快
+</span><span class='line'>
+</span><span class='line'>id method_invoke ( id receiver, Method m, ... );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 调用返回一个数据结构的方法的实现
+</span><span class='line'>
+</span><span class='line'>void method_invoke_stret ( id receiver, Method m, ... );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 获取方法名
+</span><span class='line'>// 返回一个SEL。如果要获取方法名得C字符串，要用sel_getName(method_getName(method))。
+</span><span class='line'>
+</span><span class='line'>SEL method_getName ( Method m );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 返回方法的实现
+</span><span class='line'>// 注意该函数返回值是方法之前的实现。
+</span><span class='line'>IMP method_getImplementation ( Method m );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 获取描述方法参数和返回值类型的字符串
+</span><span class='line'>
+</span><span class='line'>const char * method_getTypeEncoding ( Method m );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 获取方法的返回值类型的字符串
+</span><span class='line'>
+</span><span class='line'>char * method_copyReturnType ( Method m );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 获取方法的指定位置参数的类型字符串
+</span><span class='line'>
+</span><span class='line'>char * method_copyArgumentType ( Method m, unsigned int index );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 通过引用返回方法的返回值类型字符串
+</span><span class='line'>
+</span><span class='line'>void method_getReturnType ( Method m, char *dst, size_t dst_len );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 返回方法的参数的个数
+</span><span class='line'>
+</span><span class='line'>unsigned int method_getNumberOfArguments ( Method m );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 通过引用返回方法指定位置参数的类型字符串
+</span><span class='line'>
+</span><span class='line'>void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 返回指定方法的方法描述结构体
+</span><span class='line'>
+</span><span class='line'>struct objc_method_description * method_getDescription ( Method m );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 设置方法的实现
+</span><span class='line'>
+</span><span class='line'>IMP method_setImplementation ( Method m, IMP imp );
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>// 交换两个方法的实现
+</span><span class='line'>
+</span><span class='line'>void method_exchangeImplementations ( Method m1, Method m2 );</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>方法调用流程</h2>
+
+<p>在Objective-C中，消息会一直到运行时绑定的方法实现上。我们常用的[receiver message]会被runtime转换为一个函数调用<code>objc_msgSend</code>。如下</p>
+
+<p><code>objc_msgSend(receiver, selector)</code>
+如果消息中还有其它参数，则该方法的形式如下所示：</p>
+
+<p><code>objc_msgSend(receiver, selector, arg1, arg2, ...)</code></p>
+
+<p>这个函数在执行的过程中完成了所有动态绑定的过程。</p>
+
+<ol>
+<li>找到SEL对应的方法实现。由于一个方法可能在不同的类有不同的实现，所有我们要依赖于接受者的类来确定确切的实现。</li>
+<li>调用方法的实现，将参数传入。</li>
+<li>将方法的返回这作为的自己的返回值。</li>
+</ol>
+
+
+<p>一个基本消息的框架</p>
+
+<p><img src="http://csbzhixing.github.io/media/14463917464901.jpg" alt="" /></p>
+
+<p>注意到，在<code>objc_msgSend</code>中有两个隐藏参数：</p>
+
+<ol>
+<li>消息接受对象</li>
+<li>方法的selecor</li>
+</ol>
+
+
+<p>隐藏是以为内在定义的方法中没有申明，是在编译期被插入实现代码的。</p>
+
+<h2>消息转发</h2>
+
+<p>当一个对象能接受一个消息的时候，那么一切都会按照我们想得去做，但是如果不能接受消息的时候，会发生什么？一般情况下，如果不能相应[object message],编译期会报错。如果是以perform来调用的，那么在运行时才会确定object是否会接收消息，如果不行的话，就会造成程序崩溃。</p>
+
+<p>当然，我们可以通过<code>respondsToSelector:</code>来判断一下是否会响应这个消息，但是我们要用runtime来搞一搞，所以我们应该从<code>消息转发机制</code>来考虑。</p>
+
+<p>消息转发机制基本分为三个步骤</p>
+
+<ol>
+<li>动态方法解析</li>
+<li>备用接收者</li>
+<li>完成转发</li>
+</ol>
+
+
+<h3>动态方法解析</h3>
+
+<p>当当对象接收到位置的消息时，首先会调用类的<code>+resolveInstanceMethod:(实例方法)</code>或者<code>+resolveClassMethod:(类方法)</code>。因此，我们可以去增加一个处理方法。在消息不能被对象接收的时候就运行这个方法，前提是这个方法已经被实现了。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void functionForMethod1(id self, SEL _cmd) {
+</span><span class='line'>
+</span><span class='line'>   NSLog(@"%@, %p", self, _cmd);
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>+ (BOOL)resolveInstanceMethod:(SEL)sel {
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    NSString *selectorString = NSStringFromSelector(sel);
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    if ([selectorString isEqualToString:@"method1"]) {
+</span><span class='line'>
+</span><span class='line'>        class_addMethod(self.class, @selector(method1), (IMP)functionForMethod1, "@:");
+</span><span class='line'>
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    return [super resolveInstanceMethod:sel];
+</span><span class='line'>
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>备用接收者</h3>
+
+<p>当我们的对象不能处理消息的时候，我们将消息转发到一个备用的对象，只要这个对象的类实现了这个方法
+<code>- (id)forwardingTargetForSelector:(SEL)aSelector
+</code></p>
+
+<p>如果返回的不是一个nil的话，那么这个对象就会被作为消息的心的接收者。而在外部看来，这个消息仍然被我们的发送的对象处理了。注意，这个方法返回的对象不是self自身，不然就是个无限循环了。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>@interface SUTRuntimeMethodHelper : NSObject
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>- (void)method2;
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@end
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@implementation SUTRuntimeMethodHelper
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>- (void)method2 {
+</span><span class='line'>
+</span><span class='line'>    NSLog(@"%@, %p", self, _cmd);
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@end
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>#pragma mark -
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@interface SUTRuntimeMethod () {
+</span><span class='line'>
+</span><span class='line'>    SUTRuntimeMethodHelper *_helper;
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@end
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@implementation SUTRuntimeMethod
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>+ (instancetype)object {
+</span><span class='line'>
+</span><span class='line'>    return [[self alloc] init];
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>- (instancetype)init {
+</span><span class='line'>
+</span><span class='line'>    self = [super init];
+</span><span class='line'>
+</span><span class='line'>    if (self != nil) {
+</span><span class='line'>
+</span><span class='line'>        _helper = [[SUTRuntimeMethodHelper alloc] init];
+</span><span class='line'>
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    return self;
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>- (void)test {
+</span><span class='line'>
+</span><span class='line'>    [self performSelector:@selector(method2)];
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>- (id)forwardingTargetForSelector:(SEL)aSelector {
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    NSLog(@"forwardingTargetForSelector");
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    NSString *selectorString = NSStringFromSelector(aSelector);
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    // 将消息转发给_helper来处理
+</span><span class='line'>
+</span><span class='line'>    if ([selectorString isEqualToString:@"method2"]) {
+</span><span class='line'>
+</span><span class='line'>        return _helper;
+</span><span class='line'>
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    return [super forwardingTargetForSelector:aSelector];
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>@end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>完成的消息转发</h3>
+
+<p>如果上述的行为都不能解决的话，runtime在这时候会给对象最后一次机会：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)forwardInvocation:(NSInvocation *)anInvocation</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>这个时候，消息的所有未处理的内容都被封装到了anInvocation中，包括SEL,target，参数。我们在这里可以选着将消息转发给其他的对象。</p>
+
+<p>forwardInvocation:方法的实现有两个任务：</p>
+
+<p>定位可以响应封装在anInvocation中的消息的对象。这个对象不需要能处理所有未知消息。
+使用anInvocation作为参数，将消息发送到选中的对象。anInvocation将会保留调用结果，运行时系统会提取这一结果并将其发送到消息的原始发送者。</p></blockquote>
+
+<p>对于这一块，还没有具体的实践，毕竟到这一步，用runtime来解决不如好好回去check以下代码吧。</p>
+
+<h2>Method Swizze</h2>
+
+<p>Method Swizzling是改变一个selector的实际实现的技术.这样，我们可以在runtime的时候修改类分发的队形的函数，修改对应的实现。</p>
+
+<p>例如，我们想在每一个<code>viewDidAppear</code>增加一个跟踪代码，观察哪个vc被调用了，那么我们就可以通过<code>Method Swizzling</code></p>
+
+<h3>Swizzling 注意事项</h3>
+
+<p><code>Swizzling应该总是在+load中执行</code></p>
+
+<p>在Objective-C中，运行时会自动调用每个类的两个方法。+load会在类初始加载时调用，+initialize会在第一次调用类的类方法或实例方法之前被调用。这两个方法是可选的，且只有在实现了它们时才会被调用。由于method swizzling会影响到类的全局状态，因此要尽量避免在并发处理中出现竞争的情况。+load能保证在类的初始化过程中被加载，并保证这种改变应用级别的行为的一致性。相比之下，+initialize在其执行时不提供这种保证—事实上，如果在应用中没为给这个类发送消息，则它可能永远不会被调用。</p>
+
+<p>+load在父类，子类，分类的实现都会分别调用，所以+load更适合</p>
+
+<h3>Swizzling应该总是在dispatch_once中执行</h3>
+
+<p>与上面相同，因为swizzling会改变全局状态，所以我们需要在运行时采取一些预防措施。原子性就是这样一种措施，它确保代码只被执行一次，不管有多少个线程。GCD的dispatch_once可以确保这种行为，我们应该将其作为method swizzling的最佳实践。</p>
+
+<h3>特别的地方</h3>
+
+<blockquote><ol>
+<li>总是调用方法的原始实现(除非有更好的理由不这么做)：API提供了一个输入与输出约定，但其内部实现是一个黑盒。Swizzle一个方法而不调用原始实现可能会打破私有状态底层操作，从而影响到程序的其它部分。</li>
+<li>避免冲突：给自定义的分类方法加前缀，从而使其与所依赖的代码库不会存在命名冲突。</li>
+<li>明白是怎么回事：简单地拷贝粘贴swizzle代码而不理解它是如何工作的，不仅危险，而且会浪费学习Objective-C运行时的机会。阅读Objective-C Runtime Reference和查看&lt;objc/runtime.h>头文件以了解事件是如何发生的。</li>
+<li>小心操作：无论我们对Foundation, UIKit或其它内建框架执行Swizzle操作抱有多大信心，需要知道在下一版本中许多事可能会不一样。</li>
+</ol>
+</blockquote>
+
+<h2>总结</h2>
+
+<p>runtime到这里，大概讲了下两个问题，方法转发和关联对象。觉得还是不够，因为很多东西写起来发现自己也不是很了解，暂且做一个笔记。</p>
+
+<p>这里感谢南峰子，写得runtime教程非常详细，给了我很多帮助。</p>
+
+<p>本文参考了大量下面三篇文章的内容。</p>
+
+<p><a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/"></a></p>
+
+<p><a href="http://southpeak.github.io/blog/2014/11/03/objective-c-runtime-yun-xing-shi-zhi-san-:fang-fa-yu-xiao-xi-zhuan-fa/"></a></p>
+
+<p><a href="http://southpeak.github.io/blog/2014/10/30/objective-c-runtime-yun-xing-shi-zhi-er-:cheng-yuan-bian-liang-yu-shu-xing/"></a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[list]]></title>
