@@ -1,0 +1,145 @@
+---
+layout: post
+title: "一周刷题总结 - 1"
+date: 2015-11-06 22:36:06 +0800
+comments: true
+categories: 数据结构
+---
+
+上周开始复习算法和数据结构，一周每天在睡前都拿出不少时间去学习，做了一些题目，想来每周都应该把相关的题目总结一下，才能更好的去学习。
+
+ - 237	Delete Node in a Linked List
+
+这是上次笔记里面写过的内容，但是我自己写得时候又出现了问题，看来简单的问题业不能去忽略。
+
+```c
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+void deleteNode(struct ListNode* node) {
+    if(node == NULL) return;
+    struct ListNode *temp = node->next;
+    node->val = temp->val;
+    node->next = temp->next;
+    free(temp);
+}
+```
+
+- 171	Excel Sheet Column Number
+
+简单的来说就是一个26进制的数，没什么难点
+
+```c
+int titleToNumber(char* s) {
+    int length = strlen(s);
+    
+    int all = 0;
+    
+    for(int i=0;i<length;i++)
+    {
+        all=((s[i]-'A')+1) + all * 26;
+    }
+    
+    return all;
+}
+
+```
+
+- 169	Majority Element
+
+出现超过n/2的数，通过遍历就可以了
+
+```c
+
+int majorityElement(int* nums, int numsSize) {
+    int time=0,maj;
+    for(int i=0;i<numsSize;i++)
+    {
+        if(time == 0)
+        {
+            maj = nums[i];
+        }
+        if(nums[i]==maj) 
+        {
+            time++;
+        }
+       else{
+         time--;  
+       } 
+    }
+    return maj;
+}
+
+```
+
+- 206	Reverse Linked List
+
+反转链表，基础题目
+
+```c
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+struct ListNode* reverseList(struct ListNode* head) {
+    
+    struct ListNode* pre = NULL;
+    struct ListNode* cur = head;
+    struct ListNode* next = NULL;
+    
+    while(cur)
+    {
+        next = cur->next;
+        cur->next = pre;
+        pre = cur;
+        cur = next;
+    }
+    return pre;
+}
+
+```
+
+- 263	Ugly Number
+
+简单的递归问题
+
+```c
+
+bool isUgly(int num) {
+    
+    if(num<1) return false;
+    
+    if(num%2==0)
+    {
+        num/=2;
+        return isUgly(num);
+    }
+    
+     if(num%3==0)
+    {
+        num/=3;
+        return isUgly(num);
+    }
+    
+     if(num%5==0)
+    {
+        num/=5;
+        return isUgly(num);
+    }
+    
+    if(num == 1) return true;
+    
+    return false;
+   
+}
+
+```
+
+
