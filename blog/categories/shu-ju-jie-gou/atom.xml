@@ -4,7 +4,7 @@
   <title><![CDATA[Category: 数据结构 | 之行海涯]]></title>
   <link href="http://csbzhixing.github.io/blog/categories/shu-ju-jie-gou/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-11-02T01:03:24+08:00</updated>
+  <updated>2015-11-10T00:46:37+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,6 +12,155 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[一周刷题总结 - 1]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/11/06/week-code-1/"/>
+    <updated>2015-11-06T22:36:06+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/11/06/week-code-1</id>
+    <content type="html"><![CDATA[<p>上周开始复习算法和数据结构，一周每天在睡前都拿出不少时间去学习，做了一些题目，想来每周都应该把相关的题目总结一下，才能更好的去学习。</p>
+
+<ul>
+<li>237  Delete Node in a Linked List</li>
+</ul>
+
+
+<p>这是上次笔记里面写过的内容，但是我自己写得时候又出现了问题，看来简单的问题业不能去忽略。</p>
+
+<pre><code class="c">/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+void deleteNode(struct ListNode* node) {
+    if(node == NULL) return;
+    struct ListNode *temp = node-&gt;next;
+    node-&gt;val = temp-&gt;val;
+    node-&gt;next = temp-&gt;next;
+    free(temp);
+}
+</code></pre>
+
+<ul>
+<li>171   Excel Sheet Column Number</li>
+</ul>
+
+
+<p>简单的来说就是一个26进制的数，没什么难点</p>
+
+<pre><code class="c">int titleToNumber(char* s) {
+    int length = strlen(s);
+
+    int all = 0;
+
+    for(int i=0;i&lt;length;i++)
+    {
+        all=((s[i]-'A')+1) + all * 26;
+    }
+
+    return all;
+}
+</code></pre>
+
+<ul>
+<li>169   Majority Element</li>
+</ul>
+
+
+<p>出现超过n/2的数，通过遍历就可以了</p>
+
+<pre><code class="c">
+int majorityElement(int* nums, int numsSize) {
+    int time=0,maj;
+    for(int i=0;i&lt;numsSize;i++)
+    {
+        if(time == 0)
+        {
+            maj = nums[i];
+        }
+        if(nums[i]==maj) 
+        {
+            time++;
+        }
+       else{
+         time--;  
+       } 
+    }
+    return maj;
+}
+</code></pre>
+
+<ul>
+<li>206   Reverse Linked List</li>
+</ul>
+
+
+<p>反转链表，基础题目</p>
+
+<pre><code class="c">/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+struct ListNode* reverseList(struct ListNode* head) {
+
+    struct ListNode* pre = NULL;
+    struct ListNode* cur = head;
+    struct ListNode* next = NULL;
+
+    while(cur)
+    {
+        next = cur-&gt;next;
+        cur-&gt;next = pre;
+        pre = cur;
+        cur = next;
+    }
+    return pre;
+}
+</code></pre>
+
+<ul>
+<li>263   Ugly Number</li>
+</ul>
+
+
+<p>简单的递归问题</p>
+
+<pre><code class="c">
+bool isUgly(int num) {
+
+    if(num&lt;1) return false;
+
+    if(num%2==0)
+    {
+        num/=2;
+        return isUgly(num);
+    }
+
+     if(num%3==0)
+    {
+        num/=3;
+        return isUgly(num);
+    }
+
+     if(num%5==0)
+    {
+        num/=5;
+        return isUgly(num);
+    }
+
+    if(num == 1) return true;
+
+    return false;
+
+}
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[list]]></title>

@@ -9,7 +9,7 @@
 
 <meta name="author" content="之行"> 
 
-<meta name="description" content="从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- &mdash;&ndash;（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我， &hellip;"> <meta name="keywords" content="">
+<meta name="description" content="RAC学习 RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04; RAC的改变 RAC通过信号将不同的部分联系在了一起。 &hellip;"> <meta name="keywords" content="">
 
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -19,7 +19,7 @@
 	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
 	<link href="/stylesheets/font-awesome.min.css" rel="stylesheet" type="text/css">
 	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script src="//libs.baidu.com/jquery/1.7.2/jquery.min.js"></script>
 	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
 
 <script language="Javascript" type="text/javascript">
@@ -97,6 +97,612 @@ $(document).ready(
 </header>
 
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2015/11/10/rac/">
+		
+			Rac</a>
+	</h2>
+	<div class="entry-content">
+		<h1>RAC学习</h1>
+
+<p>RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;</p>
+
+<h2>RAC的改变</h2>
+
+<p>RAC通过信号将不同的部分联系在了一起。</p>
+
+<p>RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。</p>
+
+<h3>KVO</h3>
+
+<p>RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="p">[</span><span class="n">RACAble</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="n">username</span><span class="p">)</span> <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">newName</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="n">newName</span><span class="p">);</span>
+</span><span class='line'><span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="c1">// 只有当名字以&#39;j&#39;开头，才会被记录</span>
+</span><span class='line'><span class="p">[[</span><span class="n">RACAble</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="n">username</span><span class="p">)</span>
+</span><span class='line'>   <span class="nl">filter</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">newName</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>       <span class="k">return</span> <span class="p">[</span><span class="n">newName</span> <span class="nl">hasPrefix</span><span class="p">:</span><span class="s">@&quot;j&quot;</span><span class="p">];</span>
+</span><span class='line'>   <span class="p">}]</span>
+</span><span class='line'>   <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">newName</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>       <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="n">newName</span><span class="p">);</span>
+</span><span class='line'>   <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>UI Event</h3>
+
+<p>根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="n">RAC</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="n">logInButton</span><span class="p">,</span> <span class="n">enabled</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">RACSignal</span>
+</span><span class='line'>        <span class="nl">combineLatest</span><span class="p">:</span><span class="l">@[</span>
+</span><span class='line'>            <span class="nb">self</span><span class="p">.</span><span class="n">usernameTextField</span><span class="p">.</span><span class="n">rac_textSignal</span><span class="p">,</span>
+</span><span class='line'>            <span class="nb">self</span><span class="p">.</span><span class="n">passwordTextField</span><span class="p">.</span><span class="n">rac_textSignal</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">RACObserve</span><span class="p">(</span><span class="n">LoginManager</span><span class="p">.</span><span class="n">sharedManager</span><span class="p">,</span> <span class="n">loggingIn</span><span class="p">),</span>
+</span><span class='line'>            <span class="n">RACObserve</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">loggedIn</span><span class="p">)</span>
+</span><span class='line'>        <span class="l">]</span> <span class="nl">reduce</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="bp">NSString</span> <span class="o">*</span><span class="n">password</span><span class="p">,</span> <span class="bp">NSNumber</span> <span class="o">*</span><span class="n">loggingIn</span><span class="p">,</span> <span class="bp">NSNumber</span> <span class="o">*</span><span class="n">loggedIn</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="l">@(</span><span class="n">username</span><span class="p">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">password</span><span class="p">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">loggingIn</span><span class="p">.</span><span class="n">boolValue</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">loggedIn</span><span class="p">.</span><span class="n">boolValue</span><span class="l">)</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。</p>
+
+<h3>网络异步</h3>
+
+<p>当我们有需求的时候，可以自己创建<code>RACSubject</code>类型。我们可以认为<code>RACSubject</code>是一个具有高度自定义的信号(是RACSignal的子类)；</p>
+
+<p>当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">doTest</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">RACSubject</span> <span class="o">*</span><span class="n">subject</span> <span class="o">=</span> <span class="p">[</span><span class="nb">self</span> <span class="n">doRequest</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">[</span><span class="n">subject</span> <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">value</span><span class="p">){</span>
+</span><span class='line'>        <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;value:%@&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}];</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">-</span> <span class="p">(</span><span class="n">RACSubject</span> <span class="o">*</span><span class="p">)</span><span class="nf">doRequest</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">RACSubject</span> <span class="o">*</span><span class="n">subject</span> <span class="o">=</span> <span class="p">[</span><span class="n">RACSubject</span> <span class="n">subject</span><span class="p">];</span>
+</span><span class='line'>    <span class="c1">// 模拟2秒后得到请求内容</span>
+</span><span class='line'>    <span class="c1">// 只触发1次</span>
+</span><span class='line'>    <span class="c1">// 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的</span>
+</span><span class='line'>    <span class="c1">// subscribeNext就是定义了一个接收体</span>
+</span><span class='line'>    <span class="p">[[[[</span><span class="n">RACSignal</span> <span class="nl">interval</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="nl">take</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="nl">map</span><span class="p">:</span><span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">id</span> <span class="n">_</span><span class="p">){</span>
+</span><span class='line'>        <span class="c1">// the value is from url request</span>
+</span><span class='line'>        <span class="bp">NSString</span> <span class="o">*</span><span class="n">value</span> <span class="o">=</span> <span class="s">@&quot;content fetched from web&quot;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">subject</span> <span class="nl">sendNext</span><span class="p">:</span><span class="n">value</span><span class="p">];</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}]</span> <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">_</span><span class="p">){}];</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">subject</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>常见的概念</h2>
+
+<h3>Signal and Subscriber</h3>
+
+<p>在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。</p>
+
+<p>当信号获得了相关数据后，就会执行订阅者的<code>sendNext, sendComplete, sendError</code>方法。订阅者也有相关的方法来获取相关的数据，比如<code>[signal subscribeNext:error:completed]</code>。这个时候只要没有<code>sendError</code>和<code>sendComplete</code>传过来，就会有源源不断的数据。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="p">[</span><span class="n">RACObserve</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">username</span><span class="p">)</span> <span class="nl">subscribeNext</span><span class="p">:</span> <span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">newName</span><span class="p">){</span>
+</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;newName:%@&quot;</span><span class="p">,</span> <span class="n">newName</span><span class="p">);</span>
+</span><span class='line'><span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。</p>
+
+<p>信号是可以被处理的，通常有以下几种处理信号的方式</p>
+
+<ol>
+<li>map 修改</li>
+<li>filter 过滤</li>
+<li>combine 组合</li>
+<li>chain 串联</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="n">RAC</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="n">logInButton</span><span class="p">,</span> <span class="n">enabled</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">RACSignal</span>
+</span><span class='line'>        <span class="nl">combineLatest</span><span class="p">:</span><span class="l">@[</span>
+</span><span class='line'>            <span class="nb">self</span><span class="p">.</span><span class="n">usernameTextField</span><span class="p">.</span><span class="n">rac_textSignal</span><span class="p">,</span>
+</span><span class='line'>            <span class="nb">self</span><span class="p">.</span><span class="n">passwordTextField</span><span class="p">.</span><span class="n">rac_textSignal</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">RACObserve</span><span class="p">(</span><span class="n">LoginManager</span><span class="p">.</span><span class="n">sharedManager</span><span class="p">,</span> <span class="n">loggingIn</span><span class="p">),</span>
+</span><span class='line'>            <span class="n">RACObserve</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">loggedIn</span><span class="p">)</span>
+</span><span class='line'>        <span class="l">]</span> <span class="nl">reduce</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="bp">NSString</span> <span class="o">*</span><span class="n">password</span><span class="p">,</span> <span class="bp">NSNumber</span> <span class="o">*</span><span class="n">loggingIn</span><span class="p">,</span> <span class="bp">NSNumber</span> <span class="o">*</span><span class="n">loggedIn</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="l">@(</span><span class="n">username</span><span class="p">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">password</span><span class="p">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">loggingIn</span><span class="p">.</span><span class="n">boolValue</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">loggedIn</span><span class="p">.</span><span class="n">boolValue</span><span class="l">)</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}];</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。</p>
+
+<h3>冷信号和热信号</h3>
+
+<p>上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。</p>
+
+<p>注意，如果一个信号有多个订阅者的时候，signal里面的block会被执行多次，要控制的话就要通过replay的方法去控制。</p>
+
+<h3>UI Category</h3>
+
+<p>RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。</p>
+
+<p>我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪<code>NSArray</code>来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。</p>
+
+<p>还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法<code>rac_prepareForReuseSignal</code>，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="p">[[[</span><span class="nb">self</span><span class="p">.</span><span class="n">cancelButton</span>
+</span><span class='line'>    <span class="nl">rac_signalForControlEvents</span><span class="p">:</span><span class="n">UIControlEventTouchUpInside</span><span class="p">]</span>
+</span><span class='line'>    <span class="nl">takeUntil</span><span class="p">:</span><span class="nb">self</span><span class="p">.</span><span class="n">rac_prepareForReuseSignal</span><span class="p">]</span>
+</span><span class='line'>    <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">UIButton</span> <span class="o">*</span><span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// do other things</span>
+</span><span class='line'><span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法<code>rac_command</code>。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="n">voteButton</span><span class="p">.</span><span class="n">rac_command</span> <span class="o">=</span> <span class="p">[[</span><span class="n">RACCommand</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithEnabled</span><span class="p">:</span><span class="nb">self</span><span class="p">.</span><span class="n">viewModel</span><span class="p">.</span><span class="n">voteCommand</span><span class="p">.</span><span class="n">enabled</span> <span class="nl">signalBlock</span><span class="p">:</span><span class="o">^</span><span class="n">RACSignal</span> <span class="o">*</span><span class="p">(</span><span class="kt">id</span> <span class="n">input</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Assume that we&#39;re logged in at first. We&#39;ll replace this signal later if not.</span>
+</span><span class='line'>    <span class="n">RACSignal</span> <span class="o">*</span><span class="n">authSignal</span> <span class="o">=</span> <span class="p">[</span><span class="n">RACSignal</span> <span class="n">empty</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">([[</span><span class="n">PXRequest</span> <span class="n">apiHelper</span><span class="p">]</span> <span class="n">authMode</span><span class="p">]</span> <span class="o">==</span> <span class="n">PXAPIHelperModeNoAuth</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// Not logged in. Replace signal.</span>
+</span><span class='line'>        <span class="n">authSignal</span> <span class="o">=</span> <span class="p">[[</span><span class="n">RACSignal</span> <span class="nl">createSignal</span><span class="p">:</span><span class="o">^</span><span class="n">RACDisposable</span> <span class="o">*</span><span class="p">(</span><span class="kt">id</span><span class="o">&lt;</span><span class="n">RACSubscriber</span><span class="o">&gt;</span> <span class="n">subscriber</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="p">@</span><span class="n">strongify</span><span class="p">(</span><span class="nb">self</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="n">FRPLoginViewController</span> <span class="o">*</span><span class="n">viewController</span> <span class="o">=</span> <span class="p">[[</span><span class="n">FRPLoginViewController</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithNibName</span><span class="p">:</span><span class="s">@&quot;FRPLoginViewController&quot;</span> <span class="nl">bundle</span><span class="p">:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>            <span class="bp">UINavigationController</span> <span class="o">*</span><span class="n">navigationController</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UINavigationController</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithRootViewController</span><span class="p">:</span><span class="n">viewController</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="p">[</span><span class="nb">self</span> <span class="nl">presentViewController</span><span class="p">:</span><span class="n">navigationController</span> <span class="nl">animated</span><span class="p">:</span><span class="nb">YES</span> <span class="nl">completion</span><span class="p">:</span><span class="o">^</span><span class="p">{</span>
+</span><span class='line'>                <span class="p">[</span><span class="n">subscriber</span> <span class="n">sendCompleted</span><span class="p">];</span>
+</span><span class='line'>            <span class="p">}];</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="k">return</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}]];</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="p">[</span><span class="n">authSignal</span> <span class="nl">then</span><span class="p">:</span><span class="o">^</span><span class="n">RACSignal</span> <span class="o">*</span><span class="p">{</span>
+</span><span class='line'>        <span class="p">@</span><span class="n">strongify</span><span class="p">(</span><span class="nb">self</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">[[</span><span class="nb">self</span><span class="p">.</span><span class="n">viewModel</span><span class="p">.</span><span class="n">voteCommand</span> <span class="nl">execute</span><span class="p">:</span><span class="nb">nil</span><span class="p">]</span> <span class="n">ignoreValues</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">}];</span>
+</span><span class='line'><span class="p">}];</span>
+</span><span class='line'><span class="p">[</span><span class="n">voteButton</span><span class="p">.</span><span class="n">rac_command</span><span class="p">.</span><span class="n">errors</span> <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">x</span> <span class="nl">subscribeNext</span><span class="p">:</span><span class="o">^</span><span class="p">(</span><span class="bp">NSError</span> <span class="o">*</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">SVProgressHUD</span> <span class="nl">showErrorWithStatus</span><span class="p">:[</span><span class="n">error</span> <span class="n">localizedDescription</span><span class="p">]];</span>
+</span><span class='line'>    <span class="p">}];</span>
+</span><span class='line'><span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。</p>
+
+<p>对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。</p>
+
+<h2>小结</h2>
+
+<p>由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。</p>
+
+<p>后面可能还是想结合网络请求来看看怎么使用RAC，毕竟多数的业务都是网络请求->数据组织->页面展示->交互的过程。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-11-10T00:39:45+08:00" pubdate data-updated="true"></time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/objective-c/'>objective-c</a>
+
+</div>
+
+
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2015/11/06/week-code-1/">
+		
+			一周刷题总结 - 1</a>
+	</h2>
+	<div class="entry-content">
+		<p>上周开始复习算法和数据结构，一周每天在睡前都拿出不少时间去学习，做了一些题目，想来每周都应该把相关的题目总结一下，才能更好的去学习。</p>
+
+<ul>
+<li>237  Delete Node in a Linked List</li>
+</ul>
+
+
+<p>这是上次笔记里面写过的内容，但是我自己写得时候又出现了问题，看来简单的问题业不能去忽略。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Definition for singly-linked list.</span>
+</span><span class='line'><span class="cm"> * struct ListNode {</span>
+</span><span class='line'><span class="cm"> *     int val;</span>
+</span><span class='line'><span class="cm"> *     struct ListNode *next;</span>
+</span><span class='line'><span class="cm"> * };</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="kt">void</span> <span class="nf">deleteNode</span><span class="p">(</span><span class="k">struct</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">node</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">node</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">ListNode</span> <span class="o">*</span><span class="n">temp</span> <span class="o">=</span> <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">node</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">=</span> <span class="n">temp</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">temp</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>171   Excel Sheet Column Number</li>
+</ul>
+
+
+<p>简单的来说就是一个26进制的数，没什么难点</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">titleToNumber</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">all</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">length</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">all</span><span class="o">=</span><span class="p">((</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="sc">&#39;A&#39;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">all</span> <span class="o">*</span> <span class="mi">26</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="n">all</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>169   Majority Element</li>
+</ul>
+
+
+<p>出现超过n/2的数，通过遍历就可以了</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">majorityElement</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">nums</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numsSize</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">maj</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">numsSize</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="n">time</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">maj</span> <span class="o">=</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="n">maj</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">time</span><span class="o">++</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>       <span class="k">else</span><span class="p">{</span>
+</span><span class='line'>         <span class="n">time</span><span class="o">--</span><span class="p">;</span>
+</span><span class='line'>       <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">maj</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>206   Reverse Linked List</li>
+</ul>
+
+
+<p>反转链表，基础题目</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Definition for singly-linked list.</span>
+</span><span class='line'><span class="cm"> * struct ListNode {</span>
+</span><span class='line'><span class="cm"> *     int val;</span>
+</span><span class='line'><span class="cm"> *     struct ListNode *next;</span>
+</span><span class='line'><span class="cm"> * };</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">ListNode</span><span class="o">*</span> <span class="nf">reverseList</span><span class="p">(</span><span class="k">struct</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">head</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">pre</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">next</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">while</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">next</span> <span class="o">=</span> <span class="n">cur</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">cur</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">pre</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">pre</span> <span class="o">=</span> <span class="n">cur</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">cur</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">pre</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>263   Ugly Number</li>
+</ul>
+
+
+<p>简单的递归问题</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">bool</span> <span class="nf">isUgly</span><span class="p">(</span><span class="kt">int</span> <span class="n">num</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">num</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">)</span> <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">num</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">num</span><span class="o">/=</span><span class="mi">2</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">isUgly</span><span class="p">(</span><span class="n">num</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>     <span class="k">if</span><span class="p">(</span><span class="n">num</span><span class="o">%</span><span class="mi">3</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">num</span><span class="o">/=</span><span class="mi">3</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">isUgly</span><span class="p">(</span><span class="n">num</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>     <span class="k">if</span><span class="p">(</span><span class="n">num</span><span class="o">%</span><span class="mi">5</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">num</span><span class="o">/=</span><span class="mi">5</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">isUgly</span><span class="p">(</span><span class="n">num</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">num</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-11-06T22:36:06+08:00" pubdate data-updated="true"></time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/shu-ju-jie-gou/'>数据结构</a>
+
+</div>
+
+
+	
+</div></article>
 
 
     <article class="post">
@@ -1890,113 +2496,6 @@ beta1里面只剩下了当前几个Manager。</p>
 	<a class='category' href='/blog/categories/objective-c/'>objective-c</a>
 
 </div>
-
-
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/09/18/title/">
-		
-			IP TCP HTTPs 随便谈</a>
-	</h2>
-	<div class="entry-content">
-		<h1>IP TCP HTTPs 随便谈</h1>
-
-<p>在总结自己的技能书的缺点后，决定优先补充自己在计算机网络上知识的漏洞。现在互联网企业，离开了互联网什么都不是。对互联网，普通人可能停留在概念和使用上，而开发人员应该去深入的了解运行进制，进而去优化自己开发的产品。这篇文章，主要是记录自己最近看的一些资料的笔记。</p>
-
-
-		
-		<a href="/blog/2015/09/18/title/" class="more-link">阅读全文</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-09-18T16:48:55+08:00" pubdate data-updated="true"></time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/network/'>network</a>
-
-</div>
-
-
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/09/14/interview-9-dot-14/">
-		
-			面试小计 9.14</a>
-	</h2>
-	<div class="entry-content">
-		<p>今天是人生第二次面试。约的公司十一点半。十一点就到了公司楼下。公司所在的地方到家里不远，曾经这里也是充满了许多童年的记忆。想不到过了十几年，自己也会来这里面试，也有可能在这里工作，想想一切都充满许多有趣的偶然。</p>
-
-<p>谈起面试，这只是第二次面试。第一次面试让我感觉非常不好，受到了不小的打击，然而不知道为何现在的公司会收留我做实习生（难道是我长的很适合程序员？）经过了半年的实习经历，踏过了许多以前完全想不到的坑，有了一定的收获，但是这次面试还是有些紧张。相比于第一次面试，我对自己的不足有了更多的认识，也就担心了更多，后面发现我担心是对的，但是担心的点完全不对。。</p>
-
-<p>上了楼，被HR妹子领到一个卡座等待面试。不得不说这个公司的环境要比我的现在的实习公司好了不是一个量级，连拿给我的矿泉水都很高级。。等了大概有五分钟到十分钟，来了个哥们，一看上去就是很厉害的程序员（的确我发现厉害的程序员在长相上都能体现出来）。先自我介绍了一下。由于HR那边只有拉勾网的简历，实在是太普通，所以我把自己带的简历从新给面试官看了下。面试官开始说他也不是负责iOS的（当时内心一惊，我其实很怂考算法和数据结构这种所谓的基础- -）</p>
-
-<p>然后开始聊了下自己现在在公司所做的项目。用电脑展示了一下，开始问第一个问题就是自己负责的了哪些功能，答UI和后台都有设计。然后问了一下一些UI设计的问题，接着就提出一个我刚好思考过的问题：UITableView在网络请求的时候加载图片如何保证流畅性。这个问题刚好周末也和同事讨论过问题，之前也有在网上查了一些不同人思考，就讲了下自己的见解，大概就是通过异步的方式，将UI刷新和图片读取放入不同的线程，通过判断滑动状态来决定是否更新UI。然后他提出我的解决方案中存在的一个问题：如果快速的滑动，只会显示一些预设的空白图片，这样不利于用户去搜索的一个固定的目标。这个问题我回答的时候缺乏了思考，我回答的是通过网络异步请求加载，在前几个屏的Cell延后显示，同时将图片下载预存，快速滑动的时候将新滑入屏幕的cell进行设置图片。后来想来其实有个更讨巧的方法，就是通过分页，控制一次刷新的cell的数量，就避免了用户快速滑动的情况出现。</p>
-
-<p>对于项目，由于面试官也不是做iOS开发的，所以就没设计到一些我准备很久的题目，随后他提出了在项目中是如何与后台联调的。这个问题的许多地方我只知道一些概念，所以理解上有点偏差，但是总体还是回答出来了。</p>
-
-<p>然后面试官随后话锋一转开始问HTTP协议。好险之前抽空整理了HTTP相关知识。HTTP协议必问状态码，在解释了状态码的分类和一些常见的状态码后，他问了我3XX状态码的问题。。怕什么来什么，虽然我记得3XX状态码的归类，但是具体到细节上还是有些遗忘（果真必须什么都要掌握啊）。回答稍微差了一点。</p>
-
-<p>随后面试官问了网络优化的问题。这个问题我感觉比较广泛，不是很好回答，面试官也说不仅限于服务器或者客户端。大概谈了一下自己在项目中的一点想法，特别是当网络服务不好的时候，如何去制造一些交互让用户减少对网络不良造成的影响产生不好反应的可能。然后面试官放了大招 &ndash; 请你谈谈网络安全问题。。。当时真的有点慌了，因为和自己准备的东西偏差有点大。随后就从自己的角度谈了下常规的网络攻击的问题。然后。。。然后问了我SQL注入。。这个我真的只是听说啊，臣妾做不到啊。。。</p>
-
-<p>后面还问了一些项目体会，一些经历。。还考了下指针环的判断和一个小球掉落的题目。。那个小球掉落的题目不知道答案应该是什么，感觉就是一个二分查找。。应该问下面试官他的答案的。</p>
-
-<p>到此，第一个面试官问完，走了出去，松了口气，缓一缓。。压力很大，因为和自己想的有点偏差，即使考数据结构和算法都没这样。。因为是没有心理准备。</p>
-
-<p>大概等了有十分钟。来了第二个面试官，上来换了个座位，然后开始让我简单的自我介绍。然后问了下在校成绩和在校所做的项目。。这时候我就有点忧伤了，因为在笑的项目最大的是就是学院的薪资管理系统，但是这个项目时间比较久了而且记忆的东西不多了（所以同学们一定要写自己有把握的项目啊）。然后出了个SQL题目让我写。。。比较没把握的写了，然后提出自己在项目中用的是Hibernate框架，在这个方向上可能不是很对。在之后就是聊天了，大概就是介绍公司的一些状况，一些学习的途径，还问我来深圳工作是否会错过学校的校招，不考研的原因是什么。在这些问题上我都有自己的想法也就简单说了下。最后问我了下现在公司的情况，薪资问题。。然后就问我有事很么了解的（这算过了还是没过。。）然后讨论了一些我在现在公司开发的遇到的坑。。感觉两个面试官能力都很强，思维能力的确看得出来的不一样。最后出来已经是12点15了。</p>
-
-<p>总结这次面试，作为一个应届生应该有更扎实的基础和全面的知识。自己近半年的精力都放在了iOS上，面对一些问题已经很生疏了，但是这不是抛弃其他知识的理由。第二个面试官也谈到了，广泛的涉猎，单一的深入，才能长久的在技术的路上走下去。最后还是希望进入这家公司，无论从环境上还是见到的人上都觉得非常不错。。当然希望自己的薪资也能高一点。</p>
-
-<p>进和没进，都会更新一下。</p>
-
-<hr />
-
-<p>最终担心了两天，还是过了！希望能够在新的团队里面学到更多的知识。</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-09-14T23:22:57+08:00" pubdate data-updated="true"></time></div>
-	
 
 
 	
