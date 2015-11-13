@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "leetcode2"
+title: "一周刷题总结 - 2"
 date: 2015-11-13 22:08:35 +0800
 comments: true
 categories: 数据结构
