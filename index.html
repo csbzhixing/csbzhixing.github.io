@@ -10,7 +10,7 @@
 
 <meta name="author" content="之行"> 
 
-<meta name="description" content="又到了一周题目总结时间。到现在为止总共完成了三十道题，每天大概做1-3题。感觉这个步骤还是比较适合自己的进度的。 leetcode 9 给出一个Int值，判断是否是回文数字。 我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道， &hellip;"> <meta name="keywords" content="">
+<meta name="description" content="用过Xcode的人都知道，Log是有多难堪多难堪，控制台各种蛋疼各种无语，看到APPCode的控制台后我时对xcode彻底无爱了。经过各种折腾，决定在当前的项目试验下增强log的功能，使用CocoaLumberjack和XcodeColors来使我们的控制台达到能看的效果。 首先 &hellip;"> <meta name="keywords" content="">
 
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -99,6 +99,239 @@ $(document).ready(
 </header>
 
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2015/12/03/xcode-color/">
+		
+			让Xcode的控制台更给力点</a>
+	</h2>
+	<div class="entry-content">
+		<p>用过Xcode的人都知道，Log是有多难堪多难堪，控制台各种蛋疼各种无语，看到APPCode的控制台后我时对xcode彻底无爱了。经过各种折腾，决定在当前的项目试验下增强log的功能，使用CocoaLumberjack和XcodeColors来使我们的控制台达到能看的效果。</p>
+
+<p>首先 打开CocoaLumberjack的github地址</p>
+
+<p><a href="https://github.com/CocoaLumberjack/CocoaLumberjack">https://github.com/CocoaLumberjack/CocoaLumberjack</a></p>
+
+<p>使用cocospod 安装</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>platform :ios, '8.0'
+</span><span class='line'>    pod 'CocoaLumberjack'</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>在自己工程文件下.pch下加入</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>#define LOG_LEVEL_DEF ddLogLevel
+</span><span class='line'>#import &lt;CocoaLumberjack/CocoaLumberjack.h&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在APPDelegate里面初始化log</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)initLogger
+</span><span class='line'>{
+</span><span class='line'>    
+</span><span class='line'>    // Standard lumberjack initialization
+</span><span class='line'>    [DDLog addLogger:[DDTTYLogger sharedInstance]];
+</span><span class='line'>    
+</span><span class='line'>    // And we also enable colors
+</span><span class='line'>    [[DDTTYLogger sharedInstance] setColorsEnabled:YES];
+</span><span class='line'>    
+</span><span class='line'>    [DDTTYLogger sharedInstance].logFormatter = [[DFCustomFormatter alloc] init];
+</span><span class='line'>
+</span><span class='line'>    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
+</span><span class='line'>    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
+</span><span class='line'>    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+</span><span class='line'>    [DDLog addLogger:fileLogger];
+</span><span class='line'>    
+</span><span class='line'>    [self setConsoleColor];
+</span><span class='line'>    
+</span><span class='line'> 
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>到这里就完成了ddlog的初始化，但是到这里还没结束，因为这样仅仅是让框架运行起来，还没有到我们要的效果。</p>
+
+<p>我们想要的，应该是达到以下的目的</p>
+
+<ol>
+<li>能够打印Log的发生位置，方法，时间</li>
+<li>能够根据不同Log级别有不同的颜色对应</li>
+</ol>
+
+
+<p>完成第一点很简单，我们只需要实现自己的formatter就可以了</p>
+
+<p>实现<code>DDLogFormatter</code>的协议</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>#import &lt;Foundation/Foundation.h&gt;
+</span><span class='line'>#import "DDLog.h"
+</span><span class='line'>
+</span><span class='line'>@interface DFCustomFormatter : NSObject &lt;DDLogFormatter&gt;
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>
+</span><span class='line'>@implementation DFCustomFormatter
+</span><span class='line'>
+</span><span class='line'>- (NSString *)formatLogMessage:(DDLogMessage *)logMessage {
+</span><span class='line'>    NSString *logLevel;
+</span><span class='line'>    switch (logMessage-&gt;_flag) {
+</span><span class='line'>        case DDLogFlagError    : logLevel = @"E"; break;
+</span><span class='line'>        case DDLogFlagWarning  : logLevel = @"W"; break;
+</span><span class='line'>        case DDLogFlagInfo     : logLevel = @"I"; break;
+</span><span class='line'>        case DDLogFlagDebug    : logLevel = @"D"; break;
+</span><span class='line'>        default                : logLevel = @"V"; break;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    NSString *formatStr = [NSString stringWithFormat:@"[%@ %@][line %lu] %@",
+</span><span class='line'>                            logMessage.fileName, logMessage-&gt;_function,
+</span><span class='line'>                           (unsigned long)logMessage-&gt;_line, logMessage-&gt;_message];
+</span><span class='line'>    return formatStr;
+</span><span class='line'>
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样我们就打印了需要的信息，更多的方法可以到DDLogMessage里面看提供了什么属性。</p>
+
+<p>完成第二点，就要借助XcodeColors</p>
+
+<p>地址：<a href="https://github.com/robbiehanson/XcodeColors">https://github.com/robbiehanson/XcodeColors</a></p>
+
+<p>安装后，在APPDelegate中初始化</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// 打开颜色支持
+</span><span class='line'>[[DDTTYLogger sharedInstance] setColorsEnabled:YES];</span></code></pre></td></tr></table></div></figure>
+
+
+<p>然后我们可以根据自己的喜好设置不同级别的Log的颜色</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)setConsoleColor
+</span><span class='line'>{
+</span><span class='line'>#if TARGET_OS_IPHONE
+</span><span class='line'>    UIColor *pink = [UIColor colorWithRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];
+</span><span class='line'>    
+</span><span class='line'>#else
+</span><span class='line'>    NSColor *pink = [NSColor colorWithCalibratedRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];
+</span><span class='line'>#endif
+</span><span class='line'>    
+</span><span class='line'>    [[DDTTYLogger sharedInstance] setForegroundColor:pink backgroundColor:nil forFlag:DDLogFlagInfo];
+</span><span class='line'>    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+</span><span class='line'>    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor orangeColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+</span><span class='line'>
+</span><span class='line'>    
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>到这里，还不能让控制台显示出颜色，要设置对应schema</p>
+
+<p><img src="/media/14491562929176.jpg" alt="" /></p>
+
+<p>添加后，就可以让xcode的控制显示我们要的效果了。</p>
+
+<p>如果自己的项目本身有对应的log方法，可以用宏直接替换</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-12-03T23:23:35+08:00" pubdate data-updated="true"></time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/xcode/'>xcode</a>
+
+</div>
+
+
+	
+</div></article>
 
 
     <article class="post">
@@ -2353,331 +2586,6 @@ beta1里面只剩下了当前几个Manager。</p>
 <div class="tags">
 
 	<a class='category' href='/blog/categories/base/'>base</a>
-
-</div>
-
-
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/09/24/json-and-xml/">
-		
-			Json&amp;xml</a>
-	</h2>
-	<div class="entry-content">
-		<h1>网络传输格式 JSON &amp; XML</h1>
-
-<p>第一次接触这两个格式还是在学校做一个财务管理系统的时候。在之前变成都是纯粹的单机编程，不设计到网络数据传输的问题。到了这个项目才开始考虑如何在服务器和客户端之间传输数据。项目中使用的是JSON，所以在这里先讲JSON的部分。</p>
-
-<h2>JSON</h2>
-
-<p>JSON是一种轻量化的数据格式。他的特点就是方便已用。目前90%的网络传输都是依赖于JSON格式。</p>
-
-<p>首先来看看JSON格式是怎么样的。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='json'><span class='line'><span class="s2">&quot;access_token&quot;</span><span class="err">:</span> <span class="s2">&quot;ACCESS_TOKEN&quot;</span><span class="err">,</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="s2">&quot;expires_in&quot;</span><span class="err">:</span> <span class="mi">1234</span><span class="err">,</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="s2">&quot;remind_in&quot;</span><span class="err">:</span><span class="s2">&quot;798114&quot;</span><span class="err">,</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="s2">&quot;uid&quot;</span><span class="err">:</span><span class="s2">&quot;12341234&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这是一个常见的JSON格式。比较容易的看出，其实就是一种key-value的形式。</p>
-
-<p>key我们都好了解，是一个string。那么value就会有不一样的值。通过对比OC的对象，我们可以更容易的理解JSON中的数据类型。</p>
-
-<pre><code>            JSON                    OC
-
-            {}                      NSDictionary
-
-            []                      NSArray
-
-            ""                      NSString
-
-           数字                     NSNumber
-</code></pre>
-
-<p>知道了JSON所对应的OC对象，我们就可以通过解析JSON对象，将相关的数据转换成OC对象来存储。在这里，介绍一种能够在本地模拟API的方式，这也是由于自己找不到很好的开发API所以想在本地能够模拟API的方式。</p>
-
-<h2>JSON Server 模拟 API</h2>
-
-<h3>第一步 安装</h3>
-
-<ul>
-<li>安装Homebrew。这个可是个神器，能够管理mac上的第三方的库的工具。据说被作者写不出反转二叉树个谷歌拒了然后去了苹果。</li>
-</ul>
-
-
-<p><code>ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</code></p>
-
-<ul>
-<li>安装node.js</li>
-</ul>
-
-
-<p><code>brew install node</code></p>
-
-<ul>
-<li>安装json-server</li>
-</ul>
-
-
-<p><code>npm install -g json-server  
-</code></p>
-
-<h2>根据需求创建JSON</h2>
-
-<p>安装完毕后，随便找个你喜欢的文件夹，创建一个JSON格式的文件，如下</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='JSON'><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="nt">&quot;posts&quot;</span><span class="p">:</span> <span class="p">[</span>
-</span><span class='line'>    <span class="p">{</span> <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;json-server&quot;</span><span class="p">,</span> <span class="nt">&quot;author&quot;</span><span class="p">:</span> <span class="s2">&quot;typicode&quot;</span> <span class="p">}</span>
-</span><span class='line'>  <span class="p">],</span>
-</span><span class='line'>  <span class="nt">&quot;comments&quot;</span><span class="p">:</span> <span class="p">[</span>
-</span><span class='line'>    <span class="p">{</span> <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;body&quot;</span><span class="p">:</span> <span class="s2">&quot;some comment&quot;</span><span class="p">,</span> <span class="nt">&quot;postId&quot;</span><span class="p">:</span> <span class="mi">1</span> <span class="p">}</span>
-</span><span class='line'>  <span class="p">],</span>
-</span><span class='line'>  <span class="nt">&quot;profile&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;typicode&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>然后保存。</p>
-
-<h3>启动JSON-Server</h3>
-
-<p>通过命令<code>json-server --watch JSON文件的名字.json</code>来启动Server</p>
-
-<p>到这里，我们就相当于在本地创建了一个服务器能够相应我们想对应的请求。</p>
-
-<p>以上面的的JSON文件为例</p>
-
-<p><img src="/media/14430769630713.jpg" alt="" /></p>
-
-<p>当然，功能不止这么一点，JSON-Server还有更多方式，详见github<a href="https://github.com/typicode/json-server">json-server</a></p>
-
-<h2>OC对象和JSON对象的转换</h2>
-
-<ul>
-<li><p>通过<code>NSJSONSerialization</code>来序列化JSON.</p>
-
-<p>  <img src="/media/14430773793672.jpg" alt="" /></p></li>
-</ul>
-
-
-<p>输出的结果</p>
-
-<p><img src="/media/14430774045308.jpg" alt="" /></p>
-
-<p>对比上面的JSON数据，我们可以看出解析的结果是正确的</p>
-
-<ul>
-<li>通过第三方库JSONKit来解析</li>
-</ul>
-
-
-<p> 下载地址 <a href="https://github.com/johnezang/JSONKit">JSONKit</a></p>
-
-<p> <img src="/media/14430745214364.jpg" alt="" /></p>
-
-<ul>
-<li>使用Mantle</li>
-</ul>
-
-
-<p>在项目中用的最多的方法，也觉得非常好用</p>
-
-<p>下载地址：<a href="https://github.com/Mantle/Mantle">Mantle</a></p>
-
-<p>使用的方法：</p>
-
-<ol>
-<li><p>在本地创建对应的OC类
-<img src="/media/14430784491980.jpg" alt="" /></p></li>
-<li><p>实现相关的方法</p></li>
-</ol>
-
-
-<p><img src="/media/14430794069120.jpg" alt="" /></p>
-
-<p>第三种是直接将JSON通过一定的方法转成了OC的类对象。在使用的时候感觉更方便。</p>
-
-<h2>XML</h2>
-
-<p>虽然JSON在网络传输中有90%的使用率，但是我们依然不能放弃10%的XML是吧。</p>
-
-<p>XML全称是Extensible Markup Language，译作“可扩展标记语言”
-跟JSON一样，也是常用的一种用于交互的数据格式
-一般也叫XML文档（XML Document）</p>
-
-<p>下面是一个典型的XML文件的结构</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-</pre></td><td class='code'><pre><code class='JSON'><span class='line'><span class="err">一个元素包括了开始标签和结束标签</span>
-</span><span class='line'><span class="err">拥有元素内容：&lt;city&gt;上海&lt;/city&gt;</span>
-</span><span class='line'><span class="err">没有元素内容：&lt;city&gt;&lt;/city&gt;</span>
-</span><span class='line'><span class="err">没有元素内容的简写：&lt;city/&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">一个元素可以嵌套若干个子元素（不能出现交叉嵌套）</span>
-</span><span class='line'><span class="err">&lt;citys&gt;</span>
-</span><span class='line'>    <span class="err">&lt;city&gt;</span>
-</span><span class='line'>        <span class="err">&lt;name&gt;上海&lt;/name&gt;</span>
-</span><span class='line'>        <span class="err">&lt;weather&gt;大暴雨&lt;/weather&gt;</span>
-</span><span class='line'>          <span class="err">&lt;air&gt;舒适&lt;/air&gt;</span>
-</span><span class='line'>    <span class="err">&lt;/city&gt;</span>
-</span><span class='line'><span class="err">&lt;/citys&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">规范的XML文档最多只有</span><span class="mi">1</span><span class="err">个根元素，其他元素都是根元素的子孙元素</span>
-</span><span class='line'><span class="err">XML中的所有空格和换行，都会当做具体内容处理</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">一个元素可以拥有多个属性，属性值必须用</span> <span class="err">双引号</span><span class="s2">&quot;&quot;</span> <span class="err">或者</span> <span class="err">单引号&#39;&#39;</span> <span class="err">括住。</span>
-</span><span class='line'><span class="err">&lt;city</span> <span class="err">name=</span><span class="s2">&quot;上海&quot;</span> <span class="err">weather=</span><span class="s2">&quot;大暴雨&quot;</span> <span class="err">air=</span><span class="s2">&quot;舒适&quot;</span> <span class="err">/&gt;</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'><span class="err">属性表示的信息也可以用子元素来表示，比如</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="err">&lt;city&gt;</span>
-</span><span class='line'>        <span class="err">&lt;weather&gt;大暴雨&lt;/weather&gt;</span>
-</span><span class='line'>          <span class="err">&lt;air&gt;舒适&lt;/air&gt;</span>
-</span><span class='line'>    <span class="err">&lt;/city&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>解析XML有两种方式</p>
-
-<ol>
-<li>DOM解析：一次性将整个XML文档加载进内存，比较适合解析小文件</li>
-<li>SAX解析：从根元素开始，按顺序一个元素一个元素往下解析，比较适合解析大文件</li>
-</ol>
-
-
-<p>在iOS SDK里面，提供了两种解析的框架</p>
-
-<ol>
-<li>NSXMLParser：它是基于objective-c语言的sax解析框架，是ios sdk默认的xml解析框架，不支持dom模式。</li>
-<li>libxml2: 它是基于c语言的xml解析器，被苹果整合在ios sdk中，支持sax和dom模式。</li>
-</ol>
-
-
-<p>同样，第三方也有许多解析XML的库。这里不打算讲第三方的，一个XML使用的比较少，一个使用SDK自身的效率往往已经非常好了。</p>
-
-<h3>NSXMLParser</h3>
-
-<p>NSXMLParser属于SAX解析，是从上往下依次解析每个元素，在解析到每个元素的时候会通知代理，所以使用NSXMLParser必须遵守他的协议。
-使用非常简单</p>
-
-<p><img src="/media/14430815879826.jpg" alt="" />
-从当前项目读取XML文件，读出数据，穿件解析器，设置代理，开始解析。</p>
-
-<p>XML文件内容如下</p>
-
-<p><img src="/media/14430816475695.jpg" alt="" />
-设置代理后，我们要实现代理方法，主要有以下方法，直接上图了</p>
-
-<p><img src="/media/14430816906329.jpg" alt="" /></p>
-
-<p><img src="/media/14430817012681.jpg" alt="" /></p>
-
-<p><img src="/media/14430833160910.jpg" alt="" /></p>
-
-<p><img src="/media/14430833236999.jpg" alt="" /></p>
-
-<h3>libxml2</h3>
-
-<p>重点在于导入libxml2的库</p>
-
-<p><img src="/media/14430836046841.jpg" alt="" /></p>
-
-<p><img src="/media/14430836140287.jpg" alt="" /></p>
-
-<p><img src="/media/14430836178120.jpg" alt="" /></p>
-
-<p><img src="/media/14430836230051.jpg" alt="" /></p>
-
-<p><img src="/media/14430836285068.jpg" alt="" /></p>
-
-<p>编译项目，通过了就没问题了。</p>
-
-<p>用法参见<a href="https://github.com/neonichu/GDataXML"></a></p>
-
-<h2>总结</h2>
-
-<p>在实际使用中，还JSON用的更多，所以对于JSON的解析过程要更加了解。对于XML，有一些公司任然会使用，而一些现存的数据也会用XML存储，所有也要有一定的了解。</p>
-
-<p>这篇文章讲解了在网络通信中数据的格式。下一篇的话就进入iOS内如何进行网络通信了。虽然使用AFNetWorking已经有段时间了，但是对内部整个机制并不了解，要好好补课了。</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-09-24T16:44:36+08:00" pubdate data-updated="true"></time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/network/'>network</a>
 
 </div>
 

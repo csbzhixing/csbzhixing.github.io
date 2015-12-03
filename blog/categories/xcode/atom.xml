@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: xcode | 之行海涯]]></title>
+  <link href="http://csbzhixing.github.io/blog/categories/xcode/atom.xml" rel="self"/>
+  <link href="http://csbzhixing.github.io/"/>
+  <updated>2015-12-03T23:28:34+08:00</updated>
+  <id>http://csbzhixing.github.io/</id>
+  <author>
+    <name><![CDATA[之行]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[让Xcode的控制台更给力点]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/12/03/xcode-color/"/>
+    <updated>2015-12-03T23:23:35+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/12/03/xcode-color</id>
+    <content type="html"><![CDATA[<p>用过Xcode的人都知道，Log是有多难堪多难堪，控制台各种蛋疼各种无语，看到APPCode的控制台后我时对xcode彻底无爱了。经过各种折腾，决定在当前的项目试验下增强log的功能，使用CocoaLumberjack和XcodeColors来使我们的控制台达到能看的效果。</p>
+
+<p>首先 打开CocoaLumberjack的github地址</p>
+
+<p><a href="https://github.com/CocoaLumberjack/CocoaLumberjack">https://github.com/CocoaLumberjack/CocoaLumberjack</a></p>
+
+<p>使用cocospod 安装</p>
+
+<pre><code>platform :ios, '8.0'
+    pod 'CocoaLumberjack'
+</code></pre>
+
+<p>在自己工程文件下.pch下加入</p>
+
+<pre><code>#define LOG_LEVEL_DEF ddLogLevel
+#import &lt;CocoaLumberjack/CocoaLumberjack.h&gt;
+</code></pre>
+
+<p>在APPDelegate里面初始化log</p>
+
+<pre><code>- (void)initLogger
+{
+
+    // Standard lumberjack initialization
+    [DDLog addLogger:[DDTTYLogger sharedInstance]];
+
+    // And we also enable colors
+    [[DDTTYLogger sharedInstance] setColorsEnabled:YES];
+
+    [DDTTYLogger sharedInstance].logFormatter = [[DFCustomFormatter alloc] init];
+
+    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
+    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
+    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+    [DDLog addLogger:fileLogger];
+
+    [self setConsoleColor];
+
+
+}
+</code></pre>
+
+<p>到这里就完成了ddlog的初始化，但是到这里还没结束，因为这样仅仅是让框架运行起来，还没有到我们要的效果。</p>
+
+<p>我们想要的，应该是达到以下的目的</p>
+
+<ol>
+<li>能够打印Log的发生位置，方法，时间</li>
+<li>能够根据不同Log级别有不同的颜色对应</li>
+</ol>
+
+
+<p>完成第一点很简单，我们只需要实现自己的formatter就可以了</p>
+
+<p>实现<code>DDLogFormatter</code>的协议</p>
+
+<pre><code>#import &lt;Foundation/Foundation.h&gt;
+#import "DDLog.h"
+
+@interface DFCustomFormatter : NSObject &lt;DDLogFormatter&gt;
+</code></pre>
+
+<pre><code>
+@implementation DFCustomFormatter
+
+- (NSString *)formatLogMessage:(DDLogMessage *)logMessage {
+    NSString *logLevel;
+    switch (logMessage-&gt;_flag) {
+        case DDLogFlagError    : logLevel = @"E"; break;
+        case DDLogFlagWarning  : logLevel = @"W"; break;
+        case DDLogFlagInfo     : logLevel = @"I"; break;
+        case DDLogFlagDebug    : logLevel = @"D"; break;
+        default                : logLevel = @"V"; break;
+    }
+
+    NSString *formatStr = [NSString stringWithFormat:@"[%@ %@][line %lu] %@",
+                            logMessage.fileName, logMessage-&gt;_function,
+                           (unsigned long)logMessage-&gt;_line, logMessage-&gt;_message];
+    return formatStr;
+
+}
+</code></pre>
+
+<p>这样我们就打印了需要的信息，更多的方法可以到DDLogMessage里面看提供了什么属性。</p>
+
+<p>完成第二点，就要借助XcodeColors</p>
+
+<p>地址：<a href="https://github.com/robbiehanson/XcodeColors">https://github.com/robbiehanson/XcodeColors</a></p>
+
+<p>安装后，在APPDelegate中初始化</p>
+
+<pre><code class="">// 打开颜色支持
+[[DDTTYLogger sharedInstance] setColorsEnabled:YES];
+</code></pre>
+
+<p>然后我们可以根据自己的喜好设置不同级别的Log的颜色</p>
+
+<pre><code>- (void)setConsoleColor
+{
+#if TARGET_OS_IPHONE
+    UIColor *pink = [UIColor colorWithRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];
+
+#else
+    NSColor *pink = [NSColor colorWithCalibratedRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];
+#endif
+
+    [[DDTTYLogger sharedInstance] setForegroundColor:pink backgroundColor:nil forFlag:DDLogFlagInfo];
+    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor orangeColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+
+
+}
+</code></pre>
+
+<p>到这里，还不能让控制台显示出颜色，要设置对应schema</p>
+
+<p><img src="/media/14491562929176.jpg" alt="" /></p>
+
+<p>添加后，就可以让xcode的控制显示我们要的效果了。</p>
+
+<p>如果自己的项目本身有对应的log方法，可以用宏直接替换</p>
+]]></content>
+  </entry>
+  
+</feed>
