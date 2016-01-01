@@ -4,7 +4,7 @@
   <title><![CDATA[之行海涯]]></title>
   <link href="http://csbzhixing.github.io/atom.xml" rel="self"/>
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2015-12-03T23:28:34+08:00</updated>
+  <updated>2016-01-02T00:54:47+08:00</updated>
   <id>http://csbzhixing.github.io/</id>
   <author>
     <name><![CDATA[之行]]></name>
@@ -12,6 +12,27 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[2016]]></title>
+    <link href="http://csbzhixing.github.io/blog/2016/01/02/2016/"/>
+    <updated>2016-01-02T00:51:17+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2016/01/02/2016</id>
+    <content type="html"><![CDATA[<h1>Hello 2016, Goodbye 2015</h1>
+
+<p>转眼就一年过去了。感觉2015过的飞快。过年的时候去阳江好像就再前不久，如今已经是2016年。想起来今天过得特别快，大概是因为自己已经开始工作了吧。</p>
+
+<p>在三月份，也就是大三下学期的时候，发现自己学习进入了一个瓶颈。对待很多技术都感到很好奇，也感觉自己有想法在这个行业做下去，但是却找不到一个方向去深入地学习。于是乎，在妹子的鼓励下，决定找公司去实习，通过对实际商业生产的了解，调整自己的技术学习方向。然而就这么误打误撞地进入了iOS开发。在广州业速的六个月里面，我从一个只是听闻iOS开发和觉得macbook最牛逼的一个乡下人（好吧我承认这个是自嘲）到一个基本熟悉iOS的初级开发。在这过程中，得益于likid的指导和帮助，收获了许多学习上的心得。在之前自己的学习都是浅尝即止，并没有深入到技术的本质，所以导致了自己好像很多东西都知道，但是说起来却又好像什么都不太懂的样子。在学习iOS开发的过程中，也矫正了自己很多不良的习惯。其中是懂了baidu都是呵呵呵，要查资料还是谷歌大法好（好吧其实我学校不能翻墙，怎么去一个不存在的网站搜东西）。然后是github和stackoverflow两个社区了解也算知道了真正学技术应该去啥地方学习T T,原来我之前三年基本都白过了，还好知道的不晚。</p>
+
+<p>在十月的时候，在鹅厂无望后（主要是自己太水），决定回到深圳，来到了现在的这家公司。新公司给我最大的感受就是身边的大神特别多。其中最让我收益一个是charge对我在iOS开发上的指导，一个是春哥对我技术思考上的指导。在新公司里面，我不再把自己仅仅当做一个完成任务就好的实习生，而是更多地去作为一个团队的一份子。在这过程中，解决了之前很多从来都没思考也没有遇到过的问题，慢慢地能够更加独立地解决问题。虽然在新公司，加班的次数比起在广州多了不少，然而并没有让我觉得上班很无聊，似乎看来我还是适合干这行的，哈哈。在12月，新项目决定上React Native，这又给我了一个非常好的学习机会。在一周的时间学习了ES6和React Native的语法，写了几个简陋的组件，也算碰到了门槛。说不定2016年也会接触下安卓和前端开发。作为一个技术人，千万不能把自己限死在一个固定的平台上。掌握了基本的原则和思想，就应该能在所有的平台上都有所作为。学习能力和执行力永远是技术人的核心竞争力。</p>
+
+<p>得益于今年自己的实习有了一些小小的外快和大牛市一波行情。今年买了特别多得东西。从一堆耳机，几部手机，macbook和新台式，音响。虽然买了很多东西，但是基本上没有靠父母出什么钱。在消费观念上，一年里面也是波动了很多，从舍不得花钱，到乱花钱，到有目的的花钱。新一年里面，如果能顺利拿到offer，也要为未来考虑下了。虽然比起别人不用在外面租房省下了不少的开支，但不意味着自己能够乱花钱。希望能够在10年内尽早的完全独立。</p>
+
+<p>2015年，最大的收获就是想明白了，读书和锻炼这两样是绝对地收益终身的事情。于是乎，购入了kindle，买了跑鞋，开始了自己的精神和肉体的锻炼。这一年，读了杂七杂八的很多书，跑了快两百公里，感觉很不错，想在2016能够继续。只有保持健康的身体和清醒地大脑才能保持每天都能快乐地生活。</p>
+
+<p>2016年，是自己大学的最后一年。不出意外的话应该是在实习的过程中国不知不觉的结束自己的大学生涯。对于大学，对我个人而言，收获恐怕不多，唯有明白了自己没有选错自己未来从事的行业。想来，大学也算玩过，开心过，也不枉自己最后任性的青春。即将踏上社会，再也没有借口给自己找退路，只能和一切困难斗争下去。2016，应该是会是个值得纪念的年份。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[让Xcode的控制台更给力点]]></title>
@@ -3743,158 +3764,6 @@ HTTP是一个基于请求/响应模式的、无状态的协议。即，浏览器
 
 
 <p>深入学习block还有很多的内容，比如block是怎么实现，block的类型等等。这里只是我目前学习的一个小结，有机会还要再深入的学习。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[kvo/kvc小结]]></title>
-    <link href="http://csbzhixing.github.io/blog/2015/09/07/kvo-kvc/"/>
-    <updated>2015-09-07T11:50:52+08:00</updated>
-    <id>http://csbzhixing.github.io/blog/2015/09/07/kvo-kvc</id>
-    <content type="html"><![CDATA[<p>从学习Objective-C以来，有两个地方一直搞不明白。一个是KVO和KVC的应用和与Delegate的应用场景的区别，一个是Block的应用场景。总结起来就死对Objective-C的数据传送的应用不理解。乘着放假几天对这个知识点进行了一些学习和总结，学习了一个小demo，在这里记录一下自己的学习情况。</p>
-
-<p>参考</p>
-
-<ol>
-<li>&ndash; <a href="http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/">http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/</a></li>
-<li>&ndash; <a href="http://objccn.io/issue-7-3/">http://objccn.io/issue-7-3/</a></li>
-</ol>
-
-
-<!--more-->
-
-
-<p></p>
-
-<h1>KVO</h1>
-
-<h2>KVO简单使用</h2>
-
-<h4>KVO(Key Value Observing)，是观察者模式在Foundation中的实现</h4>
-
-<p>观察者模式，比较容易理解，就是一方对另一方观察，如果进行了改变，那么就要观察者接收到了消息就用进行相应的操作。在KVO中，总结起来就死以下几个操作。</p>
-
-<ol>
-<li>当一个object有观察者的时候，动态创建这个object的子类。</li>
-<li>对于每一个被观察的属性Property,重写他的set方法</li>
-<li>在重写的set方法中，调用 <code>- willChangeValueForKey</code> 和 <code>- didChangeValueForKey</code> 方法</li>
-<li>当一个属性Property没有被观察的时候，删除重写的方法</li>
-<li>当没有observer观察任何一个property的时候，删除动态创建的子类</li>
-</ol>
-
-
-<p>使用的时候，主要通过以下几个方法来使用</p>
-
-<p><code>addObserver:&lt;#(NSObject *)#&gt; forKeyPath:&lt;#(NSString *)#&gt; options:&lt;#(NSKeyValueObservingOptions)#&gt; context:&lt;#(void *)#&gt;</code></p>
-
-<p>通过这个方法来为一个对象添加观察者，观察减值“key”,option是观察返回的类型字典，总共有以下几种</p>
-
-<ol>
-<li>NSKeyValueObservingOptionOld &ndash; 变化前的值</li>
-<li>NSKeyValueObservingOptionNew &ndash; 变化后的值</li>
-<li>NSKeyValueObservingOptionPrior &ndash; 值变化前进行通知</li>
-<li>NSKeyValueObservingOptionInitial &ndash; 在添加观察者的时候出发相关方法</li>
-</ol>
-
-
-<p>context 是一个指针当<code>observeValueForKeyPath:ofObject:change:context:</code>方法执行时context会提供给观察者。context可以是C指针或者一个对象引用，既可以当作一个唯一的标识来分辨被观察的变更，也可以向观察者提供数据。</p>
-
-<h4>当观察者接受到消息的时</h4>
-
-<p>当被观察的属性变更时，观察者会接到<code>observeValueForKeyPath:ofObject:change:context:</code>消息，所有的观察者都必须实现这个方法。
-观察者会被提供触发通知的对象和keyPath，一个包含变更详细信息的字典，还有一个注册观察者时提供的context指针。</p>
-
-<p>关于change字典，总共包含以下五个键值</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>NSString *const NSKeyValueChangeKindKey;  
-</span><span class='line'>NSString *const NSKeyValueChangeNewKey;  
-</span><span class='line'>NSString *const NSKeyValueChangeOldKey;  
-</span><span class='line'>NSString *const NSKeyValueChangeIndexesKey;  
-</span><span class='line'>NSString *const NSKeyValueChangeNotificationIsPriorKey;</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li>NSKeyValueChangeKindKey</li>
-</ol>
-
-
-<p>指明了变更的类型，值为“NSKeyValueChange”枚举中的某一个，类型为NSNumber。</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>enum {
-</span><span class='line'>   NSKeyValueChangeSetting = 1,
-</span><span class='line'>   NSKeyValueChangeInsertion = 2,
-</span><span class='line'>   NSKeyValueChangeRemoval = 3,
-</span><span class='line'>   NSKeyValueChangeReplacement = 4
-</span><span class='line'>};
-</span><span class='line'>typedef NSUInteger NSKeyValueChange;</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li>NSKeyValueChangeNewKey</li>
-</ol>
-
-
-<p>如果 <code>NSKeyValueChangeKindKey</code>的值为 <code>NSKeyValueChangeSetting</code>，并且 <code>NSKeyValueObservingOptionNew</code>选项在注册观察者时也指定了，那么这个键的值就是属性变更后的新值。
-对于 <code>NSKeyValueChangeInsertion</code>或者<code>NSKeyValueChangeReplacement</code>，如果 <code>NSKeyValueObservingOptionNew</code>选项在注册观察者时也指定了，这个键的值是一个数组，其包含了插入或替换的对象</p>
-
-<ol>
-<li>NSKeyValueChangeOldKey</li>
-</ol>
-
-
-<h2>移除观察者</h2>
-
-<p>你可以通过发送removeObserver:forKeyPath:消息来移除观察者，你需要指明观察对象和路径</p>
-
-<p>注意，在移除观察者之前，如果context是一个对象的引用，那么必须保持对它的强引用直到观察者被移除。</p>
-
-<h2>注册依赖键</h2>
-
-<p>有时候，有些属性的值取决于一个或者多个属性的值，一旦某个依赖的属性的值改变了，依赖它的属性的值需要被通知进行改变。</p>
-
-<h3>To - One</h3>
-
-<p>要触发to - one 关系，有两种方法
-1. 定义名称为 <code>keyPathForValueAffecting&lt;key&gt;</code>方法
-2. 重写 <code>keyPathForValueAffectingForKey:</code> 方法</p>
-
-<h3>To - Many</h3>
-
-<p>由于<code>keyPathForValueAffectingForKey</code>不支持包含to-many关系的keypath。如果一个类的属性对另一个类的多个属性有依赖关系的时候，必须通过其他方法来实现KVO。</p>
-
-<ol>
-<li><p>将parent类作为所有children类的相关属性的观察者。此时必须注意如果将将child类添加或者删除的时候必须对parent类对child类的观察者添加或者删除。此时通过<code>observeValueForKeyPath:ofObject:change:context:</code>可以通过对被依赖属性的变化来更新依赖属性的值。</p></li>
-<li><p>Core Data中有另外一种实现观察者模式的方法，由于我还没有使用过Core Data,暂且不谈</p></li>
-</ol>
-
-
-<h2>调试KVO</h2>
-
-<p>在LLDB中，我们可以通过<code>po [object observationInfo]</code>来获取观察者信息</p>
-
-<h1>KVC</h1>
-
-<h2>KVC简单使用</h2>
-
-<p>KVC即是键值编码。以字符串的形式向对象发送消息，这个字符串是我们关注的焦点。</p>
-
-<p>基本调用是<code>-valueForKey</code> 和 <code>-setValue:forKey</code></p>
-
-<p>对于KVC，Cocoa自动放入和取出标量值（int，float和struct）放入NSNumber和NSValue中，当使用<code>-setValue:forKey</code>的使用，他自动将标量值从这些对象中取出。</p>
-
-<p>使用KVC访问属性的代价比直接使用存取方法要大，所以只有在需要的时候才使用。</p>
 ]]></content>
   </entry>
   

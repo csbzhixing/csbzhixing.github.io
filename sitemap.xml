@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://csbzhixing.github.io/blog/2016/01/02/2016/</loc>
+    <lastmod>2016-01-02T00:51:17+08:00</lastmod>
+  </url>
+  <url>
     <loc>http://csbzhixing.github.io/blog/2015/12/03/xcode-color/</loc>
     <lastmod>2015-12-03T23:23:35+08:00</lastmod>
   </url>
@@ -120,11 +124,5 @@
   </url>
   <url>
     <loc>http://csbzhixing.github.io/blog/categories/xcode/</loc>
-  </url>
-  <url>
-    <loc>http://csbzhixing.github.io/posts/2/</loc>
-  </url>
-  <url>
-    <loc>http://csbzhixing.github.io/posts/3/</loc>
   </url>
 </urlset>
