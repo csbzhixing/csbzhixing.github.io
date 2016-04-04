@@ -1,0 +1,297 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<script src="http://s4.cnzz.com/z_stat.php?id=1256394637&web_id=1256394637" language="JavaScript"></script>
+	<meta charset="utf-8">
+	<title>socket  | 之行海涯</title>
+
+<meta name="author" content="之行"> 
+
+<meta name="description" content="写在前面 最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。 &hellip;"> <meta name="keywords" content="">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="之行海涯" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<link href="/stylesheets/font-awesome.min.css" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//libs.baidu.com/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">之行海涯</a></h1>
+<h4>在这里记录一点一滴的成长</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/about">About</a></li>
+	<li><a href="/portfolio">Portfolio</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/about">About</a></li>
+	<li><a href="/portfolio">Portfolio</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:csbzhixing.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Socket</h2>
+	<div class="entry-content"><h2>写在前面</h2>
+
+<p>最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。对与socket的认识还是学习java的时候知道可以使用socket进行客户端与服务器端的通信，可是当时并没有去实践。欠下的债都是要还的。</p>
+
+<p>此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>正文</h2>
+
+<p>socket，套接字，是基于TCP/IP协议族下的一种网络通信方式。我们知道，在本地，进程之间有多种方法去通信。在网络中，我们同样可以使用socket进行通信。接下来一步步来看socket是如何使网络上的进程相互通信的。</p>
+
+<p>我们知道，要像让进程通信，首先必须确认进程的身份。如同我们只有知道了和自己谈话的是谁，我们才知道谈什么。在本地，进程拥有唯一的标识PID。在网络上，基于TCP/IP协议，通过<em>IP，协议，端口号</em>，我们可以确认一个进程的唯一身份。</p>
+
+<p>使用TCP/IP协议的应用程序通常采用应用编程接口，有本文讲到的socket（套接字）和TIL（被淘汰了）。目前而言，绝多大数的应用程序都是基于socket进行网络通信的，所以了解socket是一个程序员必备的。</p>
+
+<h2>scocket 究竟是什么</h2>
+
+<p>socket起源于UNIX。我们知道UNIX的设计原理就是<em>一切皆文件</em>，操作都是<em>open -> read/write -> close</em>。所以说，我们可以认为socket也是一个文件，是基于上述设计原理的实现。socket函数就是专门来完成相应操作的。</p>
+
+<h2>socket 操作</h2>
+
+<p>在上面我们知道了socket是一个文件，那么socket自然有对应的操作方法，下面是基于TCP的几个基本操作。
+(注，本文的方法是使用Objective-C写的，其实socket在任何语言都是差不多的)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="c1">// 创建并初始化socket，返回socket的文件描述符，如果返回值为-1则创建失败</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">socket</span><span class="p">(</span><span class="kt">int</span> <span class="n">addresFamily</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 关闭socket</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">close</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDescriptor</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 将socket与特定的IP地址和端口号绑定，成功返回0，失败返回-1</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">bind</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDescriptor</span><span class="p">,</span> <span class="n">sockadd</span> <span class="o">*</span><span class="n">addressToBind</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 接受客户端的请求并且将客户端的网络地址信息存入clientAddress</span>
+</span><span class='line'><span class="c1">// 当客户端的连接请求被接受后，双方的通信链路就建立好了，两者就可以开始通信了。</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">int</span> <span class="n">accept</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDescriptor</span><span class="p">,</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">clientAddress</span><span class="p">,</span> <span class="kt">int</span> <span class="n">clientAddressStructLength</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 客户端向特定的IP的服务器发送连接请求，成功返回0，失败返回-1</span>
+</span><span class='line'><span class="c1">// 当服务器建立好后，客户端就可以通过这个函数与服务器端建立连接。</span>
+</span><span class='line'><span class="c1">// 对于UDP来说，该接口是可选的，如果调用了这个接口表明设置了UDP socket默认的网络地址.</span>
+</span><span class='line'><span class="c1">// 对于TCP来说，这里就是三次握手发生的地方</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">int</span> <span class="n">connect</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDescriptor</span><span class="p">,</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">serverAddress</span><span class="p">,</span> <span class="kt">int</span> <span class="n">serverAddressLength</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 通过DNS查找特定的IP，如果找不到返回NULL</span>
+</span><span class='line'><span class="n">hostent</span> <span class="o">*</span><span class="n">gethostbyname</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">hostname</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 发送数据，发送成功后返回成功发送的字节数，否则返回-1</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">send</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDescriptor</span><span class="p">,</span><span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 接收数据，成功后返回成功读取的字节数，否则返回-1</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">receive</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDesciptor</span><span class="p">,</span><span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span><span class="kt">int</span> <span class="n">flags</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 下面两个方法是UDP的方法</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// UDP发送,返回状态同上</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">sendto</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDesciptor</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">bufferLength</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">destinationAddress</span><span class="p">,</span> <span class="kt">int</span> <span class="n">destinationAddressLength</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// UDP读取，返回状态同上</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">recvfrom</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFileDesciptor</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">bufferLength</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">fromAddress</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fromAddressLength</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过观察方法，我们发现socket其实就是<em>确认目标 ->建立连接 -> 传送/读取 -> 断开</em> 的过程</p>
+
+<p>我们再来看看TCP和UDP下socket操作的不同的地方</p>
+
+<h4>TCP</h4>
+
+<p><img src="http://www.coderyi.com//qiniu/429/image/5269612b25e6df1b3ee5ab8352b2c3b6.jpg" alt="TCP" /></p>
+
+<h4>UDP</h4>
+
+<p><img src="http://www.coderyi.com//qiniu/429/image/cd6d1690d3d6eefd300987e590c1483f.jpg" alt="UDP" /></p>
+
+<h2>最后</h2>
+
+<p>到此，对于socket编程的概念有了个一个初步的认识了。在实际开发中，我们一般不会直接调用这些底层的API。借助于一些开源的第三方库更有利于项目的开发运行。不过，对于基本的理论知识还是必须要掌握的。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-13T05:27:26+08:00" pubdate data-updated="true"></time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/network/'>network</a>
+
+</div>
+
+
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	
+
+	 
+  <div class="jiathis_style_24x24" style="text-indent: 0px; margin: 0px; padding: 0px; border-style: none; float: none; line-height: normal; font-size: 1px; vertical-align: baseline; display: inline-block;  background: transparent;">
+    <a class="jiathis_button_weixin"></a>
+    <a class="jiathis_button_tsina"></a>
+  </div>
+  
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    之行
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+<div style="display:none">
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2062275" charset="utf-8"></script>
+</div>
+
+
+</body>
+</html>

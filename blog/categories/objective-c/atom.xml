@@ -1,0 +1,1020 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: objective-c | 之行海涯]]></title>
+  <link href="http://csbzhixing.github.io/blog/categories/objective-c/atom.xml" rel="self"/>
+  <link href="http://csbzhixing.github.io/"/>
+  <updated>2016-01-02T00:54:47+08:00</updated>
+  <id>http://csbzhixing.github.io/</id>
+  <author>
+    <name><![CDATA[之行]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[rac]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/11/10/rac/"/>
+    <updated>2015-11-10T00:39:45+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/11/10/rac</id>
+    <content type="html"><![CDATA[<h1>RAC学习</h1>
+
+<p>RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;</p>
+
+<h2>RAC的改变</h2>
+
+<p>RAC通过信号将不同的部分联系在了一起。</p>
+
+<p>RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。</p>
+
+<h3>KVO</h3>
+
+<p>RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。</p>
+
+<pre><code class="Objective-C">[RACAble(self.username) subscribeNext:^(NSString *newName) {
+    NSLog(@"%@", newName);
+}];
+</code></pre>
+
+<p>看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。</p>
+
+<pre><code class="Objective-C">// 只有当名字以'j'开头，才会被记录
+[[RACAble(self.username)
+   filter:^(NSString *newName) {
+       return [newName hasPrefix:@"j"];
+   }]
+   subscribeNext:^(NSString *newName) {
+       NSLog(@"%@", newName);
+   }];
+</code></pre>
+
+<h3>UI Event</h3>
+
+<p>根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。</p>
+
+<pre><code class="Objective-C">RAC(self.logInButton, enabled) = [RACSignal
+        combineLatest:@[
+            self.usernameTextField.rac_textSignal,
+            self.passwordTextField.rac_textSignal,
+            RACObserve(LoginManager.sharedManager, loggingIn),
+            RACObserve(self, loggedIn)
+        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
+            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
+        }];
+</code></pre>
+
+<p>每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。</p>
+
+<h3>网络异步</h3>
+
+<p>当我们有需求的时候，可以自己创建<code>RACSubject</code>类型。我们可以认为<code>RACSubject</code>是一个具有高度自定义的信号(是RACSignal的子类)；</p>
+
+<p>当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。</p>
+
+<pre><code class="Objective-C">
+- (void)doTest
+{
+    RACSubject *subject = [self doRequest];
+
+    [subject subscribeNext:^(NSString *value){
+        NSLog(@"value:%@", value);
+    }];
+}
+
+- (RACSubject *)doRequest
+{
+    RACSubject *subject = [RACSubject subject];
+    // 模拟2秒后得到请求内容
+    // 只触发1次
+    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
+    // subscribeNext就是定义了一个接收体
+    [[[[RACSignal interval:2] take:1] map:^id(id _){
+        // the value is from url request
+        NSString *value = @"content fetched from web";
+        [subject sendNext:value];
+        return nil;
+    }] subscribeNext:^(id _){}];
+    return subject;
+}
+</code></pre>
+
+<h2>常见的概念</h2>
+
+<h3>Signal and Subscriber</h3>
+
+<p>在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。</p>
+
+<p>当信号获得了相关数据后，就会执行订阅者的<code>sendNext, sendComplete, sendError</code>方法。订阅者也有相关的方法来获取相关的数据，比如<code>[signal subscribeNext:error:completed]</code>。这个时候只要没有<code>sendError</code>和<code>sendComplete</code>传过来，就会有源源不断的数据。</p>
+
+<pre><code class="Objective-C">[RACObserve(self, username) subscribeNext: ^(NSString *newName){
+    NSLog(@"newName:%@", newName);
+}];
+</code></pre>
+
+<p>RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。</p>
+
+<p>信号是可以被处理的，通常有以下几种处理信号的方式</p>
+
+<ol>
+<li>map 修改</li>
+<li>filter 过滤</li>
+<li>combine 组合</li>
+<li>chain 串联</li>
+</ol>
+
+
+<pre><code class="Objective-C">
+RAC(self.logInButton, enabled) = [RACSignal
+        combineLatest:@[
+            self.usernameTextField.rac_textSignal,
+            self.passwordTextField.rac_textSignal,
+            RACObserve(LoginManager.sharedManager, loggingIn),
+            RACObserve(self, loggedIn)
+        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
+            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
+        }];
+</code></pre>
+
+<p>上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。</p>
+
+<h3>冷信号和热信号</h3>
+
+<p>上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。</p>
+
+<p>注意，如果一个信号有多个订阅者的时候，signal里面的block会被执行多次，要控制的话就要通过replay的方法去控制。</p>
+
+<h3>UI Category</h3>
+
+<p>RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。</p>
+
+<p>我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪<code>NSArray</code>来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。</p>
+
+<p>还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法<code>rac_prepareForReuseSignal</code>，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题</p>
+
+<pre><code class="Objective-C">[[[self.cancelButton
+    rac_signalForControlEvents:UIControlEventTouchUpInside]
+    takeUntil:self.rac_prepareForReuseSignal]
+    subscribeNext:^(UIButton *x) {
+    // do other things
+}];
+</code></pre>
+
+<p>还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法<code>rac_command</code>。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。</p>
+
+<pre><code class="Objective-C">
+voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) {
+    // Assume that we're logged in at first. We'll replace this signal later if not.
+    RACSignal *authSignal = [RACSignal empty];
+
+    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) {
+        // Not logged in. Replace signal.
+        authSignal = [[RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscriber) {
+            @strongify(self);
+
+            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@"FRPLoginViewController" bundle:nil];
+            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+
+            [self presentViewController:navigationController animated:YES completion:^{
+                [subscriber sendCompleted];
+            }];
+
+            return nil;
+        }]];
+    }
+
+    return [authSignal then:^RACSignal *{
+        @strongify(self);
+        return [[self.viewModel.voteCommand execute:nil] ignoreValues];
+    }];
+}];
+[voteButton.rac_command.errors subscribeNext:^(id x) {
+    [x subscribeNext:^(NSError *error) {
+        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];
+    }];
+}];
+</code></pre>
+
+<p>上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。</p>
+
+<p>对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。</p>
+
+<h2>小结</h2>
+
+<p>由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。</p>
+
+<p>后面可能还是想结合网络请求来看看怎么使用RAC，毕竟多数的业务都是网络请求->数据组织->页面展示->交互的过程。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[runtime]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/11/01/runtime/"/>
+    <updated>2015-11-01T10:07:27+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/11/01/runtime</id>
+    <content type="html"><![CDATA[<p>从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- &mdash;&ndash;（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。</p>
+
+<h2>runtime 关联对象</h2>
+
+<p>从关联对象说起，是因为在最近的项目中用到了这个方法。当时的场景是，我需要创建一个category，里面需要一个block对象。然而我们知道，我们不能在category中添加成员变量。如果我们尝试添加的话，编译器会报错。当然，使用全局变量能解决这个问题，但明显是一个很优雅的方法，也很容易造成错误。Objective-C针对这一中问题，提供了一个解决方案，就是<code>关联对象(Associated Object)。</code></p>
+
+<p>我们可以想象，关联对象就是一个key - value的模型，把对象通过特定的Key链接到相关的实例上。不过由于使用的是C的借口，所以key是一个void指针。同时，我们要需要为这个关联对象设定内存管理策略。相关的内存的管理策略如下:</p>
+
+<pre><code>OBJC_ASSOCIATION_ASSIGN
+
+OBJC_ASSOCIATION_RETAIN_NONATOMIC
+
+OBJC_ASSOCIATION_COPY_NONATOMIC
+
+OBJC_ASSOCIATION_RETAIN
+
+OBJC_ASSOCIATION_COPY
+</code></pre>
+
+<p>对<code>OBJC_ASSOCIATION_ASSIGN</code>的，当关联对象所关联的实例被释放掉后，对象不会被释放掉。而<code>OBJC_ASSOCIATION_RETAIN
+</code>和<code>
+OBJC_ASSOCIATION_COPY</code>两个的话，在实例被释放掉同时，关联对象也会被release掉。当我们用同一个key去关联另外的实例对象的时候，也会自动释放掉之前关联的对象。这种情况下，先前的关联对象会被妥善地处理掉，并且新的对象会使用它的内存。</p>
+
+<p>关联对象的的runtime函数如下</p>
+
+<pre><code>// 设置关联对象
+
+void objc_setAssociatedObject ( id object, const void *key, id value, objc_AssociationPolicy policy );
+
+
+
+// 获取关联对象
+
+id objc_getAssociatedObject ( id object, const void *key );
+
+
+
+// 移除关联对象
+
+void objc_removeAssociatedObjects ( id object );
+</code></pre>
+
+<p>下面就给出在项目中实际遇到的问题给做一个例子。</p>
+
+<p>首先在头文件中定义了以下内容。</p>
+
+<p><img src="/media/14463463210542.jpg" alt="" /></p>
+
+<p>可以看到，这个category是为了扩展vc，让vc具有一个弹出系统通讯录的功能。</p>
+
+<p>在.m文件中，如下实现block关联对象</p>
+
+<p><img src="/media/14463464447032.jpg" alt="" /></p>
+
+<p>然后就像正常的对象一样操作就行了</p>
+
+<p><img src="/media/14463464914602.jpg" alt="" /></p>
+
+<p><img src="/media/14463464837182.jpg" alt="" /></p>
+
+<p>在上面看到，我对关联对象使用的key是用了<code>@selector()</code>。那为什么可以使用SEL来代替设定一个固定的key呢？</p>
+
+<h2>方法与消息</h2>
+
+<ul>
+<li>SEL</li>
+</ul>
+
+
+<p>又叫选择器，是表示一个方法的selector的指针，其定义如下：</p>
+
+<p><code>typedef struct objc_selector *SEL;</code>
+objc_selector结构体的详细定义没有在&lt;objc/runtime.h>头文件中找到。方法的selector用于表示运行时方法的名字。Objective-C在编译时，会依据每一个方法的名字、参数序列，生成一个唯一的整型标识(Int类型的地址)，这个标识就是SEL。</p>
+
+<ul>
+<li>IMP</li>
+</ul>
+
+
+<p>通过SEL找到函数后，就可以获取到该函数的IMP。IMP实际上是一个函数指针，指向方法实现的首地址。其定义如下</p>
+
+<pre><code>id (*IMP)(id, SEL, ...)
+</code></pre>
+
+<p>通过取得IMP，我们可以跳过runtime的消息传递机制，直接通过IMP执行指向的函数实现。这样一来可以提高效率，省去了消息传递中的一系列过程</p>
+
+<pre><code>回答上面的问题
+
+我们知道，在同一个类文件里面，不能存在同一个名字的方法，即使是参数类型不同业不行。同理，同一个类文件里面不能存在同一个名字的对象，所以set方法是唯一的，所以可以使用SEL来获取唯一的整理标识来作为key。
+</code></pre>
+
+<h2>下面是看的一些文章的摘录和自己的一项心得，主要是给自己做一个备忘。</h2>
+
+<p>选择器相关的操作函数包括：</p>
+
+<pre><code>// 返回给定选择器指定的方法的名称
+const char * sel_getName ( SEL sel );
+// 在Objective-C Runtime系统中注册一个方法，将方法名映射到一个选择器，并返回这个选择器
+
+SEL sel_registerName ( const char *str );
+
+
+
+// 在Objective-C Runtime系统中注册一个方法
+
+SEL sel_getUid ( const char *str );
+
+
+
+// 比较两个选择器
+
+BOOL sel_isEqual ( SEL lhs, SEL rhs );
+</code></pre>
+
+<p>方法操作的函数如下</p>
+
+<pre><code>// 调用指定方法的实现
+// receiver不能为空
+// 比method_getImplementation和method_getName更快
+
+id method_invoke ( id receiver, Method m, ... );
+
+
+
+// 调用返回一个数据结构的方法的实现
+
+void method_invoke_stret ( id receiver, Method m, ... );
+
+
+
+// 获取方法名
+// 返回一个SEL。如果要获取方法名得C字符串，要用sel_getName(method_getName(method))。
+
+SEL method_getName ( Method m );
+
+
+
+// 返回方法的实现
+// 注意该函数返回值是方法之前的实现。
+IMP method_getImplementation ( Method m );
+
+
+
+// 获取描述方法参数和返回值类型的字符串
+
+const char * method_getTypeEncoding ( Method m );
+
+
+
+// 获取方法的返回值类型的字符串
+
+char * method_copyReturnType ( Method m );
+
+
+
+// 获取方法的指定位置参数的类型字符串
+
+char * method_copyArgumentType ( Method m, unsigned int index );
+
+
+
+// 通过引用返回方法的返回值类型字符串
+
+void method_getReturnType ( Method m, char *dst, size_t dst_len );
+
+
+
+// 返回方法的参数的个数
+
+unsigned int method_getNumberOfArguments ( Method m );
+
+
+
+// 通过引用返回方法指定位置参数的类型字符串
+
+void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );
+
+
+
+// 返回指定方法的方法描述结构体
+
+struct objc_method_description * method_getDescription ( Method m );
+
+
+
+// 设置方法的实现
+
+IMP method_setImplementation ( Method m, IMP imp );
+
+
+
+// 交换两个方法的实现
+
+void method_exchangeImplementations ( Method m1, Method m2 );
+</code></pre>
+
+<h2>方法调用流程</h2>
+
+<p>在Objective-C中，消息会一直到运行时绑定的方法实现上。我们常用的[receiver message]会被runtime转换为一个函数调用<code>objc_msgSend</code>。如下</p>
+
+<p><code>objc_msgSend(receiver, selector)</code>
+如果消息中还有其它参数，则该方法的形式如下所示：</p>
+
+<p><code>objc_msgSend(receiver, selector, arg1, arg2, ...)</code></p>
+
+<p>这个函数在执行的过程中完成了所有动态绑定的过程。</p>
+
+<ol>
+<li>找到SEL对应的方法实现。由于一个方法可能在不同的类有不同的实现，所有我们要依赖于接受者的类来确定确切的实现。</li>
+<li>调用方法的实现，将参数传入。</li>
+<li>将方法的返回这作为的自己的返回值。</li>
+</ol>
+
+
+<p>一个基本消息的框架</p>
+
+<p><img src="/media/14463917464901.jpg" alt="" /></p>
+
+<p>注意到，在<code>objc_msgSend</code>中有两个隐藏参数：</p>
+
+<ol>
+<li>消息接受对象</li>
+<li>方法的selecor</li>
+</ol>
+
+
+<p>隐藏是以为内在定义的方法中没有申明，是在编译期被插入实现代码的。</p>
+
+<h2>消息转发</h2>
+
+<p>当一个对象能接受一个消息的时候，那么一切都会按照我们想得去做，但是如果不能接受消息的时候，会发生什么？一般情况下，如果不能相应[object message],编译期会报错。如果是以perform来调用的，那么在运行时才会确定object是否会接收消息，如果不行的话，就会造成程序崩溃。</p>
+
+<p>当然，我们可以通过<code>respondsToSelector:</code>来判断一下是否会响应这个消息，但是我们要用runtime来搞一搞，所以我们应该从<code>消息转发机制</code>来考虑。</p>
+
+<p>消息转发机制基本分为三个步骤</p>
+
+<ol>
+<li>动态方法解析</li>
+<li>备用接收者</li>
+<li>完成转发</li>
+</ol>
+
+
+<h3>动态方法解析</h3>
+
+<p>当当对象接收到位置的消息时，首先会调用类的<code>+resolveInstanceMethod:(实例方法)</code>或者<code>+resolveClassMethod:(类方法)</code>。因此，我们可以去增加一个处理方法。在消息不能被对象接收的时候就运行这个方法，前提是这个方法已经被实现了。</p>
+
+<pre><code>void functionForMethod1(id self, SEL _cmd) {
+
+   NSLog(@"%@, %p", self, _cmd);
+
+}
+
+
+
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+
+
+
+    NSString *selectorString = NSStringFromSelector(sel);
+
+
+
+    if ([selectorString isEqualToString:@"method1"]) {
+
+        class_addMethod(self.class, @selector(method1), (IMP)functionForMethod1, "@:");
+
+    }
+
+
+
+    return [super resolveInstanceMethod:sel];
+
+}
+</code></pre>
+
+<h3>备用接收者</h3>
+
+<p>当我们的对象不能处理消息的时候，我们将消息转发到一个备用的对象，只要这个对象的类实现了这个方法
+<code>- (id)forwardingTargetForSelector:(SEL)aSelector
+</code></p>
+
+<p>如果返回的不是一个nil的话，那么这个对象就会被作为消息的心的接收者。而在外部看来，这个消息仍然被我们的发送的对象处理了。注意，这个方法返回的对象不是self自身，不然就是个无限循环了。</p>
+
+<pre><code>@interface SUTRuntimeMethodHelper : NSObject
+
+
+
+- (void)method2;
+
+
+
+@end
+
+
+
+@implementation SUTRuntimeMethodHelper
+
+
+
+- (void)method2 {
+
+    NSLog(@"%@, %p", self, _cmd);
+
+}
+
+
+
+@end
+
+
+
+#pragma mark -
+
+
+
+@interface SUTRuntimeMethod () {
+
+    SUTRuntimeMethodHelper *_helper;
+
+}
+
+
+
+@end
+
+
+
+@implementation SUTRuntimeMethod
+
+
+
++ (instancetype)object {
+
+    return [[self alloc] init];
+
+}
+
+
+
+- (instancetype)init {
+
+    self = [super init];
+
+    if (self != nil) {
+
+        _helper = [[SUTRuntimeMethodHelper alloc] init];
+
+    }
+
+
+
+    return self;
+
+}
+
+
+
+- (void)test {
+
+    [self performSelector:@selector(method2)];
+
+}
+
+
+
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+
+
+
+    NSLog(@"forwardingTargetForSelector");
+
+
+
+    NSString *selectorString = NSStringFromSelector(aSelector);
+
+
+
+    // 将消息转发给_helper来处理
+
+    if ([selectorString isEqualToString:@"method2"]) {
+
+        return _helper;
+
+    }
+
+
+
+    return [super forwardingTargetForSelector:aSelector];
+
+}
+
+
+
+@end
+</code></pre>
+
+<h3>完成的消息转发</h3>
+
+<p>如果上述的行为都不能解决的话，runtime在这时候会给对象最后一次机会：
+<code>
+- (void)forwardInvocation:(NSInvocation *)anInvocation
+</code></p>
+
+<blockquote><p>这个时候，消息的所有未处理的内容都被封装到了anInvocation中，包括SEL,target，参数。我们在这里可以选着将消息转发给其他的对象。</p>
+
+<p>forwardInvocation:方法的实现有两个任务：</p>
+
+<p>定位可以响应封装在anInvocation中的消息的对象。这个对象不需要能处理所有未知消息。
+使用anInvocation作为参数，将消息发送到选中的对象。anInvocation将会保留调用结果，运行时系统会提取这一结果并将其发送到消息的原始发送者。</p></blockquote>
+
+<p>对于这一块，还没有具体的实践，毕竟到这一步，用runtime来解决不如好好回去check以下代码吧。</p>
+
+<h2>Method Swizze</h2>
+
+<p>Method Swizzling是改变一个selector的实际实现的技术.这样，我们可以在runtime的时候修改类分发的队形的函数，修改对应的实现。</p>
+
+<p>例如，我们想在每一个<code>viewDidAppear</code>增加一个跟踪代码，观察哪个vc被调用了，那么我们就可以通过<code>Method Swizzling</code></p>
+
+<h3>Swizzling 注意事项</h3>
+
+<p><code>Swizzling应该总是在+load中执行</code></p>
+
+<p>在Objective-C中，运行时会自动调用每个类的两个方法。+load会在类初始加载时调用，+initialize会在第一次调用类的类方法或实例方法之前被调用。这两个方法是可选的，且只有在实现了它们时才会被调用。由于method swizzling会影响到类的全局状态，因此要尽量避免在并发处理中出现竞争的情况。+load能保证在类的初始化过程中被加载，并保证这种改变应用级别的行为的一致性。相比之下，+initialize在其执行时不提供这种保证—事实上，如果在应用中没为给这个类发送消息，则它可能永远不会被调用。</p>
+
+<p>+load在父类，子类，分类的实现都会分别调用，所以+load更适合</p>
+
+<h3>Swizzling应该总是在dispatch_once中执行</h3>
+
+<p>与上面相同，因为swizzling会改变全局状态，所以我们需要在运行时采取一些预防措施。原子性就是这样一种措施，它确保代码只被执行一次，不管有多少个线程。GCD的dispatch_once可以确保这种行为，我们应该将其作为method swizzling的最佳实践。</p>
+
+<h3>特别的地方</h3>
+
+<blockquote><ol>
+<li>总是调用方法的原始实现(除非有更好的理由不这么做)：API提供了一个输入与输出约定，但其内部实现是一个黑盒。Swizzle一个方法而不调用原始实现可能会打破私有状态底层操作，从而影响到程序的其它部分。</li>
+<li>避免冲突：给自定义的分类方法加前缀，从而使其与所依赖的代码库不会存在命名冲突。</li>
+<li>明白是怎么回事：简单地拷贝粘贴swizzle代码而不理解它是如何工作的，不仅危险，而且会浪费学习Objective-C运行时的机会。阅读Objective-C Runtime Reference和查看&lt;objc/runtime.h>头文件以了解事件是如何发生的。</li>
+<li>小心操作：无论我们对Foundation, UIKit或其它内建框架执行Swizzle操作抱有多大信心，需要知道在下一版本中许多事可能会不一样。</li>
+</ol>
+</blockquote>
+
+<h2>总结</h2>
+
+<p>runtime到这里，大概讲了下两个问题，方法转发和关联对象。觉得还是不够，因为很多东西写起来发现自己也不是很了解，暂且做一个笔记。</p>
+
+<p>这里感谢南峰子，写得runtime教程非常详细，给了我很多帮助。</p>
+
+<p>本文参考了大量下面三篇文章的内容。</p>
+
+<p><a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/"></a></p>
+
+<p><a href="http://southpeak.github.io/blog/2014/11/03/objective-c-runtime-yun-xing-shi-zhi-san-:fang-fa-yu-xiao-xi-zhuan-fa/"></a></p>
+
+<p><a href="http://southpeak.github.io/blog/2014/10/30/objective-c-runtime-yun-xing-shi-zhi-er-:cheng-yuan-bian-liang-yu-shu-xing/"></a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[重新认识ARC]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/09/22/arc/"/>
+    <updated>2015-09-22T17:48:06+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/09/22/arc</id>
+    <content type="html"><![CDATA[<p>第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下</p>
+
+<!--more-->
+
+
+<p>
+1. 增加网络编程的相关知识
+    + TCP/IP HTTP HTTPS 协议的学习和了解
+    + JSON和XML的解析
+    + iOS自身关于网络请求相关的类和API
+    + 第三方库AFNetWorking源码阅读
+2. 增加iOS内核方面的知识
+    + 内存基本知识和管理方式
+    + ARC
+    + 进程线程
+    + RunTime</p>
+
+<p>简单的看是两个大类七个点，但是感觉每一个点都非常多东西。目前暂时把1.1的点给补完了。不过任然需要投入大量的时间去复习。这里打算整合2.1和2.2。</p>
+
+<h2>内存管理</h2>
+
+<p>学过计算机基础的人对于内存都不陌生，哪怕是没有计算机基础的人也明白内存对于电脑（终端）的重要性。内存管理，就是在程序运行的过程中，申请，使用，释放内存的过程。程序写的好不好，就看你在完成功能的同时是不是使用了尽可能少的内存。</p>
+
+<p><em>堆和栈</em></p>
+
+<p>在内存中，有两个重要的概念，分别是<code>堆和栈</code>。这里不仅仅指代他们的数据结构。我们知道，一个函数执行的时候，他会被压入栈中。栈中的内存单元保存了函数的返回地址，局部变量，传参等数据。当函数被弹出栈的时候，一切数据都会被销毁。而<code>堆</code>上的数据是由开发者自行申请管理的，生命周期由开发者自行掌握。</p>
+
+<p><em>引用计数</em></p>
+
+<p>学过OC的人都知道，在OC中管理内存的方法是<code>引用计数</code>(Retain Counting)。通过对堆和栈的了解，我们可以得出OC上的对象<em>都是在堆上</em>的。</p>
+
+<p>在苹果开发文档里面有一张图很好的说明的通过引用计数来管理对象生命周期的过程。</p>
+
+<p><img src="/media/14429735006902.jpg" alt="引用计数" /></p>
+
+<p>同样，引用计数也遵循几大内存管理原则</p>
+
+<ol>
+<li>谁申请谁拥有</li>
+<li>肯以申请拥有一个存在的对象</li>
+<li>当不需要的再拥有对象的时候，申请释放</li>
+<li>不能释放不属于自己没有拥有的对象</li>
+</ol>
+
+
+<h2>Automatic Reference Counting (ARC)</h2>
+
+<p>在学习iOS开发半年后，ARC给我留下了很深的印象。ARC是苹果在引用计数的基础上改善了编译器实现的功能。要了解ARC，首先要看看在没有ARC之前开发者是怎么去通过引用计数管理的。</p>
+
+<p>在ARC之前，我们统称为<code>MRC（Manual Reference Counting</code>，即手动引用技术。通过调用<code>retain</code>和<code>release</code>来管理对象的生命周期。有了ARC之后，在编译的过程中，编译器可以根据上下文估算对象的生命周期，以此来自动的添加<code>retain</code>和<code>release</code>。</p>
+
+<p>注意，ARC只对OC对象有作用，对于C的类型对象不则按照C的内存管理的方法去管理。</p>
+
+<p>如果在工程中开启了使用ARC，那么就要遵循ARC定义的一些规范</p>
+
+<ol>
+<li>不能显示的调用<code>dealloc</code>,<code>ratain</code>,<code>release</code>,<code>retainCount</code>,<code>autoRelease</code>。</li>
+<li>如果要复写<code>dealloc</code>方法，不需要显示调用<code>[super dealloc]</code>方法。</li>
+<li>不能再使用<code>AutoReleasepool</code></li>
+</ol>
+
+
+<p><em>ARC下的修饰符</em></p>
+
+<p>在@Property 中，有四种修饰符是ARC提供的，他们分别是
+1. strong
+2. weak
+3. unsafe_unretained
+4. __autoreleasing</p>
+
+<p>其中，重点来谈谈strong和weak</p>
+
+<ul>
+<li>strong。我们理解为强引用。当前的对象实际拥有这个对象。默认情况下ARC使用的strong来修饰。</li>
+<li>weak。相对于strong的强引用，weak指的是弱引用。当引用的对象被释放掉的时候，当前引用对象会被自动置nil。weak通常被用来解决循环引用的问题。</li>
+</ul>
+
+
+<p><code>__autoreleasing</code>和<code>__unsafe_unretained</code>在实际应用中是很少的。<code>__unsafe_unretained</code>是为了兼容iOS4之前的版本，现在基本上不会使用了，主要是为了实现weak的功能。<code>__autoreleasing</code>是表示在autorelease pool中自动释放对象的引用。</p>
+
+<h2>block 在ARC下</h2>
+
+<p>block在之前已经小小的讨论过了，出现的几个问题都有谈论到，这里主要从ARC的角度上再谈一谈。</p>
+
+<p>block在ARC下最特殊的地方就是怎么去解决循环引用。在block的篇章中没有很详细讨论，原因也是没从内存的角度来看。这里详细讲下循环引用产生原因和在ARC下解决循环引用的方法。</p>
+
+<blockquote><p>You can use lifetime qualifiers to avoid strong reference cycles. For example, typically if you have a graph of objects arranged in a parent-child hierarchy and parents need to refer to their children and vice versa, then you make the parent-to-child relationship strong and the child-to-parent relationship weak. Other situations may be more subtle, particularly when they involve block objects.</p>
+
+<p>In manual reference counting mode, <strong>block id x; has the effect of not retaining x. In ARC mode, </strong>block id x; defaults to retaining x (just like all other values). To get the manual reference counting mode behavior under ARC, you could use <strong>unsafe_unretained </strong>block id x;. As the name <strong>unsafe_unretained implies, however, having a non-retained variable is dangerous (because it can dangle) and is therefore discouraged. Two better options are to either use </strong>weak (if you don’t need to support iOS 4 or OS X v10.6), or set the __block value to nil to break the retain cycle.</p>
+
+<p>The following code fragment illustrates this issue using a pattern that is sometimes used in manual reference counting.</p></blockquote>
+
+<p>上面是苹果官方文档对循环引用的解释。通过引用计数，我们了解到，如果有两个对象，对彼此都是强引用的话，双方都无法释放对方，也就无法释放delloc对象，最终就造成了死循环。在iOS5以下的版本里面，我们可以通过手动使用<code>unsafe_unretained</code>来使其中一个变量变成野指针。而在ARC下，我们通过使用weak来修饰其中一个变量，这样在block中就不存在双方强引用的抢矿。</p>
+
+<p>但是，上面的处理方法有个问题。我们不知道weak修饰的对象什么时候会被释放掉了，有可能在执行block里面的对象在之前就已经被释放掉了。在AFNetWorking中，提供了一个非常好的解决思路</p>
+
+<p><img src="/media/14429947239639.jpg" alt="" /></p>
+
+<p>上面方法中，在block外先将self用<code>weak</code>引用一个weakSelf，进入block后再使用一个<code>_strong_typeof</code>去创建一个strong引用对象。这样的做法既能避免产生循环引用，也能避免weak对象提前被释放掉。</p>
+
+<h2>ARC与Toll-Free Bridging</h2>
+
+<p>Toll-Free Briding保证了在程序中，可以方便和谐的使用Core Foundation类型的对象和Objective-C类型的对象。但是，我们知道，到了ARC的时候，两者的内存管理方法不同了。对于一种对象，我们不能用该两种内存管理方法去管理。所以在进入ARC之后，Toll-Free Bridging也进行了相应的变化。</p>
+
+<p><em>__bridge</em></p>
+
+<p>只是申明了类型转变，并没有改变内存管理方法。</p>
+
+<p><em>__bridge_retained（修饰符） or CFBridgingRetain（函数）</em></p>
+
+<p>表示将指针类型转变的同时，将内存管理的责任由原来的Objective-C交给Core Foundation来处理，也就是，将ARC转变为MRC。</p>
+
+<p><em>__bridge_transfer（修饰符） or CFBridgingRelease（函数）</em></p>
+
+<p>这个修饰符和函数的功能和上面那个__bridge_retained相反，它表示将管理的责任由Core Foundation转交给Objective-C，即将管理方式由MRC转变为ARC。</p>
+
+<p>上面就是要谈的ARC的内容了。其实ARC的坑比起MRC已经少了很多了，对于我们可怜的程序员来说已经是很大的解放了。</p>
+
+<p>这里对于内存管理仅仅是基于OC简单的谈了谈，觉得还是不够深刻，主要是自己在这方面的知识的确很欠缺。读了
+<a href="http://casatwy.com/ccheng-xu-de-nei-cun-guan-li.html">C程序的内存管理</a>这篇文章学到了很多，在这里也安利一下。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[GCD小结]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/09/12/gcd/"/>
+    <updated>2015-09-12T21:16:43+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/09/12/gcd</id>
+    <content type="html"><![CDATA[<h1>写在最前面</h1>
+
+<p>最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h1>正文</h1>
+
+<h2>GCD是什么鬼</h2>
+
+<p>GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流程性是不可争辩的事实。GCD内部自动管理线程 的生命周期，不需要我们自己去手动管理。我们只需要调用对应的API就可以了。GCD是基于C语言开发的，不过由于使用了block，所以使用起来很方便。在了解GCD之前，我们需要了解一点多线程运行的原理。</p>
+
+<h2>基本概念</h2>
+
+<p>GCD中有两个重要的概念：<em>任务</em> 和 <em>队列</em></p>
+
+<ol>
+<li>任务。我们可以理解任务就是一个动作，放在GCD中就是一个代码块（block）。执行任务有两种，分别为<em>同步执行</em> 和 <em>异步执行</em>。同步和异步的区别其实很好理解。<code>同步执行</code>既是当前任务执行完前会阻塞当前进程，<code>而异步执行</code>就不会。</li>
+<li>队列。队列是用来存放任务的。我们可以理解为任务就是队列中排队等待执行。队列分为<em>串行队列</em>和<em>并行队列</em>。</li>
+<li>串行队列，就像排队一样，严格遵守FIFO。</li>
+<li>并行队列，同样执行FIFO。不同的是，取出来的任务会根据情况放到别的线程上。由于多个线程出队的时间间隔可能很短，所以容易认为是非FIFO的。不过即使这样，系统也会根据硬件条件来判断，并不一定会所有任务都在同时执行。</li>
+</ol>
+
+
+<hr />
+
+<p>  创建队列的操作如下图所示</p>
+
+<p>  <img src="http://i3.tietuku.com/045e13ec06064ef3.png" alt="queue" /></p>
+
+<hr />
+
+<p>  创建任务如下如图所示</p>
+
+<p>  <img src="http://i3.tietuku.com/b2ef139ced93771f.png" alt="task" /></p>
+
+<h4>队列组</h4>
+
+<p>  对列组就是将多个队列添加到一个组里。这样的方式使我们可以在队列里所有的任务都完成后收到一个通知方法。</p>
+
+<pre><code>  objective-c
+
+  // 创建队列组
+    dispatch_group_t group = dispatch_group_create();
+
+    dispatch_group_async(group, globalQueue, ^{
+      for (NSInteger i = 0; i &lt; 3; i++)
+      {
+          NSLog(@"group - queue - %@", [NSThread currentThread]);
+      }
+    });
+</code></pre>
+
+<h2>NSOperation 和 NSOperationQueue</h2>
+
+<p>  NSOperation 和 NSOperationQueue是苹果对GCD的基于面向对象的完全封装，使其更容易理解。操作方式也更简单</p>
+
+<ol>
+<li>将要执行的任务封装到一个<code>NSOperation</code>对象中</li>
+<li>将任务添加到一个<code>NSOperationQueue</code>中</li>
+</ol>
+
+
+<p>  此后系统将自动在执行任务。</p>
+
+<h3>添加任务</h3>
+
+<p> 由于NSOperation是一个抽象类，所以不能直接封装任务。但是有两个子类用于封装任务：<code>NSInvocationOperation</code> 和 <code>NSBlockOperation</code>。创建一个队列后，需要调动<code>start()</code>方法来启动，<em>默认在当前队列同步执行</em>。同时队列提供<code>cancel()</code>方法在中途取消任务。</p>
+
+<ul>
+<li>NSInvocationOperation 传入一个方法名。</li>
+<li>NSBlockOperation 传入一个代码块。
+
+<ul>
+<li>在NSBlockOperation中，有一个方法<code>addExecutionBlock</code>方法。这个方法使我们可以添加多个block到队列中。<em>这些block将会并发执行**，将在</em>主线程和其他的多个线程``执行任务</li>
+</ul>
+</li>
+</ul>
+
+
+<h3>添加队列</h3>
+
+<p>   多数时候，我们不希望当前线程被占用，因为会影响到UI的流畅性（UI永远在主线程上）。因此我们需要创建新的队列。只要我们添加任务到队列上，就会自动调用任务的<code>start()</code>方法。如果任务在其他队列上，那么他就会在其他线程上并行执行。</p>
+
+<p>   我们发现，<code>NSOperationQueue</code>并没有设置串行和并行队列的问题，那么<code>NSOperationQueue</code>是怎么确定队列的类型的呢。苹果通过封装巧妙的使调用者不需要特意的去注意队列的性质，只需要设置<code>NSOperationQueue</code>中的<code>maxConcurrentOperationCount</code> &ndash; 最大并发数就可以了。</p>
+
+<h2>总结</h2>
+
+<p>   在上篇block的文章中也谈到了block在gcd的中的应用。通过gcd，我们可以最大化的去使用硬件的性能，避免出现卡顿的现象。多线程用的好不好，也基本上代表了一个开发者的能力水平。虽然多线程编程有许多坑，但只有跨过一个个坑，才能变成大牛，不是吗？</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[block]]></title>
+    <link href="http://csbzhixing.github.io/blog/2015/09/07/block/"/>
+    <updated>2015-09-07T17:25:40+08:00</updated>
+    <id>http://csbzhixing.github.io/blog/2015/09/07/block</id>
+    <content type="html"><![CDATA[<h2>Block是个什么</h2>
+
+<p>和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h3>Blcok 是什么</h3>
+
+<p>block是在iOS SDK 4.0引入的黑魔法。从他诞生的时候，Apple就倾注了大量的心血。字面上看，block就是一个代码块。在许多语言中都可以看到相似的语法设计。但是block自身由于可以在内联执行的时候还可以传递参数，同时自身可以作为参数在函数之间来传递，所有有了许多神奇的用法（好吧是我觉得很神奇）</p>
+
+<p>一个典型的block的应用如下</p>
+
+<pre><code> BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@"csb"])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+</code></pre>
+
+<p>定义一个block开头是和函数一样是返回类型，（^）跟着是block的名字，后面跟着是传入的数据类型。括号里面是代码块。</p>
+
+<p>一个完整的例子</p>
+
+<pre><code>
+- (void)blockTest
+{
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@"csb"])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @"csb";
+    NSLog(@"is csb ? %@", isName(self.sark.name) ? @"yes" : @"no");
+}
+</code></pre>
+
+<p>那么block有什么特别之处？前面提到了，block能够使用block外的参数，我们来实验下</p>
+
+<pre><code>- (void)blockTest
+{
+    NSString *csbName = @"csbzhixing";
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:csbName])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @"csbzhixing";
+    NSLog(@"is csb ? %@", isName(self.sark.name) ? @"yes" : @"no");
+}
+</code></pre>
+
+<p>输出
+<code>
+2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes
+</code></p>
+
+<p>注意到，定义了block后，修改了block中引用的局部变量，那么block中的局部变量仍然会保持不变。</p>
+
+<p><img src="http://i3.tietuku.com/a60eb087f6bfd358.png" alt="pic1" /></p>
+
+<p>好吧，如果我们的确有这个需求怎么弄呢？使用<code>_block</code>修饰符来修饰局部变量可以解决这个问题</p>
+
+<p><img src="http://i3.tietuku.com/ba1814837f233066.png" alt="pic2" /></p>
+
+<p>block调用实例变量，这个没有好说的。。直接用就是了。</p>
+
+<h2>小小的问题，循环引用</h2>
+
+<p>需要注意的一个问题是block的retain cycle问题，即循环引用。</p>
+
+<p>如果要细究这个问题，要回到老生常谈的引用计数的问题上。有许多很详细的文章解释了为何存在这种问题，在这里我只简单的谈下我的理解。</p>
+
+<p>retain cycle的问题根源在于block和object可能会互相强引用，互相retain了对方，这样就导致了retain cycle的问题。到了最后就发现两者谁也释放不了谁，导致了崩溃。（你不让我，我不让你怎么行）。</p>
+
+<p>解决的方法就是打破这种循环，使用弱引用。这点可以参考最有名的第三方库AFNetworking的源码，在block上afn的写法最值得参考学习。</p>
+
+<h2>Block该用在什么地方</h2>
+
+<p>在项目中，主要应用block的地方有场景之间的数据传输，UI刷新，网络请求等等。在参考官方的建议和大神的博客后，总结了一下几个方面</p>
+
+<ol>
+<li>枚举 &ndash; 通过block获取对象和控制枚举进程</li>
+<li>View动画 &ndash; 规定动画，参考官方的demo可以很快的了解</li>
+<li>通知 &ndash; 事件完成后执行block内的代码，比如网络请求成功后</li>
+<li>完成 &ndash; 同上</li>
+<li>GCD多线程 &ndash; 这个是下一篇想要去了解学习的内容</li>
+<li>错误处理 &ndash; 错误发生的时候执行</li>
+<li>排序</li>
+</ol>
+
+
+<p>深入学习block还有很多的内容，比如block是怎么实现，block的类型等等。这里只是我目前学习的一个小结，有机会还要再深入的学习。</p>
+]]></content>
+  </entry>
+  
+</feed>
