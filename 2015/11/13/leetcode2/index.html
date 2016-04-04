@@ -13,7 +13,7 @@ leetcode 9
 给出一个Int值，判断是否是回文数字。
 我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。
 代码如下
-1234567891">
+bool isPal">
 <meta property="og:type" content="article">
 <meta property="og:title" content="一周刷题总结 - 2">
 <meta property="og:url" content="http://csbzhixing.github.io/2015/11/13/leetcode2/index.html">
@@ -25,7 +25,7 @@ leetcode 9
 给出一个Int值，判断是否是回文数字。
 我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。
 代码如下
-1234567891">
+bool isPal">
 <meta property="og:updated_time" content="2015-11-13T16:03:13.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一周刷题总结 - 2">
@@ -36,7 +36,7 @@ leetcode 9
 给出一个Int值，判断是否是回文数字。
 我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。
 代码如下
-1234567891">
+bool isPal">
   
     <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
   
@@ -262,26 +262,86 @@ leetcode 9
 <p>给出一个Int值，判断是否是回文数字。</p>
 <p>我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。</p>
 <p>代码如下</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">isPalindrome</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x&lt;<span class="number">0</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">if</span>(x&lt;<span class="number">10</span>) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> y=<span class="number">0</span>,temp = x;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span>(temp)</span><br><span class="line">    &#123;</span><br><span class="line">        y = y*<span class="number">10</span> + (temp%<span class="number">10</span>);</span><br><span class="line">        temp/=<span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> x==y;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="C">bool isPalindrome(int x) {
+    if(x&lt;0) return false;
+    if(x&lt;10) return true;
+
+    int y=0,temp = x;
+
+    while(temp)
+    {
+        y = y*10 + (temp%10);
+        temp/=10;
+    }
+
+    return x==y;
+}
+</code></pre>
 <ul>
 <li>leetcode 26</li>
 </ul>
 <p>移除一个数组中重复的数字。</p>
 <p>根据题意，我们只需要将重复的数字不停地移动到数组末尾，然后缩短数组大小就可以了。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">removeDuplicates</span><span class="params">(<span class="keyword">int</span>* nums, <span class="keyword">int</span> numsSize)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(numsSize&lt;<span class="number">2</span>) <span class="keyword">return</span> numsSize;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> cur = <span class="number">0</span>;<span class="keyword">int</span> temp = nums[<span class="number">0</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i&lt;numsSize;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(nums[i] == temp) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            nums[cur+<span class="number">1</span>] = nums[i];</span><br><span class="line">            cur++;</span><br><span class="line">            temp = nums[i];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="keyword">return</span> cur+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="C">int removeDuplicates(int* nums, int numsSize) {
+
+    if(numsSize&lt;2) return numsSize;
+
+    int cur = 0;int temp = nums[0];
+
+    for(int i = 1;i&lt;numsSize;i++)
+    {
+        if(nums[i] == temp) continue;
+        else
+        {
+            nums[cur+1] = nums[i];
+            cur++;
+            temp = nums[i];
+        }
+    }    
+    return cur+1;
+}
+</code></pre>
 <ul>
 <li>leetcode 136</li>
 </ul>
 <p>给出一个数组，找出数组中唯一一个只出现了一次的数，其他的数都出现了两次，要求线性时间内完成且不能用额外的空间。</p>
 <p>这道题给的难度分类是中等，但是我看了下题目的通过率很高，说明又很巧妙地方法。我自己在开始做得时候想到的都都要用额外的存储空间。在看了别人的方法后才知道原来可以用异或方法，因为异或方法相当于交换了两个数。所以我们要做得就是遍历一次数组，用一个数与每个数组的数异或，最后保留的数就是唯一一个出现了一次的数。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">removeDuplicates</span><span class="params">(<span class="keyword">int</span>* nums, <span class="keyword">int</span> numsSize)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(numsSize&lt;<span class="number">2</span>) <span class="keyword">return</span> numsSize;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> cur = <span class="number">0</span>;<span class="keyword">int</span> temp = nums[<span class="number">0</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i&lt;numsSize;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(nums[i] == temp) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            nums[cur+<span class="number">1</span>] = nums[i];</span><br><span class="line">            cur++;</span><br><span class="line">            temp = nums[i];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> cur+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="C">int removeDuplicates(int* nums, int numsSize) {
+
+    if(numsSize&lt;2) return numsSize;
+
+    int cur = 0;int temp = nums[0];
+
+    for(int i = 1;i&lt;numsSize;i++)
+    {
+        if(nums[i] == temp) continue;
+        else
+        {
+            nums[cur+1] = nums[i];
+            cur++;
+            temp = nums[i];
+        }
+    }
+
+    return cur+1;
+}
+</code></pre>
 <p>同样地,leetcode还给出了一道相似的题目，就是</p>
 <ul>
 <li>leetcode 260</li>
 </ul>
 <p>这道题目和上面的题目基本一样，唯独不同的是给出的数组中有两个数只出现了一次。</p>
 <p>题目中提到了，要在线性时间内完成，我们还是要考虑从上面的题目中怎么改进就可以完成这道题目。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span>* <span class="title">singleNumber</span><span class="params">(<span class="keyword">int</span>* nums, <span class="keyword">int</span> numsSize, <span class="keyword">int</span>* returnSize)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, *result = <span class="built_in">calloc</span>(*returnSize = <span class="number">2</span>, <span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; numsSize; result[<span class="number">0</span>] ^= nums[i++]);</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; numsSize; i++)</span><br><span class="line">        <span class="keyword">if</span>(nums[i] &amp; result[<span class="number">0</span>] &amp; -result[<span class="number">0</span>])</span><br><span class="line">            result[<span class="number">1</span>] ^= nums[i];</span><br><span class="line">    result[<span class="number">0</span>] ^= result[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="C">int* singleNumber(int* nums, int numsSize, int* returnSize) {
+    int i, *result = calloc(*returnSize = 2, sizeof(int));
+    for(i = 0; i &lt; numsSize; result[0] ^= nums[i++]);
+    for(i = 0; i &lt; numsSize; i++)
+        if(nums[i] &amp; result[0] &amp; -result[0])
+            result[1] ^= nums[i];
+    result[0] ^= result[1];
+    return result;
+}
+</code></pre>
 <p>这个方法，首先找出了一个result[0]，这个是保存了两个出现了一次的的数字的异或结果a xor b;<br>我们知道 如果a != b的话，那么a xor b就会保准他们每个数字的一部分的二进制。<br>那么第二部我们通过异或就可以刷选出一个结果。<br>通过 a xor b的结果再异或，就可以得出另一个结果。</p>
 <p>通过上面两道题目可以得出，简简单单的异或有时候可是非常强大的。</p>
 <p>##小结</p>

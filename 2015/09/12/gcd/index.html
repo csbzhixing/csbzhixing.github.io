@@ -7,20 +7,29 @@
   <title>GCD小结 | 学海无涯</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="#写在最前面
-最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。">
+最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&amp;lt;!--more--&amp;gt;  
+#正文
+##GCD是什么鬼
+GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流">
 <meta property="og:type" content="article">
 <meta property="og:title" content="GCD小结">
 <meta property="og:url" content="http://csbzhixing.github.io/2015/09/12/gcd/index.html">
 <meta property="og:site_name" content="学海无涯">
 <meta property="og:description" content="#写在最前面
-最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。">
+最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&amp;lt;!--more--&amp;gt;  
+#正文
+##GCD是什么鬼
+GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流">
 <meta property="og:image" content="http://i3.tietuku.com/045e13ec06064ef3.png">
 <meta property="og:image" content="http://i3.tietuku.com/b2ef139ced93771f.png">
 <meta property="og:updated_time" content="2015-09-24T09:05:48.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="GCD小结">
 <meta name="twitter:description" content="#写在最前面
-最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。">
+最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&amp;lt;!--more--&amp;gt;  
+#正文
+##GCD是什么鬼
+GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流">
 <meta name="twitter:image" content="http://i3.tietuku.com/045e13ec06064ef3.png">
   
     <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
@@ -241,7 +250,7 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>#写在最前面</p>
-<p>最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。<br><a id="more"></a>  </p>
+<p>最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。<br>&lt;!--more--&gt;  </p>
 <p>#正文</p>
 <p>##GCD是什么鬼</p>
 <p>GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流程性是不可争辩的事实。GCD内部自动管理线程 的生命周期，不需要我们自己去手动管理。我们只需要调用对应的API就可以了。GCD是基于C语言开发的，不过由于使用了block，所以使用起来很方便。在了解GCD之前，我们需要了解一点多线程运行的原理。</p>
@@ -262,8 +271,18 @@
 </li>
 </ol>
 <h4 id="队列组"><a href="#队列组" class="headerlink" title="队列组"></a>队列组</h4><p>  对列组就是将多个队列添加到一个组里。这样的方式使我们可以在队列里所有的任务都完成后收到一个通知方法。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">objective-c</span><br><span class="line"></span><br><span class="line">// 创建队列组</span><br><span class="line">  dispatch_group_t group = dispatch_group_create();</span><br><span class="line"></span><br><span class="line">  dispatch_group_async(group, globalQueue, ^&#123;</span><br><span class="line">    for (NSInteger i = 0; i &lt; 3; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        NSLog(@&quot;group - queue - %@&quot;, [NSThread currentThread]);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
-<h2 id="NSOperation-和-NSOperationQueue"><a href="#NSOperation-和-NSOperationQueue" class="headerlink" title="NSOperation 和 NSOperationQueue"></a>NSOperation 和 NSOperationQueue</h2><p>  NSOperation 和 NSOperationQueue是苹果对GCD的基于面向对象的完全封装，使其更容易理解。操作方式也更简单</p>
+<pre><code>  objective-c
+
+  // 创建队列组
+    dispatch_group_t group = dispatch_group_create();
+
+    dispatch_group_async(group, globalQueue, ^{
+      for (NSInteger i = 0; i &lt; 3; i++)
+      {
+          NSLog(@&quot;group - queue - %@&quot;, [NSThread currentThread]);
+      }
+    });
+</code></pre><h2 id="NSOperation-和-NSOperationQueue"><a href="#NSOperation-和-NSOperationQueue" class="headerlink" title="NSOperation 和 NSOperationQueue"></a>NSOperation 和 NSOperationQueue</h2><p>  NSOperation 和 NSOperationQueue是苹果对GCD的基于面向对象的完全封装，使其更容易理解。操作方式也更简单</p>
 <ol>
 <li>将要执行的任务封装到一个<code>NSOperation</code>对象中</li>
 <li><p>将任务添加到一个<code>NSOperationQueue</code>中</p>

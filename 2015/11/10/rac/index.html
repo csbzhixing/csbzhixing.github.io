@@ -249,22 +249,70 @@ RAC统一了对KVO、UI Event、Network request、Async work的处理，因为�
 <p>RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。</p>
 <p>###KVO</p>
 <p>RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[RACAble(self.username) subscribeNext:^(NSString *newName) &#123;</span><br><span class="line">    NSLog(@&quot;%@&quot;, newName);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">[RACAble(self.username) subscribeNext:^(NSString *newName) {
+    NSLog(@&quot;%@&quot;, newName);
+}];
+</code></pre>
 <p>看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// 只有当名字以&apos;j&apos;开头，才会被记录</span><br><span class="line">[[RACAble(self.username)</span><br><span class="line">   filter:^(NSString *newName) &#123;</span><br><span class="line">       return [newName hasPrefix:@&quot;j&quot;];</span><br><span class="line">   &#125;]</span><br><span class="line">   subscribeNext:^(NSString *newName) &#123;</span><br><span class="line">       NSLog(@&quot;%@&quot;, newName);</span><br><span class="line">   &#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">// 只有当名字以&#39;j&#39;开头，才会被记录
+[[RACAble(self.username)
+   filter:^(NSString *newName) {
+       return [newName hasPrefix:@&quot;j&quot;];
+   }]
+   subscribeNext:^(NSString *newName) {
+       NSLog(@&quot;%@&quot;, newName);
+   }];
+</code></pre>
 <p>###UI Event</p>
 <p>根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">RAC(self.logInButton, enabled) = [RACSignal</span><br><span class="line">        combineLatest:@[</span><br><span class="line">            self.usernameTextField.rac_textSignal,</span><br><span class="line">            self.passwordTextField.rac_textSignal,</span><br><span class="line">            RACObserve(LoginManager.sharedManager, loggingIn),</span><br><span class="line">            RACObserve(self, loggedIn)</span><br><span class="line">        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) &#123;</span><br><span class="line">            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);</span><br><span class="line">        &#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">RAC(self.logInButton, enabled) = [RACSignal
+        combineLatest:@[
+            self.usernameTextField.rac_textSignal,
+            self.passwordTextField.rac_textSignal,
+            RACObserve(LoginManager.sharedManager, loggingIn),
+            RACObserve(self, loggedIn)
+        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
+            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
+        }];
+</code></pre>
 <p>每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。</p>
 <p>###网络异步</p>
 <p>当我们有需求的时候，可以自己创建<code>RACSubject</code>类型。我们可以认为<code>RACSubject</code>是一个具有高度自定义的信号(是RACSignal的子类)；</p>
 <p>当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- (void)doTest</span><br><span class="line">&#123;</span><br><span class="line">    RACSubject *subject = [self doRequest];</span><br><span class="line">    </span><br><span class="line">    [subject subscribeNext:^(NSString *value)&#123;</span><br><span class="line">        NSLog(@&quot;value:%@&quot;, value);</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (RACSubject *)doRequest</span><br><span class="line">&#123;</span><br><span class="line">    RACSubject *subject = [RACSubject subject];</span><br><span class="line">    // 模拟2秒后得到请求内容</span><br><span class="line">    // 只触发1次</span><br><span class="line">    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的</span><br><span class="line">    // subscribeNext就是定义了一个接收体</span><br><span class="line">    [[[[RACSignal interval:2] take:1] map:^id(id _)&#123;</span><br><span class="line">        // the value is from url request</span><br><span class="line">        NSString *value = @&quot;content fetched from web&quot;;</span><br><span class="line">        [subject sendNext:value];</span><br><span class="line">        return nil;</span><br><span class="line">    &#125;] subscribeNext:^(id _)&#123;&#125;];</span><br><span class="line">    return subject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">
+- (void)doTest
+{
+    RACSubject *subject = [self doRequest];
+
+    [subject subscribeNext:^(NSString *value){
+        NSLog(@&quot;value:%@&quot;, value);
+    }];
+}
+
+- (RACSubject *)doRequest
+{
+    RACSubject *subject = [RACSubject subject];
+    // 模拟2秒后得到请求内容
+    // 只触发1次
+    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
+    // subscribeNext就是定义了一个接收体
+    [[[[RACSignal interval:2] take:1] map:^id(id _){
+        // the value is from url request
+        NSString *value = @&quot;content fetched from web&quot;;
+        [subject sendNext:value];
+        return nil;
+    }] subscribeNext:^(id _){}];
+    return subject;
+}
+</code></pre>
 <p>##常见的概念</p>
 <p>###Signal and Subscriber</p>
 <p>在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。</p>
 <p>当信号获得了相关数据后，就会执行订阅者的<code>sendNext, sendComplete, sendError</code>方法。订阅者也有相关的方法来获取相关的数据，比如<code>[signal subscribeNext:error:completed]</code>。这个时候只要没有<code>sendError</code>和<code>sendComplete</code>传过来，就会有源源不断的数据。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[RACObserve(self, username) subscribeNext: ^(NSString *newName)&#123;</span><br><span class="line">    NSLog(@&quot;newName:%@&quot;, newName);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">[RACObserve(self, username) subscribeNext: ^(NSString *newName){
+    NSLog(@&quot;newName:%@&quot;, newName);
+}];
+</code></pre>
 <p>RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。</p>
 <p>信号是可以被处理的，通常有以下几种处理信号的方式</p>
 <ol>
@@ -273,7 +321,17 @@ RAC统一了对KVO、UI Event、Network request、Async work的处理，因为�
 <li>combine 组合</li>
 <li>chain 串联</li>
 </ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">RAC(self.logInButton, enabled) = [RACSignal</span><br><span class="line">        combineLatest:@[</span><br><span class="line">            self.usernameTextField.rac_textSignal,</span><br><span class="line">            self.passwordTextField.rac_textSignal,</span><br><span class="line">            RACObserve(LoginManager.sharedManager, loggingIn),</span><br><span class="line">            RACObserve(self, loggedIn)</span><br><span class="line">        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) &#123;</span><br><span class="line">            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);</span><br><span class="line">        &#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">
+RAC(self.logInButton, enabled) = [RACSignal
+        combineLatest:@[
+            self.usernameTextField.rac_textSignal,
+            self.passwordTextField.rac_textSignal,
+            RACObserve(LoginManager.sharedManager, loggingIn),
+            RACObserve(self, loggedIn)
+        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
+            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
+        }];
+</code></pre>
 <p>上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。</p>
 <p>###冷信号和热信号</p>
 <p>上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。</p>
@@ -282,9 +340,46 @@ RAC统一了对KVO、UI Event、Network request、Async work的处理，因为�
 <p>RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。</p>
 <p>我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪<code>NSArray</code>来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。</p>
 <p>还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法<code>rac_prepareForReuseSignal</code>，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[[[self.cancelButton</span><br><span class="line">    rac_signalForControlEvents:UIControlEventTouchUpInside]</span><br><span class="line">    takeUntil:self.rac_prepareForReuseSignal]</span><br><span class="line">    subscribeNext:^(UIButton *x) &#123;</span><br><span class="line">    // do other things</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">[[[self.cancelButton
+    rac_signalForControlEvents:UIControlEventTouchUpInside]
+    takeUntil:self.rac_prepareForReuseSignal]
+    subscribeNext:^(UIButton *x) {
+    // do other things
+}];
+</code></pre>
 <p>还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法<code>rac_command</code>。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) &#123;</span><br><span class="line">    // Assume that we&apos;re logged in at first. We&apos;ll replace this signal later if not.</span><br><span class="line">    RACSignal *authSignal = [RACSignal empty];</span><br><span class="line">    </span><br><span class="line">    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) &#123;</span><br><span class="line">        // Not logged in. Replace signal.</span><br><span class="line">        authSignal = [[RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscriber) &#123;</span><br><span class="line">            @strongify(self);</span><br><span class="line">            </span><br><span class="line">            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&quot;FRPLoginViewController&quot; bundle:nil];</span><br><span class="line">            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];</span><br><span class="line">            </span><br><span class="line">            [self presentViewController:navigationController animated:YES completion:^&#123;</span><br><span class="line">                [subscriber sendCompleted];</span><br><span class="line">            &#125;];</span><br><span class="line">            </span><br><span class="line">            return nil;</span><br><span class="line">        &#125;]];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    return [authSignal then:^RACSignal *&#123;</span><br><span class="line">        @strongify(self);</span><br><span class="line">        return [[self.viewModel.voteCommand execute:nil] ignoreValues];</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;];</span><br><span class="line">[voteButton.rac_command.errors subscribeNext:^(id x) &#123;</span><br><span class="line">    [x subscribeNext:^(NSError *error) &#123;</span><br><span class="line">        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">
+voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) {
+    // Assume that we&#39;re logged in at first. We&#39;ll replace this signal later if not.
+    RACSignal *authSignal = [RACSignal empty];
+
+    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) {
+        // Not logged in. Replace signal.
+        authSignal = [[RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscriber) {
+            @strongify(self);
+
+            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&quot;FRPLoginViewController&quot; bundle:nil];
+            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+
+            [self presentViewController:navigationController animated:YES completion:^{
+                [subscriber sendCompleted];
+            }];
+
+            return nil;
+        }]];
+    }
+
+    return [authSignal then:^RACSignal *{
+        @strongify(self);
+        return [[self.viewModel.voteCommand execute:nil] ignoreValues];
+    }];
+}];
+[voteButton.rac_command.errors subscribeNext:^(id x) {
+    [x subscribeNext:^(NSError *error) {
+        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];
+    }];
+}];
+</code></pre>
 <p>上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。</p>
 <p>对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。</p>
 <p>##小结<br>由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。</p>

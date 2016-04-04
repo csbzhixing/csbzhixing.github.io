@@ -7,20 +7,23 @@
   <title>block | 学海无涯</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="##Block是个什么
-和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。">
+和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&amp;lt;!--more--&amp;gt;  
+###Blcok 是什么">
 <meta property="og:type" content="article">
 <meta property="og:title" content="block">
 <meta property="og:url" content="http://csbzhixing.github.io/2015/09/07/block/index.html">
 <meta property="og:site_name" content="学海无涯">
 <meta property="og:description" content="##Block是个什么
-和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。">
+和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&amp;lt;!--more--&amp;gt;  
+###Blcok 是什么">
 <meta property="og:image" content="http://i3.tietuku.com/a60eb087f6bfd358.png">
 <meta property="og:image" content="http://i3.tietuku.com/ba1814837f233066.png">
 <meta property="og:updated_time" content="2016-04-04T05:58:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="block">
 <meta name="twitter:description" content="##Block是个什么
-和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。">
+和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&amp;lt;!--more--&amp;gt;  
+###Blcok 是什么">
 <meta name="twitter:image" content="http://i3.tietuku.com/a60eb087f6bfd358.png">
   
     <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
@@ -241,17 +244,60 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>##Block是个什么</p>
-<p>和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。<br><a id="more"></a>  </p>
+<p>和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。<br>&lt;!--more--&gt;  </p>
 <p>###Blcok 是什么</p>
 <p>block是在iOS SDK 4.0引入的黑魔法。从他诞生的时候，Apple就倾注了大量的心血。字面上看，block就是一个代码块。在许多语言中都可以看到相似的语法设计。但是block自身由于可以在内联执行的时候还可以传递参数，同时自身可以作为参数在函数之间来传递，所有有了许多神奇的用法（好吧是我觉得很神奇）</p>
 <p>一个典型的block的应用如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">BOOL (^isName)(NSString *) = ^(NSString *name) &#123;</span><br><span class="line">     if ([name isEqualToString:@&quot;csb&quot;])</span><br><span class="line">     &#123;</span><br><span class="line">         return YES;</span><br><span class="line">     &#125;</span><br><span class="line">     else</span><br><span class="line">     &#123;</span><br><span class="line">         return NO;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;;</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C"> BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@&quot;csb&quot;])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+</code></pre>
 <p>定义一个block开头是和函数一样是返回类型，（^）跟着是block的名字，后面跟着是传入的数据类型。括号里面是代码块。</p>
 <p>一个完整的例子</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- (void)blockTest</span><br><span class="line">&#123;</span><br><span class="line">    BOOL (^isName)(NSString *) = ^(NSString *name) &#123;</span><br><span class="line">      if ([name isEqualToString:@&quot;csb&quot;])</span><br><span class="line">      &#123;</span><br><span class="line">          return YES;</span><br><span class="line">      &#125;</span><br><span class="line">      else</span><br><span class="line">      &#123;</span><br><span class="line">          return NO;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    self.sark.name = @&quot;csb&quot;;</span><br><span class="line">    NSLog(@&quot;is csb ? %@&quot;, isName(self.sark.name) ? @&quot;yes&quot; : @&quot;no&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="Objective-C">
+- (void)blockTest
+{
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@&quot;csb&quot;])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @&quot;csb&quot;;
+    NSLog(@&quot;is csb ? %@&quot;, isName(self.sark.name) ? @&quot;yes&quot; : @&quot;no&quot;);
+}
+</code></pre>
 <p>那么block有什么特别之处？前面提到了，block能够使用block外的参数，我们来实验下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">- (void)blockTest</span><br><span class="line">&#123;</span><br><span class="line">    NSString *csbName = @&quot;csbzhixing&quot;;</span><br><span class="line">    BOOL (^isName)(NSString *) = ^(NSString *name) &#123;</span><br><span class="line">      if ([name isEqualToString:csbName])</span><br><span class="line">      &#123;</span><br><span class="line">          return YES;</span><br><span class="line">      &#125;</span><br><span class="line">      else</span><br><span class="line">      &#123;</span><br><span class="line">          return NO;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    self.sark.name = @&quot;csbzhixing&quot;;</span><br><span class="line">    NSLog(@&quot;is csb ? %@&quot;, isName(self.sark.name) ? @&quot;yes&quot; : @&quot;no&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>输出<br><code>2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes</code></p>
+<pre><code>- (void)blockTest
+{
+    NSString *csbName = @&quot;csbzhixing&quot;;
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:csbName])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @&quot;csbzhixing&quot;;
+    NSLog(@&quot;is csb ? %@&quot;, isName(self.sark.name) ? @&quot;yes&quot; : @&quot;no&quot;);
+}
+</code></pre><p>输出<br><code>2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes</code></p>
 <p>注意到，定义了block后，修改了block中引用的局部变量，那么block中的局部变量仍然会保持不变。</p>
 <p><img src="http://i3.tietuku.com/a60eb087f6bfd358.png" alt="pic1"></p>
 <p>好吧，如果我们的确有这个需求怎么弄呢？使用<code>_block</code>修饰符来修饰局部变量可以解决这个问题</p>

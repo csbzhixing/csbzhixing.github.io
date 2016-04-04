@@ -243,7 +243,8 @@
 <p>参考</p>
 <ol>
 <li>– <a href="http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/" target="_blank" rel="external">http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/</a></li>
-<li>– <a href="http://objccn.io/issue-7-3/" target="_blank" rel="external">http://objccn.io/issue-7-3/</a><a id="more"></a>  
+<li>– <a href="http://objccn.io/issue-7-3/" target="_blank" rel="external">http://objccn.io/issue-7-3/</a><p>&lt;!--more--&gt;  
+</p>
 #KVO</li>
 </ol>
 <h2 id="KVO简单使用"><a href="#KVO简单使用" class="headerlink" title="KVO简单使用"></a>KVO简单使用</h2><h4 id="KVO-Key-Value-Observing-，是观察者模式在Foundation中的实现"><a href="#KVO-Key-Value-Observing-，是观察者模式在Foundation中的实现" class="headerlink" title="KVO(Key Value Observing)，是观察者模式在Foundation中的实现"></a>KVO(Key Value Observing)，是观察者模式在Foundation中的实现</h4><p>观察者模式，比较容易理解，就是一方对另一方观察，如果进行了改变，那么就要观察者接收到了消息就用进行相应的操作。在KVO中，总结起来就死以下几个操作。</p>
@@ -266,13 +267,23 @@
 <p>context 是一个指针当<code>observeValueForKeyPath:ofObject:change:context:</code>方法执行时context会提供给观察者。context可以是C指针或者一个对象引用，既可以当作一个唯一的标识来分辨被观察的变更，也可以向观察者提供数据。</p>
 <h4 id="当观察者接受到消息的时"><a href="#当观察者接受到消息的时" class="headerlink" title="当观察者接受到消息的时"></a>当观察者接受到消息的时</h4><p>当被观察的属性变更时，观察者会接到<code>observeValueForKeyPath:ofObject:change:context:</code>消息，所有的观察者都必须实现这个方法。<br>观察者会被提供触发通知的对象和keyPath，一个包含变更详细信息的字典，还有一个注册观察者时提供的context指针。</p>
 <p>关于change字典，总共包含以下五个键值</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">NSString *const NSKeyValueChangeKindKey;  </span><br><span class="line">NSString *const NSKeyValueChangeNewKey;  </span><br><span class="line">NSString *const NSKeyValueChangeOldKey;  </span><br><span class="line">NSString *const NSKeyValueChangeIndexesKey;  </span><br><span class="line">NSString *const NSKeyValueChangeNotificationIsPriorKey;</span><br></pre></td></tr></table></figure>
-<ol>
+<pre><code>NSString *const NSKeyValueChangeKindKey;  
+NSString *const NSKeyValueChangeNewKey;  
+NSString *const NSKeyValueChangeOldKey;  
+NSString *const NSKeyValueChangeIndexesKey;  
+NSString *const NSKeyValueChangeNotificationIsPriorKey;
+</code></pre><ol>
 <li>NSKeyValueChangeKindKey</li>
 </ol>
 <p>指明了变更的类型，值为“NSKeyValueChange”枚举中的某一个，类型为NSNumber。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">enum &#123;</span><br><span class="line">   NSKeyValueChangeSetting = 1,</span><br><span class="line">   NSKeyValueChangeInsertion = 2,</span><br><span class="line">   NSKeyValueChangeRemoval = 3,</span><br><span class="line">   NSKeyValueChangeReplacement = 4</span><br><span class="line">&#125;;</span><br><span class="line">typedef NSUInteger NSKeyValueChange;</span><br></pre></td></tr></table></figure>
-<ol>
+<pre><code>enum {
+   NSKeyValueChangeSetting = 1,
+   NSKeyValueChangeInsertion = 2,
+   NSKeyValueChangeRemoval = 3,
+   NSKeyValueChangeReplacement = 4
+};
+typedef NSUInteger NSKeyValueChange;
+</code></pre><ol>
 <li>NSKeyValueChangeNewKey</li>
 </ol>
 <p>如果 <code>NSKeyValueChangeKindKey</code>的值为 <code>NSKeyValueChangeSetting</code>，并且 <code>NSKeyValueObservingOptionNew</code>选项在注册观察者时也指定了，那么这个键的值就是属性变更后的新值。<br>对于 <code>NSKeyValueChangeInsertion</code>或者<code>NSKeyValueChangeReplacement</code>，如果 <code>NSKeyValueObservingOptionNew</code>选项在注册观察者时也指定了，这个键的值是一个数组，其包含了插入或替换的对象</p>

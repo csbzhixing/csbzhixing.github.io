@@ -245,7 +245,7 @@
       
         <p>##写在前面</p>
 <p>最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。对与socket的认识还是学习java的时候知道可以使用socket进行客户端与服务器端的通信，可是当时并没有去实践。欠下的债都是要还的。</p>
-<p>此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。<br><a id="more"></a>  </p>
+<p>此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。<br>&lt;!--more--&gt;  </p>
 <p>##正文</p>
 <p>socket，套接字，是基于TCP/IP协议族下的一种网络通信方式。我们知道，在本地，进程之间有多种方法去通信。在网络中，我们同样可以使用socket进行通信。接下来一步步来看socket是如何使网络上的进程相互通信的。</p>
 <p>我们知道，要像让进程通信，首先必须确认进程的身份。如同我们只有知道了和自己谈话的是谁，我们才知道谈什么。在本地，进程拥有唯一的标识PID。在网络上，基于TCP/IP协议，通过<em>IP，协议，端口号</em>，我们可以确认一个进程的唯一身份。</p>
@@ -254,7 +254,45 @@
 <p>socket起源于UNIX。我们知道UNIX的设计原理就是<em>一切皆文件</em>，操作都是<em>open -&gt; read/write -&gt; close</em>。所以说，我们可以认为socket也是一个文件，是基于上述设计原理的实现。socket函数就是专门来完成相应操作的。</p>
 <p>##socket 操作</p>
 <p>在上面我们知道了socket是一个文件，那么socket自然有对应的操作方法，下面是基于TCP的几个基本操作。<br>(注，本文的方法是使用Objective-C写的，其实socket在任何语言都是差不多的)</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">// 创建并初始化socket，返回socket的文件描述符，如果返回值为-1则创建失败</span><br><span class="line">int socket(int addresFamily, int type, int protocol)</span><br><span class="line"></span><br><span class="line">// 关闭socket</span><br><span class="line">int close(int socketFileDescriptor)</span><br><span class="line"> </span><br><span class="line">// 将socket与特定的IP地址和端口号绑定，成功返回0，失败返回-1</span><br><span class="line">int bind(int socketFileDescriptor, sockadd *addressToBind)</span><br><span class="line"></span><br><span class="line">// 接受客户端的请求并且将客户端的网络地址信息存入clientAddress</span><br><span class="line">// 当客户端的连接请求被接受后，双方的通信链路就建立好了，两者就可以开始通信了。</span><br><span class="line"></span><br><span class="line">int accept(int socketFileDescriptor, sockaddr *clientAddress, int clientAddressStructLength)</span><br><span class="line"></span><br><span class="line">// 客户端向特定的IP的服务器发送连接请求，成功返回0，失败返回-1</span><br><span class="line">// 当服务器建立好后，客户端就可以通过这个函数与服务器端建立连接。</span><br><span class="line">// 对于UDP来说，该接口是可选的，如果调用了这个接口表明设置了UDP socket默认的网络地址.</span><br><span class="line">// 对于TCP来说，这里就是三次握手发生的地方</span><br><span class="line"></span><br><span class="line">int connect(int socketFileDescriptor, sockaddr *serverAddress, int serverAddressLength)</span><br><span class="line"></span><br><span class="line">// 通过DNS查找特定的IP，如果找不到返回NULL</span><br><span class="line">hostent *gethostbyname(char *hostname)</span><br><span class="line"></span><br><span class="line">// 发送数据，发送成功后返回成功发送的字节数，否则返回-1</span><br><span class="line">int send(int socketFileDescriptor,char *buffer, int flags)</span><br><span class="line"></span><br><span class="line">// 接收数据，成功后返回成功读取的字节数，否则返回-1</span><br><span class="line">int receive(int socketFileDesciptor,char *buffer,int flags)</span><br><span class="line"></span><br><span class="line">// 下面两个方法是UDP的方法</span><br><span class="line"></span><br><span class="line">// UDP发送,返回状态同上</span><br><span class="line">int sendto(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *destinationAddress, int destinationAddressLength)</span><br><span class="line"></span><br><span class="line">// UDP读取，返回状态同上</span><br><span class="line">int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *fromAddress, int fromAddressLength)</span><br></pre></td></tr></table></figure>
+<pre><code class="objective-c">
+// 创建并初始化socket，返回socket的文件描述符，如果返回值为-1则创建失败
+int socket(int addresFamily, int type, int protocol)
+
+// 关闭socket
+int close(int socketFileDescriptor)
+
+// 将socket与特定的IP地址和端口号绑定，成功返回0，失败返回-1
+int bind(int socketFileDescriptor, sockadd *addressToBind)
+
+// 接受客户端的请求并且将客户端的网络地址信息存入clientAddress
+// 当客户端的连接请求被接受后，双方的通信链路就建立好了，两者就可以开始通信了。
+
+int accept(int socketFileDescriptor, sockaddr *clientAddress, int clientAddressStructLength)
+
+// 客户端向特定的IP的服务器发送连接请求，成功返回0，失败返回-1
+// 当服务器建立好后，客户端就可以通过这个函数与服务器端建立连接。
+// 对于UDP来说，该接口是可选的，如果调用了这个接口表明设置了UDP socket默认的网络地址.
+// 对于TCP来说，这里就是三次握手发生的地方
+
+int connect(int socketFileDescriptor, sockaddr *serverAddress, int serverAddressLength)
+
+// 通过DNS查找特定的IP，如果找不到返回NULL
+hostent *gethostbyname(char *hostname)
+
+// 发送数据，发送成功后返回成功发送的字节数，否则返回-1
+int send(int socketFileDescriptor,char *buffer, int flags)
+
+// 接收数据，成功后返回成功读取的字节数，否则返回-1
+int receive(int socketFileDesciptor,char *buffer,int flags)
+
+// 下面两个方法是UDP的方法
+
+// UDP发送,返回状态同上
+int sendto(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *destinationAddress, int destinationAddressLength)
+
+// UDP读取，返回状态同上
+int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *fromAddress, int fromAddressLength)
+</code></pre>
 <p>通过观察方法，我们发现socket其实就是<em>确认目标 -&gt;建立连接 -&gt; 传送/读取 -&gt; 断开</em> 的过程</p>
 <p>我们再来看看TCP和UDP下socket操作的不同的地方</p>
 <p>####TCP</p>

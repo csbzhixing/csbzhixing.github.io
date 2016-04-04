@@ -280,7 +280,20 @@
 </ol>
 <p>链表就是链式存储的线性表。根据指针域的不同，链表分为单项链表，双向链表，循环链表等等</p>
 <p>一个简单的List定义</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="built_in">list</span> &#123;</span><br><span class="line">    <span class="keyword">int</span> ver;</span><br><span class="line">    <span class="keyword">struct</span> <span class="built_in">list</span> *next;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="built_in">list</span> *listLink;</span><br><span class="line"><span class="comment">// 插入</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">insert_list</span><span class="params">(listLink *, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="comment">// 打印</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">print_list</span><span class="params">(listLink *, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="comment">// 链表长</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">list_length</span><span class="params">(listLink)</span></span>;</span><br><span class="line"><span class="comment">// 搜索一个特定的值</span></span><br><span class="line"><span class="function">listLink <span class="title">search_list</span><span class="params">(listLink, <span class="keyword">int</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code class="C">struct list {
+int ver;
+struct list *next;
+};
+typedef struct list *listLink;
+// 插入
+void insert_list(listLink *, int);
+// 打印
+void print_list(listLink *, int);
+// 链表长
+int list_length(listLink);
+// 搜索一个特定的值
+listLink search_list(listLink, int);
+</code></pre>
 </li>
 </ul>
 <p>四个方法的实现</p>

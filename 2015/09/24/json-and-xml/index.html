@@ -264,18 +264,28 @@ JSON是一种轻量化的数据格式。他的特点就是方便已用。目前9
 <p>##JSON</p>
 <p>JSON是一种轻量化的数据格式。他的特点就是方便已用。目前90%的网络传输都是依赖于JSON格式。</p>
 <p>首先来看看JSON格式是怎么样的。</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">"access_token": "ACCESS_TOKEN",</span><br><span class="line"></span><br><span class="line">   "expires_in": 1234,</span><br><span class="line"></span><br><span class="line">   "remind_in":"798114",</span><br><span class="line"></span><br><span class="line">   "uid":"12341234"</span><br></pre></td></tr></table></figure>
+<pre><code class="json">
+&quot;access_token&quot;: &quot;ACCESS_TOKEN&quot;,
+
+   &quot;expires_in&quot;: 1234,
+
+   &quot;remind_in&quot;:&quot;798114&quot;,
+
+   &quot;uid&quot;:&quot;12341234&quot;
+</code></pre>
 <p>这是一个常见的JSON格式。比较容易的看出，其实就是一种key-value的形式。</p>
 <p>key我们都好了解，是一个string。那么value就会有不一样的值。通过对比OC的对象，我们可以更容易的理解JSON中的数据类型。</p>
-<pre><code> JSON                    OC
+<pre><code>            JSON                    OC
 
- {}                        NSDictionary
+            {}                        NSDictionary
 
- []                        NSArray
+            []                        NSArray
 
- &quot;&quot;                        NSString
+            &quot;&quot;                        NSString
 
-数字                      NSNumber
+           数字                      NSNumber
+
+
 </code></pre><p>知道了JSON所对应的OC对象，我们就可以通过解析JSON对象，将相关的数据转换成OC对象来存储。在这里，介绍一种能够在本地模拟API的方式，这也是由于自己找不到很好的开发API所以想在本地能够模拟API的方式。</p>
 <p>##JSON Server 模拟 API</p>
 <p>###第一步 安装</p>
@@ -291,7 +301,17 @@ JSON是一种轻量化的数据格式。他的特点就是方便已用。目前9
 <li>安装json-server</li>
 </ul>
 <p><code>npm install -g json-server</code></p>
-<h2 id="根据需求创建JSON"><a href="#根据需求创建JSON" class="headerlink" title="根据需求创建JSON"></a>根据需求创建JSON</h2><p>安装完毕后，随便找个你喜欢的文件夹，创建一个JSON格式的文件，如下<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"posts"</span>: [</span><br><span class="line">    &#123; <span class="attr">"id"</span>: <span class="number">1</span>, <span class="attr">"title"</span>: <span class="string">"json-server"</span>, <span class="attr">"author"</span>: <span class="string">"typicode"</span> &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">"comments"</span>: [</span><br><span class="line">    &#123; <span class="attr">"id"</span>: <span class="number">1</span>, <span class="attr">"body"</span>: <span class="string">"some comment"</span>, <span class="attr">"postId"</span>: <span class="number">1</span> &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">"profile"</span>: &#123; <span class="attr">"name"</span>: <span class="string">"typicode"</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="根据需求创建JSON"><a href="#根据需求创建JSON" class="headerlink" title="根据需求创建JSON"></a>根据需求创建JSON</h2><p>安装完毕后，随便找个你喜欢的文件夹，创建一个JSON格式的文件，如下</p>
+<pre><code class="JSON">{
+  &quot;posts&quot;: [
+    { &quot;id&quot;: 1, &quot;title&quot;: &quot;json-server&quot;, &quot;author&quot;: &quot;typicode&quot; }
+  ],
+  &quot;comments&quot;: [
+    { &quot;id&quot;: 1, &quot;body&quot;: &quot;some comment&quot;, &quot;postId&quot;: 1 }
+  ],
+  &quot;profile&quot;: { &quot;name&quot;: &quot;typicode&quot; }
+}
+</code></pre>
 <p>然后保存。</p>
 <p>###启动JSON-Server</p>
 <p>通过命令<code>json-server --watch JSON文件的名字.json</code>来启动Server</p>
@@ -304,6 +324,8 @@ JSON是一种轻量化的数据格式。他的特点就是方便已用。目前9
 <li>通过<code>NSJSONSerialization</code>来序列化JSON.</li>
 </ul>
 <pre><code>![](/media/14430773793672.jpg)
+
+
 </code></pre><p>输出的结果</p>
 <p><img src="/media/14430774045308.jpg" alt=""></p>
 <p>对比上面的JSON数据，我们可以看出解析的结果是正确的</p>
@@ -330,8 +352,34 @@ JSON是一种轻量化的数据格式。他的特点就是方便已用。目前9
 <p>虽然JSON在网络传输中有90%的使用率，但是我们依然不能放弃10%的XML是吧。</p>
 <p>XML全称是Extensible Markup Language，译作“可扩展标记语言”<br>跟JSON一样，也是常用的一种用于交互的数据格式<br>一般也叫XML文档（XML Document）</p>
 <p>下面是一个典型的XML文件的结构</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">一个元素包括了开始标签和结束标签</span><br><span class="line">拥有元素内容：&lt;city&gt;上海&lt;/city&gt;</span><br><span class="line">没有元素内容：&lt;city&gt;&lt;/city&gt;</span><br><span class="line">没有元素内容的简写：&lt;city/&gt; </span><br><span class="line"></span><br><span class="line">一个元素可以嵌套若干个子元素（不能出现交叉嵌套）</span><br><span class="line">&lt;citys&gt;</span><br><span class="line">    &lt;city&gt;</span><br><span class="line">        &lt;name&gt;上海&lt;/name&gt;</span><br><span class="line">        &lt;weather&gt;大暴雨&lt;/weather&gt;</span><br><span class="line">          &lt;air&gt;舒适&lt;/air&gt;</span><br><span class="line">    &lt;/city&gt;</span><br><span class="line">&lt;/citys&gt;</span><br><span class="line"></span><br><span class="line">规范的XML文档最多只有1个根元素，其他元素都是根元素的子孙元素</span><br><span class="line">XML中的所有空格和换行，都会当做具体内容处理</span><br><span class="line"></span><br><span class="line">一个元素可以拥有多个属性，属性值必须用 双引号&quot;&quot; 或者 单引号&apos;&apos; 括住。</span><br><span class="line">&lt;city name=&quot;上海&quot; weather=&quot;大暴雨&quot; air=&quot;舒适&quot; /&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">属性表示的信息也可以用子元素来表示，比如</span><br><span class="line"></span><br><span class="line">   &lt;city&gt;</span><br><span class="line">        &lt;weather&gt;大暴雨&lt;/weather&gt;</span><br><span class="line">          &lt;air&gt;舒适&lt;/air&gt;</span><br><span class="line">    &lt;/city&gt;</span><br></pre></td></tr></table></figure>
-<p>解析XML有两种方式</p>
+<pre><code>一个元素包括了开始标签和结束标签
+拥有元素内容：&lt;city&gt;上海&lt;/city&gt;
+没有元素内容：&lt;city&gt;&lt;/city&gt;
+没有元素内容的简写：&lt;city/&gt; 
+
+一个元素可以嵌套若干个子元素（不能出现交叉嵌套）
+&lt;citys&gt;
+    &lt;city&gt;
+        &lt;name&gt;上海&lt;/name&gt;
+        &lt;weather&gt;大暴雨&lt;/weather&gt;
+          &lt;air&gt;舒适&lt;/air&gt;
+    &lt;/city&gt;
+&lt;/citys&gt;
+
+规范的XML文档最多只有1个根元素，其他元素都是根元素的子孙元素
+XML中的所有空格和换行，都会当做具体内容处理
+
+一个元素可以拥有多个属性，属性值必须用 双引号&quot;&quot; 或者 单引号&#39;&#39; 括住。
+&lt;city name=&quot;上海&quot; weather=&quot;大暴雨&quot; air=&quot;舒适&quot; /&gt;
+
+
+属性表示的信息也可以用子元素来表示，比如
+
+   &lt;city&gt;
+        &lt;weather&gt;大暴雨&lt;/weather&gt;
+          &lt;air&gt;舒适&lt;/air&gt;
+    &lt;/city&gt;
+</code></pre><p>解析XML有两种方式</p>
 <ol>
 <li>DOM解析：一次性将整个XML文档加载进内存，比较适合解析小文件</li>
 <li>SAX解析：从根元素开始，按顺序一个元素一个元素往下解析，比较适合解析大文件</li>

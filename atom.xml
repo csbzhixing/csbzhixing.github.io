@@ -50,15 +50,33 @@
 &lt;p&gt;首先 打开CocoaLumberjack的github地址&lt;/p&gt;
 &lt;p&gt;&lt;a href=&quot;https://github.com/CocoaLumberjack/CocoaLumberjack&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/CocoaLumberjack/CocoaLumberjack&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;使用cocospod 安装&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;platform :ios, &amp;apos;8.0&amp;apos;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;pod &amp;apos;CocoaLumberjack&amp;apos;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;在自己工程文件下.pch下加入&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;#define LOG_LEVEL_DEF ddLogLevel&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;#import &amp;lt;CocoaLumberjack/CocoaLumberjack.h&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;在APPDelegate里面初始化log&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;- (void)initLogger&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // Standard lumberjack initialization&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [DDLog addLogger:[DDTTYLogger sharedInstance]];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // And we also enable colors&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [[DDTTYLogger sharedInstance] setColorsEnabled:YES];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [DDTTYLogger sharedInstance].logFormatter = [[DFCustomFormatter alloc] init];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [DDLog addLogger:fileLogger];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [self setConsoleColor];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;到这里就完成了ddlog的初始化，但是到这里还没结束，因为这样仅仅是让框架运行起来，还没有到我们要的效果。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;platform :ios, &amp;#39;8.0&amp;#39;
+pod &amp;#39;CocoaLumberjack&amp;#39;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在自己工程文件下.pch下加入&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;#define LOG_LEVEL_DEF ddLogLevel
+#import &amp;lt;CocoaLumberjack/CocoaLumberjack.h&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在APPDelegate里面初始化log&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)initLogger
+{
+
+    // Standard lumberjack initialization
+    [DDLog addLogger:[DDTTYLogger sharedInstance]];
+
+    // And we also enable colors
+    [[DDTTYLogger sharedInstance] setColorsEnabled:YES];
+
+    [DDTTYLogger sharedInstance].logFormatter = [[DFCustomFormatter alloc] init];
+
+    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
+    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
+    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+    [DDLog addLogger:fileLogger];
+
+    [self setConsoleColor];
+
+
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;到这里就完成了ddlog的初始化，但是到这里还没结束，因为这样仅仅是让框架运行起来，还没有到我们要的效果。&lt;/p&gt;
 &lt;p&gt;我们想要的，应该是达到以下的目的&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;能够打印Log的发生位置，方法，时间&lt;/li&gt;
@@ -66,20 +84,51 @@
 &lt;/ol&gt;
 &lt;p&gt;完成第一点很简单，我们只需要实现自己的formatter就可以了&lt;/p&gt;
 &lt;p&gt;实现&lt;code&gt;DDLogFormatter&lt;/code&gt;的协议&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;#import &amp;lt;Foundation/Foundation.h&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;#import &amp;quot;DDLog.h&amp;quot;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@interface DFCustomFormatter : NSObject &amp;lt;DDLogFormatter&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;@implementation DFCustomFormatter&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (NSString *)formatLogMessage:(DDLogMessage *)logMessage &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSString *logLevel;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    switch (logMessage-&amp;gt;_flag) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        case DDLogFlagError    : logLevel = @&amp;quot;E&amp;quot;; break;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        case DDLogFlagWarning  : logLevel = @&amp;quot;W&amp;quot;; break;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        case DDLogFlagInfo     : logLevel = @&amp;quot;I&amp;quot;; break;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        case DDLogFlagDebug    : logLevel = @&amp;quot;D&amp;quot;; break;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        default                : logLevel = @&amp;quot;V&amp;quot;; break;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSString *formatStr = [NSString stringWithFormat:@&amp;quot;[%@ %@][line %lu] %@&amp;quot;,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                            logMessage.fileName, logMessage-&amp;gt;_function,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           (unsigned long)logMessage-&amp;gt;_line, logMessage-&amp;gt;_message];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return formatStr;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;这样我们就打印了需要的信息，更多的方法可以到DDLogMessage里面看提供了什么属性。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;#import &amp;lt;Foundation/Foundation.h&amp;gt;
+#import &amp;quot;DDLog.h&amp;quot;
+
+@interface DFCustomFormatter : NSObject &amp;lt;DDLogFormatter&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;pre&gt;&lt;code&gt;@implementation DFCustomFormatter
+
+- (NSString *)formatLogMessage:(DDLogMessage *)logMessage {
+    NSString *logLevel;
+    switch (logMessage-&amp;gt;_flag) {
+        case DDLogFlagError    : logLevel = @&amp;quot;E&amp;quot;; break;
+        case DDLogFlagWarning  : logLevel = @&amp;quot;W&amp;quot;; break;
+        case DDLogFlagInfo     : logLevel = @&amp;quot;I&amp;quot;; break;
+        case DDLogFlagDebug    : logLevel = @&amp;quot;D&amp;quot;; break;
+        default                : logLevel = @&amp;quot;V&amp;quot;; break;
+    }
+
+    NSString *formatStr = [NSString stringWithFormat:@&amp;quot;[%@ %@][line %lu] %@&amp;quot;,
+                            logMessage.fileName, logMessage-&amp;gt;_function,
+                           (unsigned long)logMessage-&amp;gt;_line, logMessage-&amp;gt;_message];
+    return formatStr;
+
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这样我们就打印了需要的信息，更多的方法可以到DDLogMessage里面看提供了什么属性。&lt;/p&gt;
 &lt;p&gt;完成第二点，就要借助XcodeColors&lt;/p&gt;
 &lt;p&gt;地址：&lt;a href=&quot;https://github.com/robbiehanson/XcodeColors&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/robbiehanson/XcodeColors&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;安装后，在APPDelegate中初始化&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;// 打开颜色支持&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;[[DDTTYLogger sharedInstance] setColorsEnabled:YES];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;然后我们可以根据自己的喜好设置不同级别的Log的颜色&lt;/p&gt;
-&lt;p&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;- (void)setConsoleColor&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;#if TARGET_OS_IPHONE&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    UIColor *pink = [UIColor colorWithRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;#else&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSColor *pink = [NSColor colorWithCalibratedRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;#endif&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [[DDTTYLogger sharedInstance] setForegroundColor:pink backgroundColor:nil forFlag:DDLogFlagInfo];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor orangeColor] backgroundColor:nil forFlag:DDLogFlagWarning];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;/p&gt;
-&lt;p&gt;到这里，还不能让控制台显示出颜色，要设置对应schema&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// 打开颜色支持
+[[DDTTYLogger sharedInstance] setColorsEnabled:YES];
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;然后我们可以根据自己的喜好设置不同级别的Log的颜色&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)setConsoleColor
+{
+#if TARGET_OS_IPHONE
+    UIColor *pink = [UIColor colorWithRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];
+
+#else
+    NSColor *pink = [NSColor colorWithCalibratedRed:(255/255.0) green:(58/255.0) blue:(159/255.0) alpha:1.0];
+#endif
+
+    [[DDTTYLogger sharedInstance] setForegroundColor:pink backgroundColor:nil forFlag:DDLogFlagInfo];
+    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+    [[DDTTYLogger sharedInstance] setForegroundColor:[UIColor orangeColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+
+
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;到这里，还不能让控制台显示出颜色，要设置对应schema&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;/media/14491562929176.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
 &lt;p&gt;添加后，就可以让xcode的控制显示我们要的效果了。&lt;/p&gt;
 &lt;p&gt;如果自己的项目本身有对应的log方法，可以用宏直接替换&lt;/p&gt;
@@ -110,26 +159,86 @@
 &lt;p&gt;给出一个Int值，判断是否是回文数字。&lt;/p&gt;
 &lt;p&gt;我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。&lt;/p&gt;
 &lt;p&gt;代码如下&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;isPalindrome&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; x)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(x&amp;lt;&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;literal&quot;&gt;false&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(x&amp;lt;&lt;span class=&quot;number&quot;&gt;10&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;literal&quot;&gt;true&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; y=&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;,temp = x;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;while&lt;/span&gt;(temp)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        y = y*&lt;span class=&quot;number&quot;&gt;10&lt;/span&gt; + (temp%&lt;span class=&quot;number&quot;&gt;10&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        temp/=&lt;span class=&quot;number&quot;&gt;10&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; x==y;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;C&quot;&gt;bool isPalindrome(int x) {
+    if(x&amp;lt;0) return false;
+    if(x&amp;lt;10) return true;
+
+    int y=0,temp = x;
+
+    while(temp)
+    {
+        y = y*10 + (temp%10);
+        temp/=10;
+    }
+
+    return x==y;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;ul&gt;
 &lt;li&gt;leetcode 26&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;移除一个数组中重复的数字。&lt;/p&gt;
 &lt;p&gt;根据题意，我们只需要将重复的数字不停地移动到数组末尾，然后缩短数组大小就可以了。&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;removeDuplicates&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;* nums, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; numsSize)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(numsSize&amp;lt;&lt;span class=&quot;number&quot;&gt;2&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; numsSize;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; cur = &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; temp = nums[&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; i = &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;;i&amp;lt;numsSize;i++)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(nums[i] == temp) &lt;span class=&quot;keyword&quot;&gt;continue&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            nums[cur+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;] = nums[i];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            cur++;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            temp = nums[i];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; cur+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;C&quot;&gt;int removeDuplicates(int* nums, int numsSize) {
+
+    if(numsSize&amp;lt;2) return numsSize;
+
+    int cur = 0;int temp = nums[0];
+
+    for(int i = 1;i&amp;lt;numsSize;i++)
+    {
+        if(nums[i] == temp) continue;
+        else
+        {
+            nums[cur+1] = nums[i];
+            cur++;
+            temp = nums[i];
+        }
+    }    
+    return cur+1;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;ul&gt;
 &lt;li&gt;leetcode 136&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;给出一个数组，找出数组中唯一一个只出现了一次的数，其他的数都出现了两次，要求线性时间内完成且不能用额外的空间。&lt;/p&gt;
 &lt;p&gt;这道题给的难度分类是中等，但是我看了下题目的通过率很高，说明又很巧妙地方法。我自己在开始做得时候想到的都都要用额外的存储空间。在看了别人的方法后才知道原来可以用异或方法，因为异或方法相当于交换了两个数。所以我们要做得就是遍历一次数组，用一个数与每个数组的数异或，最后保留的数就是唯一一个出现了一次的数。&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;removeDuplicates&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;* nums, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; numsSize)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(numsSize&amp;lt;&lt;span class=&quot;number&quot;&gt;2&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; numsSize;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; cur = &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; temp = nums[&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; i = &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;;i&amp;lt;numsSize;i++)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(nums[i] == temp) &lt;span class=&quot;keyword&quot;&gt;continue&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            nums[cur+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;] = nums[i];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            cur++;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            temp = nums[i];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; cur+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;C&quot;&gt;int removeDuplicates(int* nums, int numsSize) {
+
+    if(numsSize&amp;lt;2) return numsSize;
+
+    int cur = 0;int temp = nums[0];
+
+    for(int i = 1;i&amp;lt;numsSize;i++)
+    {
+        if(nums[i] == temp) continue;
+        else
+        {
+            nums[cur+1] = nums[i];
+            cur++;
+            temp = nums[i];
+        }
+    }
+
+    return cur+1;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;同样地,leetcode还给出了一道相似的题目，就是&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;leetcode 260&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;这道题目和上面的题目基本一样，唯独不同的是给出的数组中有两个数只出现了一次。&lt;/p&gt;
 &lt;p&gt;题目中提到了，要在线性时间内完成，我们还是要考虑从上面的题目中怎么改进就可以完成这道题目。&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;* &lt;span class=&quot;title&quot;&gt;singleNumber&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;* nums, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; numsSize, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;* returnSize)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; i, *result = &lt;span class=&quot;built_in&quot;&gt;calloc&lt;/span&gt;(*returnSize = &lt;span class=&quot;number&quot;&gt;2&lt;/span&gt;, &lt;span class=&quot;keyword&quot;&gt;sizeof&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;));&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(i = &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;; i &amp;lt; numsSize; result[&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;] ^= nums[i++]);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(i = &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;; i &amp;lt; numsSize; i++)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(nums[i] &amp;amp; result[&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;] &amp;amp; -result[&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;])&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            result[&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;] ^= nums[i];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    result[&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;] ^= result[&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; result;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;C&quot;&gt;int* singleNumber(int* nums, int numsSize, int* returnSize) {
+    int i, *result = calloc(*returnSize = 2, sizeof(int));
+    for(i = 0; i &amp;lt; numsSize; result[0] ^= nums[i++]);
+    for(i = 0; i &amp;lt; numsSize; i++)
+        if(nums[i] &amp;amp; result[0] &amp;amp; -result[0])
+            result[1] ^= nums[i];
+    result[0] ^= result[1];
+    return result;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;这个方法，首先找出了一个result[0]，这个是保存了两个出现了一次的的数字的异或结果a xor b;&lt;br&gt;我们知道 如果a != b的话，那么a xor b就会保准他们每个数字的一部分的二进制。&lt;br&gt;那么第二部我们通过异或就可以刷选出一个结果。&lt;br&gt;通过 a xor b的结果再异或，就可以得出另一个结果。&lt;/p&gt;
 &lt;p&gt;通过上面两道题目可以得出，简简单单的异或有时候可是非常强大的。&lt;/p&gt;
 &lt;p&gt;##小结&lt;/p&gt;
@@ -165,22 +274,70 @@
 &lt;p&gt;RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。&lt;/p&gt;
 &lt;p&gt;###KVO&lt;/p&gt;
 &lt;p&gt;RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;[RACAble(self.username) subscribeNext:^(NSString *newName) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSLog(@&amp;quot;%@&amp;quot;, newName);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;[RACAble(self.username) subscribeNext:^(NSString *newName) {
+    NSLog(@&amp;quot;%@&amp;quot;, newName);
+}];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;// 只有当名字以&amp;apos;j&amp;apos;开头，才会被记录&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;[[RACAble(self.username)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   filter:^(NSString *newName) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       return [newName hasPrefix:@&amp;quot;j&amp;quot;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &amp;#125;]&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   subscribeNext:^(NSString *newName) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       NSLog(@&amp;quot;%@&amp;quot;, newName);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;// 只有当名字以&amp;#39;j&amp;#39;开头，才会被记录
+[[RACAble(self.username)
+   filter:^(NSString *newName) {
+       return [newName hasPrefix:@&amp;quot;j&amp;quot;];
+   }]
+   subscribeNext:^(NSString *newName) {
+       NSLog(@&amp;quot;%@&amp;quot;, newName);
+   }];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;###UI Event&lt;/p&gt;
 &lt;p&gt;根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;RAC(self.logInButton, enabled) = [RACSignal&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        combineLatest:@[&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            self.usernameTextField.rac_textSignal,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            self.passwordTextField.rac_textSignal,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            RACObserve(LoginManager.sharedManager, loggingIn),&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            RACObserve(self, loggedIn)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            return @(username.length &amp;gt; 0 &amp;amp;&amp;amp; password.length &amp;gt; 0 &amp;amp;&amp;amp; !loggingIn.boolValue &amp;amp;&amp;amp; !loggedIn.boolValue);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;RAC(self.logInButton, enabled) = [RACSignal
+        combineLatest:@[
+            self.usernameTextField.rac_textSignal,
+            self.passwordTextField.rac_textSignal,
+            RACObserve(LoginManager.sharedManager, loggingIn),
+            RACObserve(self, loggedIn)
+        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
+            return @(username.length &amp;gt; 0 &amp;amp;&amp;amp; password.length &amp;gt; 0 &amp;amp;&amp;amp; !loggingIn.boolValue &amp;amp;&amp;amp; !loggedIn.boolValue);
+        }];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。&lt;/p&gt;
 &lt;p&gt;###网络异步&lt;/p&gt;
 &lt;p&gt;当我们有需求的时候，可以自己创建&lt;code&gt;RACSubject&lt;/code&gt;类型。我们可以认为&lt;code&gt;RACSubject&lt;/code&gt;是一个具有高度自定义的信号(是RACSignal的子类)；&lt;/p&gt;
 &lt;p&gt;当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (void)doTest&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    RACSubject *subject = [self doRequest];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [subject subscribeNext:^(NSString *value)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        NSLog(@&amp;quot;value:%@&amp;quot;, value);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (RACSubject *)doRequest&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    RACSubject *subject = [RACSubject subject];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // 模拟2秒后得到请求内容&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // 只触发1次&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // subscribeNext就是定义了一个接收体&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [[[[RACSignal interval:2] take:1] map:^id(id _)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        // the value is from url request&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        NSString *value = @&amp;quot;content fetched from web&amp;quot;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        [subject sendNext:value];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        return nil;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;] subscribeNext:^(id _)&amp;#123;&amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return subject;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
+- (void)doTest
+{
+    RACSubject *subject = [self doRequest];
+
+    [subject subscribeNext:^(NSString *value){
+        NSLog(@&amp;quot;value:%@&amp;quot;, value);
+    }];
+}
+
+- (RACSubject *)doRequest
+{
+    RACSubject *subject = [RACSubject subject];
+    // 模拟2秒后得到请求内容
+    // 只触发1次
+    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
+    // subscribeNext就是定义了一个接收体
+    [[[[RACSignal interval:2] take:1] map:^id(id _){
+        // the value is from url request
+        NSString *value = @&amp;quot;content fetched from web&amp;quot;;
+        [subject sendNext:value];
+        return nil;
+    }] subscribeNext:^(id _){}];
+    return subject;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;##常见的概念&lt;/p&gt;
 &lt;p&gt;###Signal and Subscriber&lt;/p&gt;
 &lt;p&gt;在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。&lt;/p&gt;
 &lt;p&gt;当信号获得了相关数据后，就会执行订阅者的&lt;code&gt;sendNext, sendComplete, sendError&lt;/code&gt;方法。订阅者也有相关的方法来获取相关的数据，比如&lt;code&gt;[signal subscribeNext:error:completed]&lt;/code&gt;。这个时候只要没有&lt;code&gt;sendError&lt;/code&gt;和&lt;code&gt;sendComplete&lt;/code&gt;传过来，就会有源源不断的数据。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;[RACObserve(self, username) subscribeNext: ^(NSString *newName)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSLog(@&amp;quot;newName:%@&amp;quot;, newName);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;[RACObserve(self, username) subscribeNext: ^(NSString *newName){
+    NSLog(@&amp;quot;newName:%@&amp;quot;, newName);
+}];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。&lt;/p&gt;
 &lt;p&gt;信号是可以被处理的，通常有以下几种处理信号的方式&lt;/p&gt;
 &lt;ol&gt;
@@ -189,7 +346,17 @@
 &lt;li&gt;combine 组合&lt;/li&gt;
 &lt;li&gt;chain 串联&lt;/li&gt;
 &lt;/ol&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;RAC(self.logInButton, enabled) = [RACSignal&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        combineLatest:@[&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            self.usernameTextField.rac_textSignal,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            self.passwordTextField.rac_textSignal,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            RACObserve(LoginManager.sharedManager, loggingIn),&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            RACObserve(self, loggedIn)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            return @(username.length &amp;gt; 0 &amp;amp;&amp;amp; password.length &amp;gt; 0 &amp;amp;&amp;amp; !loggingIn.boolValue &amp;amp;&amp;amp; !loggedIn.boolValue);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
+RAC(self.logInButton, enabled) = [RACSignal
+        combineLatest:@[
+            self.usernameTextField.rac_textSignal,
+            self.passwordTextField.rac_textSignal,
+            RACObserve(LoginManager.sharedManager, loggingIn),
+            RACObserve(self, loggedIn)
+        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
+            return @(username.length &amp;gt; 0 &amp;amp;&amp;amp; password.length &amp;gt; 0 &amp;amp;&amp;amp; !loggingIn.boolValue &amp;amp;&amp;amp; !loggedIn.boolValue);
+        }];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。&lt;/p&gt;
 &lt;p&gt;###冷信号和热信号&lt;/p&gt;
 &lt;p&gt;上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。&lt;/p&gt;
@@ -198,9 +365,46 @@
 &lt;p&gt;RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。&lt;/p&gt;
 &lt;p&gt;我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪&lt;code&gt;NSArray&lt;/code&gt;来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。&lt;/p&gt;
 &lt;p&gt;还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法&lt;code&gt;rac_prepareForReuseSignal&lt;/code&gt;，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;[[[self.cancelButton&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    rac_signalForControlEvents:UIControlEventTouchUpInside]&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    takeUntil:self.rac_prepareForReuseSignal]&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    subscribeNext:^(UIButton *x) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // do other things&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;[[[self.cancelButton
+    rac_signalForControlEvents:UIControlEventTouchUpInside]
+    takeUntil:self.rac_prepareForReuseSignal]
+    subscribeNext:^(UIButton *x) {
+    // do other things
+}];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法&lt;code&gt;rac_command&lt;/code&gt;。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // Assume that we&amp;apos;re logged in at first. We&amp;apos;ll replace this signal later if not.&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    RACSignal *authSignal = [RACSignal empty];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        // Not logged in. Replace signal.&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        authSignal = [[RACSignal createSignal:^RACDisposable *(id&amp;lt;RACSubscriber&amp;gt; subscriber) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            @strongify(self);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&amp;quot;FRPLoginViewController&amp;quot; bundle:nil];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            [self presentViewController:navigationController animated:YES completion:^&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                [subscriber sendCompleted];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            return nil;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;]];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return [authSignal then:^RACSignal *&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        @strongify(self);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        return [[self.viewModel.voteCommand execute:nil] ignoreValues];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;[voteButton.rac_command.errors subscribeNext:^(id x) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [x subscribeNext:^(NSError *error) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;];&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
+voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) {
+    // Assume that we&amp;#39;re logged in at first. We&amp;#39;ll replace this signal later if not.
+    RACSignal *authSignal = [RACSignal empty];
+
+    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) {
+        // Not logged in. Replace signal.
+        authSignal = [[RACSignal createSignal:^RACDisposable *(id&amp;lt;RACSubscriber&amp;gt; subscriber) {
+            @strongify(self);
+
+            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&amp;quot;FRPLoginViewController&amp;quot; bundle:nil];
+            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+
+            [self presentViewController:navigationController animated:YES completion:^{
+                [subscriber sendCompleted];
+            }];
+
+            return nil;
+        }]];
+    }
+
+    return [authSignal then:^RACSignal *{
+        @strongify(self);
+        return [[self.viewModel.voteCommand execute:nil] ignoreValues];
+    }];
+}];
+[voteButton.rac_command.errors subscribeNext:^(id x) {
+    [x subscribeNext:^(NSError *error) {
+        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];
+    }];
+}];
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。&lt;/p&gt;
 &lt;p&gt;对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。&lt;/p&gt;
 &lt;p&gt;##小结&lt;br&gt;由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。&lt;/p&gt;
@@ -230,27 +434,122 @@
 &lt;li&gt;237    Delete Node in a Linked List&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;这是上次笔记里面写过的内容，但是我自己写得时候又出现了问题，看来简单的问题业不能去忽略。&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;/**&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * Definition for singly-linked list.&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * struct ListNode &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; *     int val;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; *     struct ListNode *next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * &amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; */&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;deleteNode&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode* node)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(node == &lt;span class=&quot;literal&quot;&gt;NULL&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode *temp = node-&amp;gt;next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    node-&amp;gt;val = temp-&amp;gt;val;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    node-&amp;gt;next = temp-&amp;gt;next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;built_in&quot;&gt;free&lt;/span&gt;(temp);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;c&quot;&gt;/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+void deleteNode(struct ListNode* node) {
+    if(node == NULL) return;
+    struct ListNode *temp = node-&amp;gt;next;
+    node-&amp;gt;val = temp-&amp;gt;val;
+    node-&amp;gt;next = temp-&amp;gt;next;
+    free(temp);
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;ul&gt;
 &lt;li&gt;171    Excel Sheet Column Number&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;简单的来说就是一个26进制的数，没什么难点&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;titleToNumber&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;char&lt;/span&gt;* s)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; length = &lt;span class=&quot;built_in&quot;&gt;strlen&lt;/span&gt;(s);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; all = &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; i=&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;;i&amp;lt;length;i++)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        all=((s[i]-&lt;span class=&quot;string&quot;&gt;&#39;A&#39;&lt;/span&gt;)+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;) + all * &lt;span class=&quot;number&quot;&gt;26&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; all;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;c&quot;&gt;int titleToNumber(char* s) {
+    int length = strlen(s);
+
+    int all = 0;
+
+    for(int i=0;i&amp;lt;length;i++)
+    {
+        all=((s[i]-&amp;#39;A&amp;#39;)+1) + all * 26;
+    }
+
+    return all;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;ul&gt;
 &lt;li&gt;169    Majority Element&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;出现超过n/2的数，通过遍历就可以了&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;majorityElement&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;* nums, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; numsSize)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; time=&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;,maj;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; i=&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;;i&amp;lt;numsSize;i++)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(time == &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            maj = nums[i];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(nums[i]==maj) &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            time++;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       &lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;         time--;  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       &amp;#125; &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; maj;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;c&quot;&gt;
+int majorityElement(int* nums, int numsSize) {
+    int time=0,maj;
+    for(int i=0;i&amp;lt;numsSize;i++)
+    {
+        if(time == 0)
+        {
+            maj = nums[i];
+        }
+        if(nums[i]==maj) 
+        {
+            time++;
+        }
+       else{
+         time--;  
+       } 
+    }
+    return maj;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;ul&gt;
 &lt;li&gt;206    Reverse Linked List&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;反转链表，基础题目&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;/**&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * Definition for singly-linked list.&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * struct ListNode &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; *     int val;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; *     struct ListNode *next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * &amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; */&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode* &lt;span class=&quot;title&quot;&gt;reverseList&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode* head)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode* pre = &lt;span class=&quot;literal&quot;&gt;NULL&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode* cur = head;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; ListNode* next = &lt;span class=&quot;literal&quot;&gt;NULL&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;while&lt;/span&gt;(cur)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        next = cur-&amp;gt;next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        cur-&amp;gt;next = pre;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        pre = cur;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        cur = next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; pre;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;c&quot;&gt;/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+struct ListNode* reverseList(struct ListNode* head) {
+
+    struct ListNode* pre = NULL;
+    struct ListNode* cur = head;
+    struct ListNode* next = NULL;
+
+    while(cur)
+    {
+        next = cur-&amp;gt;next;
+        cur-&amp;gt;next = pre;
+        pre = cur;
+        cur = next;
+    }
+    return pre;
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;ul&gt;
 &lt;li&gt;263    Ugly Number&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;简单的递归问题&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;isUgly&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; num)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(num&amp;lt;&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;literal&quot;&gt;false&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(num%&lt;span class=&quot;number&quot;&gt;2&lt;/span&gt;==&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        num/=&lt;span class=&quot;number&quot;&gt;2&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; isUgly(num);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(num%&lt;span class=&quot;number&quot;&gt;3&lt;/span&gt;==&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        num/=&lt;span class=&quot;number&quot;&gt;3&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; isUgly(num);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(num%&lt;span class=&quot;number&quot;&gt;5&lt;/span&gt;==&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        num/=&lt;span class=&quot;number&quot;&gt;5&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; isUgly(num);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(num == &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;literal&quot;&gt;true&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;literal&quot;&gt;false&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;c&quot;&gt;
+bool isUgly(int num) {
+
+    if(num&amp;lt;1) return false;
+
+    if(num%2==0)
+    {
+        num/=2;
+        return isUgly(num);
+    }
+
+     if(num%3==0)
+    {
+        num/=3;
+        return isUgly(num);
+    }
+
+     if(num%5==0)
+    {
+        num/=5;
+        return isUgly(num);
+    }
+
+    if(num == 1) return true;
+
+    return false;
+
+}
+&lt;/code&gt;&lt;/pre&gt;
 </content>
     
     <summary type="html">
@@ -279,11 +578,33 @@
 &lt;p&gt;##runtime 关联对象&lt;/p&gt;
 &lt;p&gt;从关联对象说起，是因为在最近的项目中用到了这个方法。当时的场景是，我需要创建一个category，里面需要一个block对象。然而我们知道，我们不能在category中添加成员变量。如果我们尝试添加的话，编译器会报错。当然，使用全局变量能解决这个问题，但明显是一个很优雅的方法，也很容易造成错误。Objective-C针对这一中问题，提供了一个解决方案，就是&lt;code&gt;关联对象(Associated Object)。&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;我们可以想象，关联对象就是一个key - value的模型，把对象通过特定的Key链接到相关的实例上。不过由于使用的是C的借口，所以key是一个void指针。同时，我们要需要为这个关联对象设定内存管理策略。相关的内存的管理策略如下:&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;OBJC_ASSOCIATION_ASSIGN&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;OBJC_ASSOCIATION_RETAIN_NONATOMIC&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;OBJC_ASSOCIATION_COPY_NONATOMIC&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;OBJC_ASSOCIATION_RETAIN&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;OBJC_ASSOCIATION_COPY&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;对&lt;code&gt;OBJC_ASSOCIATION_ASSIGN&lt;/code&gt;的，当关联对象所关联的实例被释放掉后，对象不会被释放掉。而&lt;code&gt;OBJC_ASSOCIATION_RETAIN&lt;/code&gt;和&lt;code&gt;OBJC_ASSOCIATION_COPY&lt;/code&gt;两个的话，在实例被释放掉同时，关联对象也会被release掉。当我们用同一个key去关联另外的实例对象的时候，也会自动释放掉之前关联的对象。这种情况下，先前的关联对象会被妥善地处理掉，并且新的对象会使用它的内存。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;OBJC_ASSOCIATION_ASSIGN
+
+OBJC_ASSOCIATION_RETAIN_NONATOMIC
+
+OBJC_ASSOCIATION_COPY_NONATOMIC
+
+OBJC_ASSOCIATION_RETAIN
+
+OBJC_ASSOCIATION_COPY
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;对&lt;code&gt;OBJC_ASSOCIATION_ASSIGN&lt;/code&gt;的，当关联对象所关联的实例被释放掉后，对象不会被释放掉。而&lt;code&gt;OBJC_ASSOCIATION_RETAIN&lt;/code&gt;和&lt;code&gt;OBJC_ASSOCIATION_COPY&lt;/code&gt;两个的话，在实例被释放掉同时，关联对象也会被release掉。当我们用同一个key去关联另外的实例对象的时候，也会自动释放掉之前关联的对象。这种情况下，先前的关联对象会被妥善地处理掉，并且新的对象会使用它的内存。&lt;/p&gt;
 &lt;p&gt;关联对象的的runtime函数如下&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;// 设置关联对象&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;void objc_setAssociatedObject ( id object, const void *key, id value, objc_AssociationPolicy policy );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 获取关联对象&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;id objc_getAssociatedObject ( id object, const void *key );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 移除关联对象&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;void objc_removeAssociatedObjects ( id object );&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;下面就给出在项目中实际遇到的问题给做一个例子。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// 设置关联对象
+
+void objc_setAssociatedObject ( id object, const void *key, id value, objc_AssociationPolicy policy );
+
+
+
+// 获取关联对象
+
+id objc_getAssociatedObject ( id object, const void *key );
+
+
+
+// 移除关联对象
+
+void objc_removeAssociatedObjects ( id object );
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;下面就给出在项目中实际遇到的问题给做一个例子。&lt;/p&gt;
 &lt;p&gt;首先在头文件中定义了以下内容。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;/media/14463463210542.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
 &lt;p&gt;可以看到，这个category是为了扩展vc，让vc具有一个弹出系统通讯录的功能。&lt;/p&gt;
@@ -297,20 +618,115 @@
 &lt;li&gt;SEL&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;又叫选择器，是表示一个方法的selector的指针，其定义如下：&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;typedef struct objc_selector *SEL;&lt;/code&gt;&lt;br&gt;objc_selector结构体的详细定义没有在&lt;objc runtime.h=&quot;&quot;&gt;头文件中找到。方法的selector用于表示运行时方法的名字。Objective-C在编译时，会依据每一个方法的名字、参数序列，生成一个唯一的整型标识(Int类型的地址)，这个标识就是SEL。&lt;/objc&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;typedef struct objc_selector *SEL;&lt;/code&gt;&lt;br&gt;objc_selector结构体的详细定义没有在&amp;lt;objc/runtime.h&amp;gt;头文件中找到。方法的selector用于表示运行时方法的名字。Objective-C在编译时，会依据每一个方法的名字、参数序列，生成一个唯一的整型标识(Int类型的地址)，这个标识就是SEL。&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;IMP&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;通过SEL找到函数后，就可以获取到该函数的IMP。IMP实际上是一个函数指针，指向方法实现的首地址。其定义如下&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;id (*IMP)(id, SEL, ...)&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;通过取得IMP，我们可以跳过runtime的消息传递机制，直接通过IMP执行指向的函数实现。这样一来可以提高效率，省去了消息传递中的一系列过程&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;回答上面的问题&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;我们知道，在同一个类文件里面，不能存在同一个名字的方法，即使是参数类型不同业不行。同理，同一个类文件里面不能存在同一个名字的对象，所以set方法是唯一的，所以可以使用SEL来获取唯一的整理标识来作为key。&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;##下面是看的一些文章的摘录和自己的一项心得，主要是给自己做一个备忘。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;id (*IMP)(id, SEL, ...)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;通过取得IMP，我们可以跳过runtime的消息传递机制，直接通过IMP执行指向的函数实现。这样一来可以提高效率，省去了消息传递中的一系列过程&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;回答上面的问题
+
+我们知道，在同一个类文件里面，不能存在同一个名字的方法，即使是参数类型不同业不行。同理，同一个类文件里面不能存在同一个名字的对象，所以set方法是唯一的，所以可以使用SEL来获取唯一的整理标识来作为key。
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;##下面是看的一些文章的摘录和自己的一项心得，主要是给自己做一个备忘。&lt;/p&gt;
 &lt;p&gt;选择器相关的操作函数包括：&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;// 返回给定选择器指定的方法的名称&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;const char * sel_getName ( SEL sel );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 在Objective-C Runtime系统中注册一个方法，将方法名映射到一个选择器，并返回这个选择器&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;SEL sel_registerName ( const char *str );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 在Objective-C Runtime系统中注册一个方法&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;SEL sel_getUid ( const char *str );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 比较两个选择器&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;BOOL sel_isEqual ( SEL lhs, SEL rhs );&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;方法操作的函数如下&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;39&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;40&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;41&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;42&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;43&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;44&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;45&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;46&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;47&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;48&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;49&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;50&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;51&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;52&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;53&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;54&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;55&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;56&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;57&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;58&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;59&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;60&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;61&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;62&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;63&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;64&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;65&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;66&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;67&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;68&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;69&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;70&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;71&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;72&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;73&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;74&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;75&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;76&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;77&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;78&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;// 调用指定方法的实现&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// receiver不能为空&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 比method_getImplementation和method_getName更快&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;id method_invoke ( id receiver, Method m, ... );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 调用返回一个数据结构的方法的实现&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;void method_invoke_stret ( id receiver, Method m, ... );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 获取方法名&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 返回一个SEL。如果要获取方法名得C字符串，要用sel_getName(method_getName(method))。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;SEL method_getName ( Method m );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 返回方法的实现&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 注意该函数返回值是方法之前的实现。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;IMP method_getImplementation ( Method m );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 获取描述方法参数和返回值类型的字符串&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;const char * method_getTypeEncoding ( Method m );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 获取方法的返回值类型的字符串&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;char * method_copyReturnType ( Method m );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 获取方法的指定位置参数的类型字符串&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;char * method_copyArgumentType ( Method m, unsigned int index );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 通过引用返回方法的返回值类型字符串&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;void method_getReturnType ( Method m, char *dst, size_t dst_len );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 返回方法的参数的个数&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;unsigned int method_getNumberOfArguments ( Method m );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 通过引用返回方法指定位置参数的类型字符串&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 返回指定方法的方法描述结构体&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;struct objc_method_description * method_getDescription ( Method m );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 设置方法的实现&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;IMP method_setImplementation ( Method m, IMP imp );&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 交换两个方法的实现&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;void method_exchangeImplementations ( Method m1, Method m2 );&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;##方法调用流程&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// 返回给定选择器指定的方法的名称
+const char * sel_getName ( SEL sel );
+// 在Objective-C Runtime系统中注册一个方法，将方法名映射到一个选择器，并返回这个选择器
+
+SEL sel_registerName ( const char *str );
+
+
+
+// 在Objective-C Runtime系统中注册一个方法
+
+SEL sel_getUid ( const char *str );
+
+
+
+// 比较两个选择器
+
+BOOL sel_isEqual ( SEL lhs, SEL rhs );
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;方法操作的函数如下&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// 调用指定方法的实现
+// receiver不能为空
+// 比method_getImplementation和method_getName更快
+
+id method_invoke ( id receiver, Method m, ... );
+
+
+
+// 调用返回一个数据结构的方法的实现
+
+void method_invoke_stret ( id receiver, Method m, ... );
+
+
+
+// 获取方法名
+// 返回一个SEL。如果要获取方法名得C字符串，要用sel_getName(method_getName(method))。
+
+SEL method_getName ( Method m );
+
+
+
+// 返回方法的实现
+// 注意该函数返回值是方法之前的实现。
+IMP method_getImplementation ( Method m );
+
+
+
+// 获取描述方法参数和返回值类型的字符串
+
+const char * method_getTypeEncoding ( Method m );
+
+
+
+// 获取方法的返回值类型的字符串
+
+char * method_copyReturnType ( Method m );
+
+
+
+// 获取方法的指定位置参数的类型字符串
+
+char * method_copyArgumentType ( Method m, unsigned int index );
+
+
+
+// 通过引用返回方法的返回值类型字符串
+
+void method_getReturnType ( Method m, char *dst, size_t dst_len );
+
+
+
+// 返回方法的参数的个数
+
+unsigned int method_getNumberOfArguments ( Method m );
+
+
+
+// 通过引用返回方法指定位置参数的类型字符串
+
+void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );
+
+
+
+// 返回指定方法的方法描述结构体
+
+struct objc_method_description * method_getDescription ( Method m );
+
+
+
+// 设置方法的实现
+
+IMP method_setImplementation ( Method m, IMP imp );
+
+
+
+// 交换两个方法的实现
+
+void method_exchangeImplementations ( Method m1, Method m2 );
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;##方法调用流程&lt;/p&gt;
 &lt;p&gt;在Objective-C中，消息会一直到运行时绑定的方法实现上。我们常用的[receiver message]会被runtime转换为一个函数调用&lt;code&gt;objc_msgSend&lt;/code&gt;。如下&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;objc_msgSend(receiver, selector)&lt;/code&gt;&lt;br&gt;如果消息中还有其它参数，则该方法的形式如下所示：&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;objc_msgSend(receiver, selector, arg1, arg2, ...)&lt;/code&gt;&lt;/p&gt;
@@ -339,13 +755,150 @@
 &lt;/ol&gt;
 &lt;p&gt;###动态方法解析&lt;/p&gt;
 &lt;p&gt;当当对象接收到位置的消息时，首先会调用类的&lt;code&gt;+resolveInstanceMethod:(实例方法)&lt;/code&gt;或者&lt;code&gt;+resolveClassMethod:(类方法)&lt;/code&gt;。因此，我们可以去增加一个处理方法。在消息不能被对象接收的时候就运行这个方法，前提是这个方法已经被实现了。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;void functionForMethod1(id self, SEL _cmd) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   NSLog(@&amp;quot;%@, %p&amp;quot;, self, _cmd);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;+ (BOOL)resolveInstanceMethod:(SEL)sel &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSString *selectorString = NSStringFromSelector(sel);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    if ([selectorString isEqualToString:@&amp;quot;method1&amp;quot;]) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        class_addMethod(self.class, @selector(method1), (IMP)functionForMethod1, &amp;quot;@:&amp;quot;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return [super resolveInstanceMethod:sel];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;h3 id=&quot;备用接收者&quot;&gt;&lt;a href=&quot;#备用接收者&quot; class=&quot;headerlink&quot; title=&quot;备用接收者&quot;&gt;&lt;/a&gt;备用接收者&lt;/h3&gt;&lt;p&gt;当我们的对象不能处理消息的时候，我们将消息转发到一个备用的对象，只要这个对象的类实现了这个方法&lt;br&gt;&lt;code&gt;- (id)forwardingTargetForSelector:(SEL)aSelector&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;void functionForMethod1(id self, SEL _cmd) {
+
+   NSLog(@&amp;quot;%@, %p&amp;quot;, self, _cmd);
+
+}
+
+
+
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+
+
+
+    NSString *selectorString = NSStringFromSelector(sel);
+
+
+
+    if ([selectorString isEqualToString:@&amp;quot;method1&amp;quot;]) {
+
+        class_addMethod(self.class, @selector(method1), (IMP)functionForMethod1, &amp;quot;@:&amp;quot;);
+
+    }
+
+
+
+    return [super resolveInstanceMethod:sel];
+
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&quot;备用接收者&quot;&gt;&lt;a href=&quot;#备用接收者&quot; class=&quot;headerlink&quot; title=&quot;备用接收者&quot;&gt;&lt;/a&gt;备用接收者&lt;/h3&gt;&lt;p&gt;当我们的对象不能处理消息的时候，我们将消息转发到一个备用的对象，只要这个对象的类实现了这个方法&lt;br&gt;&lt;code&gt;- (id)forwardingTargetForSelector:(SEL)aSelector&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;如果返回的不是一个nil的话，那么这个对象就会被作为消息的心的接收者。而在外部看来，这个消息仍然被我们的发送的对象处理了。注意，这个方法返回的对象不是self自身，不然就是个无限循环了。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;39&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;40&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;41&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;42&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;43&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;44&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;45&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;46&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;47&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;48&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;49&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;50&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;51&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;52&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;53&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;54&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;55&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;56&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;57&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;58&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;59&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;60&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;61&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;62&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;63&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;64&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;65&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;66&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;67&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;68&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;69&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;70&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;71&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;72&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;73&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;74&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;75&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;76&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;77&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;78&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;79&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;80&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;81&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;82&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;83&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;84&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;85&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;86&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;87&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;88&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;89&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;90&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;91&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;92&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;93&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;94&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;95&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;96&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;97&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;98&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;99&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;100&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;101&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;102&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;103&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;104&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;105&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;106&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;107&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;108&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;109&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;110&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;111&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;@interface SUTRuntimeMethodHelper : NSObject&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (void)method2;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@end&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@implementation SUTRuntimeMethodHelper&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (void)method2 &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSLog(@&amp;quot;%@, %p&amp;quot;, self, _cmd);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@end&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;#pragma mark -&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@interface SUTRuntimeMethod () &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    SUTRuntimeMethodHelper *_helper;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@end&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@implementation SUTRuntimeMethod&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;+ (instancetype)object &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return [[self alloc] init];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (instancetype)init &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    self = [super init];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    if (self != nil) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        _helper = [[SUTRuntimeMethodHelper alloc] init];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return self;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (void)test &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    [self performSelector:@selector(method2)];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (id)forwardingTargetForSelector:(SEL)aSelector &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSLog(@&amp;quot;forwardingTargetForSelector&amp;quot;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSString *selectorString = NSStringFromSelector(aSelector);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    // 将消息转发给_helper来处理&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    if ([selectorString isEqualToString:@&amp;quot;method2&amp;quot;]) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        return _helper;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    return [super forwardingTargetForSelector:aSelector];&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;@end&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;###完成的消息转发&lt;/p&gt;
-&lt;p&gt;如果上述的行为都不能解决的话，runtime在这时候会给对象最后一次机会：&lt;br&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;- (void)forwardInvocation:(NSInvocation *)anInvocation&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
-&lt;blockquote&gt;
+&lt;pre&gt;&lt;code&gt;@interface SUTRuntimeMethodHelper : NSObject
+
+
+
+- (void)method2;
+
+
+
+@end
+
+
+
+@implementation SUTRuntimeMethodHelper
+
+
+
+- (void)method2 {
+
+    NSLog(@&amp;quot;%@, %p&amp;quot;, self, _cmd);
+
+}
+
+
+
+@end
+
+
+
+#pragma mark -
+
+
+
+@interface SUTRuntimeMethod () {
+
+    SUTRuntimeMethodHelper *_helper;
+
+}
+
+
+
+@end
+
+
+
+@implementation SUTRuntimeMethod
+
+
+
++ (instancetype)object {
+
+    return [[self alloc] init];
+
+}
+
+
+
+- (instancetype)init {
+
+    self = [super init];
+
+    if (self != nil) {
+
+        _helper = [[SUTRuntimeMethodHelper alloc] init];
+
+    }
+
+
+
+    return self;
+
+}
+
+
+
+- (void)test {
+
+    [self performSelector:@selector(method2)];
+
+}
+
+
+
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+
+
+
+    NSLog(@&amp;quot;forwardingTargetForSelector&amp;quot;);
+
+
+
+    NSString *selectorString = NSStringFromSelector(aSelector);
+
+
+
+    // 将消息转发给_helper来处理
+
+    if ([selectorString isEqualToString:@&amp;quot;method2&amp;quot;]) {
+
+        return _helper;
+
+    }
+
+
+
+    return [super forwardingTargetForSelector:aSelector];
+
+}
+
+
+
+@end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;###完成的消息转发&lt;/p&gt;
+&lt;p&gt;如果上述的行为都不能解决的话，runtime在这时候会给对象最后一次机会：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)forwardInvocation:(NSInvocation *)anInvocation
+&lt;/code&gt;&lt;/pre&gt;&lt;blockquote&gt;
 &lt;p&gt;这个时候，消息的所有未处理的内容都被封装到了anInvocation中，包括SEL,target，参数。我们在这里可以选着将消息转发给其他的对象。&lt;/p&gt;
 &lt;p&gt;forwardInvocation:方法的实现有两个任务：&lt;/p&gt;
 &lt;p&gt;定位可以响应封装在anInvocation中的消息的对象。这个对象不需要能处理所有未知消息。&lt;br&gt;使用anInvocation作为参数，将消息发送到选中的对象。anInvocation将会保留调用结果，运行时系统会提取这一结果并将其发送到消息的原始发送者。&lt;/p&gt;
@@ -365,7 +918,7 @@
 &lt;ol&gt;
 &lt;li&gt;总是调用方法的原始实现(除非有更好的理由不这么做)：API提供了一个输入与输出约定，但其内部实现是一个黑盒。Swizzle一个方法而不调用原始实现可能会打破私有状态底层操作，从而影响到程序的其它部分。&lt;/li&gt;
 &lt;li&gt;避免冲突：给自定义的分类方法加前缀，从而使其与所依赖的代码库不会存在命名冲突。&lt;/li&gt;
-&lt;li&gt;明白是怎么回事：简单地拷贝粘贴swizzle代码而不理解它是如何工作的，不仅危险，而且会浪费学习Objective-C运行时的机会。阅读Objective-C Runtime Reference和查看&lt;objc runtime.h=&quot;&quot;&gt;头文件以了解事件是如何发生的。&lt;/objc&gt;&lt;/li&gt;
+&lt;li&gt;明白是怎么回事：简单地拷贝粘贴swizzle代码而不理解它是如何工作的，不仅危险，而且会浪费学习Objective-C运行时的机会。阅读Objective-C Runtime Reference和查看&amp;lt;objc/runtime.h&amp;gt;头文件以了解事件是如何发生的。&lt;/li&gt;
 &lt;li&gt;小心操作：无论我们对Foundation, UIKit或其它内建框架执行Swizzle操作抱有多大信心，需要知道在下一版本中许多事可能会不一样。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;##总结&lt;/p&gt;
@@ -419,7 +972,20 @@
 &lt;/ol&gt;
 &lt;p&gt;链表就是链式存储的线性表。根据指针域的不同，链表分为单项链表，双向链表，循环链表等等&lt;/p&gt;
 &lt;p&gt;一个简单的List定义&lt;/p&gt;
-&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;built_in&quot;&gt;list&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; ver;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;built_in&quot;&gt;list&lt;/span&gt; *next;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;built_in&quot;&gt;list&lt;/span&gt; *listLink;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 插入&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;insert_list&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(listLink *, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;)&lt;/span&gt;&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 打印&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;print_list&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(listLink *, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;)&lt;/span&gt;&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 链表长&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;list_length&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(listLink)&lt;/span&gt;&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 搜索一个特定的值&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;listLink &lt;span class=&quot;title&quot;&gt;search_list&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(listLink, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;)&lt;/span&gt;&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;C&quot;&gt;struct list {
+int ver;
+struct list *next;
+};
+typedef struct list *listLink;
+// 插入
+void insert_list(listLink *, int);
+// 打印
+void print_list(listLink *, int);
+// 链表长
+int list_length(listLink);
+// 搜索一个特定的值
+listLink search_list(listLink, int);
+&lt;/code&gt;&lt;/pre&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;四个方法的实现&lt;/p&gt;
@@ -569,7 +1135,8 @@
 &lt;p&gt;##使用的例子&lt;/p&gt;
 &lt;p&gt;###使用&lt;code&gt;AFURLSessionManager&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;从源码中可以看到，&lt;code&gt;AFURLSessionManager&lt;/code&gt;实现了&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate, NSURLSessionDownloadDelegate, NSSecureCoding, NSCopying&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-c&quot;&gt;NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate, NSURLSessionDownloadDelegate, NSSecureCoding, NSCopying
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;首先需要设置url和NSURLConfirguration&lt;/p&gt;
 &lt;p&gt;这里是使用百度API商店的公开API&lt;br&gt;&lt;img src=&quot;/media/14453928846040.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
 &lt;p&gt;然后初始化Manager&lt;img src=&quot;/media/14453929237373.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
@@ -742,18 +1309,28 @@
 &lt;p&gt;##JSON&lt;/p&gt;
 &lt;p&gt;JSON是一种轻量化的数据格式。他的特点就是方便已用。目前90%的网络传输都是依赖于JSON格式。&lt;/p&gt;
 &lt;p&gt;首先来看看JSON格式是怎么样的。&lt;/p&gt;
-&lt;figure class=&quot;highlight&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&quot;access_token&quot;: &quot;ACCESS_TOKEN&quot;,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &quot;expires_in&quot;: 1234,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &quot;remind_in&quot;:&quot;798114&quot;,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &quot;uid&quot;:&quot;12341234&quot;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;json&quot;&gt;
+&amp;quot;access_token&amp;quot;: &amp;quot;ACCESS_TOKEN&amp;quot;,
+
+   &amp;quot;expires_in&amp;quot;: 1234,
+
+   &amp;quot;remind_in&amp;quot;:&amp;quot;798114&amp;quot;,
+
+   &amp;quot;uid&amp;quot;:&amp;quot;12341234&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;这是一个常见的JSON格式。比较容易的看出，其实就是一种key-value的形式。&lt;/p&gt;
 &lt;p&gt;key我们都好了解，是一个string。那么value就会有不一样的值。通过对比OC的对象，我们可以更容易的理解JSON中的数据类型。&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt; JSON                    OC
+&lt;pre&gt;&lt;code&gt;            JSON                    OC
 
- {}                        NSDictionary
+            {}                        NSDictionary
 
- []                        NSArray
+            []                        NSArray
 
- &amp;quot;&amp;quot;                        NSString
+            &amp;quot;&amp;quot;                        NSString
 
-数字                      NSNumber
+           数字                      NSNumber
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;知道了JSON所对应的OC对象，我们就可以通过解析JSON对象，将相关的数据转换成OC对象来存储。在这里，介绍一种能够在本地模拟API的方式，这也是由于自己找不到很好的开发API所以想在本地能够模拟API的方式。&lt;/p&gt;
 &lt;p&gt;##JSON Server 模拟 API&lt;/p&gt;
 &lt;p&gt;###第一步 安装&lt;/p&gt;
@@ -769,7 +1346,17 @@
 &lt;li&gt;安装json-server&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;&lt;code&gt;npm install -g json-server&lt;/code&gt;&lt;/p&gt;
-&lt;h2 id=&quot;根据需求创建JSON&quot;&gt;&lt;a href=&quot;#根据需求创建JSON&quot; class=&quot;headerlink&quot; title=&quot;根据需求创建JSON&quot;&gt;&lt;/a&gt;根据需求创建JSON&lt;/h2&gt;&lt;p&gt;安装完毕后，随便找个你喜欢的文件夹，创建一个JSON格式的文件，如下&lt;br&gt;&lt;figure class=&quot;highlight json&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  &lt;span class=&quot;attr&quot;&gt;&quot;posts&quot;&lt;/span&gt;: [&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123; &lt;span class=&quot;attr&quot;&gt;&quot;id&quot;&lt;/span&gt;: &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;, &lt;span class=&quot;attr&quot;&gt;&quot;title&quot;&lt;/span&gt;: &lt;span class=&quot;string&quot;&gt;&quot;json-server&quot;&lt;/span&gt;, &lt;span class=&quot;attr&quot;&gt;&quot;author&quot;&lt;/span&gt;: &lt;span class=&quot;string&quot;&gt;&quot;typicode&quot;&lt;/span&gt; &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  ],&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  &lt;span class=&quot;attr&quot;&gt;&quot;comments&quot;&lt;/span&gt;: [&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123; &lt;span class=&quot;attr&quot;&gt;&quot;id&quot;&lt;/span&gt;: &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;, &lt;span class=&quot;attr&quot;&gt;&quot;body&quot;&lt;/span&gt;: &lt;span class=&quot;string&quot;&gt;&quot;some comment&quot;&lt;/span&gt;, &lt;span class=&quot;attr&quot;&gt;&quot;postId&quot;&lt;/span&gt;: &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt; &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  ],&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  &lt;span class=&quot;attr&quot;&gt;&quot;profile&quot;&lt;/span&gt;: &amp;#123; &lt;span class=&quot;attr&quot;&gt;&quot;name&quot;&lt;/span&gt;: &lt;span class=&quot;string&quot;&gt;&quot;typicode&quot;&lt;/span&gt; &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;h2 id=&quot;根据需求创建JSON&quot;&gt;&lt;a href=&quot;#根据需求创建JSON&quot; class=&quot;headerlink&quot; title=&quot;根据需求创建JSON&quot;&gt;&lt;/a&gt;根据需求创建JSON&lt;/h2&gt;&lt;p&gt;安装完毕后，随便找个你喜欢的文件夹，创建一个JSON格式的文件，如下&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;JSON&quot;&gt;{
+  &amp;quot;posts&amp;quot;: [
+    { &amp;quot;id&amp;quot;: 1, &amp;quot;title&amp;quot;: &amp;quot;json-server&amp;quot;, &amp;quot;author&amp;quot;: &amp;quot;typicode&amp;quot; }
+  ],
+  &amp;quot;comments&amp;quot;: [
+    { &amp;quot;id&amp;quot;: 1, &amp;quot;body&amp;quot;: &amp;quot;some comment&amp;quot;, &amp;quot;postId&amp;quot;: 1 }
+  ],
+  &amp;quot;profile&amp;quot;: { &amp;quot;name&amp;quot;: &amp;quot;typicode&amp;quot; }
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;然后保存。&lt;/p&gt;
 &lt;p&gt;###启动JSON-Server&lt;/p&gt;
 &lt;p&gt;通过命令&lt;code&gt;json-server --watch JSON文件的名字.json&lt;/code&gt;来启动Server&lt;/p&gt;
@@ -782,6 +1369,8 @@
 &lt;li&gt;通过&lt;code&gt;NSJSONSerialization&lt;/code&gt;来序列化JSON.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;pre&gt;&lt;code&gt;![](/media/14430773793672.jpg)
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;输出的结果&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;/media/14430774045308.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
 &lt;p&gt;对比上面的JSON数据，我们可以看出解析的结果是正确的&lt;/p&gt;
@@ -808,8 +1397,34 @@
 &lt;p&gt;虽然JSON在网络传输中有90%的使用率，但是我们依然不能放弃10%的XML是吧。&lt;/p&gt;
 &lt;p&gt;XML全称是Extensible Markup Language，译作“可扩展标记语言”&lt;br&gt;跟JSON一样，也是常用的一种用于交互的数据格式&lt;br&gt;一般也叫XML文档（XML Document）&lt;/p&gt;
 &lt;p&gt;下面是一个典型的XML文件的结构&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;一个元素包括了开始标签和结束标签&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;拥有元素内容：&amp;lt;city&amp;gt;上海&amp;lt;/city&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;没有元素内容：&amp;lt;city&amp;gt;&amp;lt;/city&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;没有元素内容的简写：&amp;lt;city/&amp;gt; &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;一个元素可以嵌套若干个子元素（不能出现交叉嵌套）&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;lt;citys&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;lt;city&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;lt;name&amp;gt;上海&amp;lt;/name&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;lt;weather&amp;gt;大暴雨&amp;lt;/weather&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          &amp;lt;air&amp;gt;舒适&amp;lt;/air&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;lt;/city&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;lt;/citys&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;规范的XML文档最多只有1个根元素，其他元素都是根元素的子孙元素&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;XML中的所有空格和换行，都会当做具体内容处理&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;一个元素可以拥有多个属性，属性值必须用 双引号&amp;quot;&amp;quot; 或者 单引号&amp;apos;&amp;apos; 括住。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;lt;city name=&amp;quot;上海&amp;quot; weather=&amp;quot;大暴雨&amp;quot; air=&amp;quot;舒适&amp;quot; /&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;属性表示的信息也可以用子元素来表示，比如&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &amp;lt;city&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;lt;weather&amp;gt;大暴雨&amp;lt;/weather&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          &amp;lt;air&amp;gt;舒适&amp;lt;/air&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;lt;/city&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;解析XML有两种方式&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;一个元素包括了开始标签和结束标签
+拥有元素内容：&amp;lt;city&amp;gt;上海&amp;lt;/city&amp;gt;
+没有元素内容：&amp;lt;city&amp;gt;&amp;lt;/city&amp;gt;
+没有元素内容的简写：&amp;lt;city/&amp;gt; 
+
+一个元素可以嵌套若干个子元素（不能出现交叉嵌套）
+&amp;lt;citys&amp;gt;
+    &amp;lt;city&amp;gt;
+        &amp;lt;name&amp;gt;上海&amp;lt;/name&amp;gt;
+        &amp;lt;weather&amp;gt;大暴雨&amp;lt;/weather&amp;gt;
+          &amp;lt;air&amp;gt;舒适&amp;lt;/air&amp;gt;
+    &amp;lt;/city&amp;gt;
+&amp;lt;/citys&amp;gt;
+
+规范的XML文档最多只有1个根元素，其他元素都是根元素的子孙元素
+XML中的所有空格和换行，都会当做具体内容处理
+
+一个元素可以拥有多个属性，属性值必须用 双引号&amp;quot;&amp;quot; 或者 单引号&amp;#39;&amp;#39; 括住。
+&amp;lt;city name=&amp;quot;上海&amp;quot; weather=&amp;quot;大暴雨&amp;quot; air=&amp;quot;舒适&amp;quot; /&amp;gt;
+
+
+属性表示的信息也可以用子元素来表示，比如
+
+   &amp;lt;city&amp;gt;
+        &amp;lt;weather&amp;gt;大暴雨&amp;lt;/weather&amp;gt;
+          &amp;lt;air&amp;gt;舒适&amp;lt;/air&amp;gt;
+    &amp;lt;/city&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;解析XML有两种方式&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;DOM解析：一次性将整个XML文档加载进内存，比较适合解析小文件&lt;/li&gt;
 &lt;li&gt;SAX解析：从根元素开始，按顺序一个元素一个元素往下解析，比较适合解析大文件&lt;/li&gt;
@@ -862,7 +1477,8 @@
     <updated>2015-09-24T09:04:36.000Z</updated>
     
     <content type="html">&lt;p&gt;第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下&lt;/p&gt;
-&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
+&lt;p&gt;&amp;lt;!--more--&amp;gt;  
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;增加网络编程的相关知识&lt;ul&gt;
 &lt;li&gt;TCP/IP HTTP HTTPS 协议的学习和了解&lt;/li&gt;
@@ -939,7 +1555,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下&lt;/p&gt;
+      &lt;p&gt;第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么
     
     </summary>
     
@@ -955,7 +1571,7 @@
     <published>2015-09-18T08:48:55.000Z</published>
     <updated>2015-09-24T09:04:35.000Z</updated>
     
-    <content type="html">&lt;h1 id=&quot;IP-TCP-HTTPs-随便谈&quot;&gt;&lt;a href=&quot;#IP-TCP-HTTPs-随便谈&quot; class=&quot;headerlink&quot; title=&quot;IP TCP HTTPs 随便谈&quot;&gt;&lt;/a&gt;IP TCP HTTPs 随便谈&lt;/h1&gt;&lt;p&gt;在总结自己的技能书的缺点后，决定优先补充自己在计算机网络上知识的漏洞。现在互联网企业，离开了互联网什么都不是。对互联网，普通人可能停留在概念和使用上，而开发人员应该去深入的了解运行进制，进而去优化自己开发的产品。这篇文章，主要是记录自己最近看的一些资料的笔记。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  &lt;/p&gt;
+    <content type="html">&lt;h1 id=&quot;IP-TCP-HTTPs-随便谈&quot;&gt;&lt;a href=&quot;#IP-TCP-HTTPs-随便谈&quot; class=&quot;headerlink&quot; title=&quot;IP TCP HTTPs 随便谈&quot;&gt;&lt;/a&gt;IP TCP HTTPs 随便谈&lt;/h1&gt;&lt;p&gt;在总结自己的技能书的缺点后，决定优先补充自己在计算机网络上知识的漏洞。现在互联网企业，离开了互联网什么都不是。对互联网，普通人可能停留在概念和使用上，而开发人员应该去深入的了解运行进制，进而去优化自己开发的产品。这篇文章，主要是记录自己最近看的一些资料的笔记。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
 &lt;p&gt;##IP 协议&lt;/p&gt;
 &lt;p&gt;IP协议，是网络协议（Internet Protocol）的缩写。IP协议是互联网众多协议的基础。&lt;/p&gt;
 &lt;p&gt;IP协议实现了解&lt;code&gt;*分组交换网络*&lt;/code&gt;。在协议下，每个机器被称为&lt;code&gt;*主机*&lt;/code&gt;，IP协议明确了主机之间数据包的传输方式。&lt;/p&gt;
@@ -1024,7 +1640,7 @@
 &lt;p&gt;简单的来说，通过SSL/TSL四次握手，来解决下面三个问题。&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;数字证书：该证书包含了公钥等信息，一般是由服务器发给客户端，接收方通过验证这个证书是不是由信赖的CA签发，或者与本地的证书相对比，来判断证书是否可信；假如需要双向验证，则服务器和客户端都需要发送数字证书给对方验证；&lt;/li&gt;
-&lt;li&gt;三个随机数：这三个随机数构成了后续通信过程中用来对数据进行对称加密解密的“对话密钥”。&lt;br&gt; 首先客户端先发第一个随机数N1，然后服务器回了第    二个随机数N2（这个过程同时把之前提到的证书发给    客户端），这两个随机数都是明文的；而第三个随机    数N3（这个随机数被称为Premaster secret），    客户端用数字证书的公钥进行非对称加密，发给服务    器；而服务器用只有自己知道的私钥来解密，获取第    三个随机数。这样，服务端和客户端都有了三个随机    数N1+N2+N3，然后两端就使用这三个随机数来生    成“对话密钥”，在此之后的通信都是使用这个“对话    密钥”来进行对称加密解密。因为这个过程中，服务端    的私钥只用来解密第三个随机数，从来没有在网络中    传输过，这样的话，只要私钥没有被泄露，那么数据    就是安全的。&lt;/li&gt;
+&lt;li&gt;三个随机数：这三个随机数构成了后续通信过程中用来对数据进行对称加密解密的“对话密钥”。&lt;br&gt;首先客户端先发第一个随机数N1，然后服务器回了第    二个随机数N2（这个过程同时把之前提到的证书发给    客户端），这两个随机数都是明文的；而第三个随机    数N3（这个随机数被称为Premaster secret），    客户端用数字证书的公钥进行非对称加密，发给服务    器；而服务器用只有自己知道的私钥来解密，获取第    三个随机数。这样，服务端和客户端都有了三个随机    数N1+N2+N3，然后两端就使用这三个随机数来生    成“对话密钥”，在此之后的通信都是使用这个“对话    密钥”来进行对称加密解密。因为这个过程中，服务端    的私钥只用来解密第三个随机数，从来没有在网络中    传输过，这样的话，只要私钥没有被泄露，那么数据    就是安全的。&lt;/li&gt;
 &lt;li&gt;加密通信协议：就是双方商量使用哪一种加密方式，假如两者支持的加密方式不匹配，则无法进行通信；&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;具体的可以参考上面两篇文章的内容，去了解SSL/TSL加密的过程。在这里想重点说的是在iOS中使用HTTPS。&lt;/p&gt;
@@ -1078,7 +1694,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     
     <summary type="html">
     
-      &lt;h1 id=&quot;IP-TCP-HTTPs-随便谈&quot;&gt;&lt;a href=&quot;#IP-TCP-HTTPs-随便谈&quot; class=&quot;headerlink&quot; title=&quot;IP TCP HTTPs 随便谈&quot;&gt;&lt;/a&gt;IP TCP HTTPs 随便谈&lt;/h1&gt;&lt;p&gt;在总结自己的技能书的缺点后，决定优先补充自己在计算机网络上知识的漏洞。现在互联网企业，离开了互联网什么都不是。对互联网，普通人可能停留在概念和使用上，而开发人员应该去深入的了解运行进制，进而去优化自己开发的产品。这篇文章，主要是记录自己最近看的一些资料的笔记。&lt;br&gt;
+      &lt;h1 id=&quot;IP-TCP-HTTPs-随便谈&quot;&gt;&lt;a href=&quot;#IP-TCP-HTTPs-随便谈&quot; class=&quot;headerlink&quot; title=&quot;IP TCP HTTPs 随便谈&quot;&gt;&lt;/a&gt;IP TCP HTTPs 随便谈&lt;/h1&gt;&lt;p&gt;在总结自己的技能书的缺点后，
     
     </summary>
     
@@ -1129,7 +1745,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     
     <content type="html">&lt;p&gt;##写在前面&lt;/p&gt;
 &lt;p&gt;最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。对与socket的认识还是学习java的时候知道可以使用socket进行客户端与服务器端的通信，可是当时并没有去实践。欠下的债都是要还的。&lt;/p&gt;
-&lt;p&gt;此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  &lt;/p&gt;
+&lt;p&gt;此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
 &lt;p&gt;##正文&lt;/p&gt;
 &lt;p&gt;socket，套接字，是基于TCP/IP协议族下的一种网络通信方式。我们知道，在本地，进程之间有多种方法去通信。在网络中，我们同样可以使用socket进行通信。接下来一步步来看socket是如何使网络上的进程相互通信的。&lt;/p&gt;
 &lt;p&gt;我们知道，要像让进程通信，首先必须确认进程的身份。如同我们只有知道了和自己谈话的是谁，我们才知道谈什么。在本地，进程拥有唯一的标识PID。在网络上，基于TCP/IP协议，通过&lt;em&gt;IP，协议，端口号&lt;/em&gt;，我们可以确认一个进程的唯一身份。&lt;/p&gt;
@@ -1138,7 +1754,45 @@ requestOperationManager.securityPolicy = securityPolicy;
 &lt;p&gt;socket起源于UNIX。我们知道UNIX的设计原理就是&lt;em&gt;一切皆文件&lt;/em&gt;，操作都是&lt;em&gt;open -&amp;gt; read/write -&amp;gt; close&lt;/em&gt;。所以说，我们可以认为socket也是一个文件，是基于上述设计原理的实现。socket函数就是专门来完成相应操作的。&lt;/p&gt;
 &lt;p&gt;##socket 操作&lt;/p&gt;
 &lt;p&gt;在上面我们知道了socket是一个文件，那么socket自然有对应的操作方法，下面是基于TCP的几个基本操作。&lt;br&gt;(注，本文的方法是使用Objective-C写的，其实socket在任何语言都是差不多的)&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 创建并初始化socket，返回socket的文件描述符，如果返回值为-1则创建失败&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int socket(int addresFamily, int type, int protocol)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 关闭socket&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int close(int socketFileDescriptor)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 将socket与特定的IP地址和端口号绑定，成功返回0，失败返回-1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int bind(int socketFileDescriptor, sockadd *addressToBind)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 接受客户端的请求并且将客户端的网络地址信息存入clientAddress&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 当客户端的连接请求被接受后，双方的通信链路就建立好了，两者就可以开始通信了。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int accept(int socketFileDescriptor, sockaddr *clientAddress, int clientAddressStructLength)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 客户端向特定的IP的服务器发送连接请求，成功返回0，失败返回-1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 当服务器建立好后，客户端就可以通过这个函数与服务器端建立连接。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 对于UDP来说，该接口是可选的，如果调用了这个接口表明设置了UDP socket默认的网络地址.&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 对于TCP来说，这里就是三次握手发生的地方&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int connect(int socketFileDescriptor, sockaddr *serverAddress, int serverAddressLength)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 通过DNS查找特定的IP，如果找不到返回NULL&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;hostent *gethostbyname(char *hostname)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 发送数据，发送成功后返回成功发送的字节数，否则返回-1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int send(int socketFileDescriptor,char *buffer, int flags)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 接收数据，成功后返回成功读取的字节数，否则返回-1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int receive(int socketFileDesciptor,char *buffer,int flags)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 下面两个方法是UDP的方法&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// UDP发送,返回状态同上&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int sendto(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *destinationAddress, int destinationAddressLength)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// UDP读取，返回状态同上&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *fromAddress, int fromAddressLength)&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;objective-c&quot;&gt;
+// 创建并初始化socket，返回socket的文件描述符，如果返回值为-1则创建失败
+int socket(int addresFamily, int type, int protocol)
+
+// 关闭socket
+int close(int socketFileDescriptor)
+
+// 将socket与特定的IP地址和端口号绑定，成功返回0，失败返回-1
+int bind(int socketFileDescriptor, sockadd *addressToBind)
+
+// 接受客户端的请求并且将客户端的网络地址信息存入clientAddress
+// 当客户端的连接请求被接受后，双方的通信链路就建立好了，两者就可以开始通信了。
+
+int accept(int socketFileDescriptor, sockaddr *clientAddress, int clientAddressStructLength)
+
+// 客户端向特定的IP的服务器发送连接请求，成功返回0，失败返回-1
+// 当服务器建立好后，客户端就可以通过这个函数与服务器端建立连接。
+// 对于UDP来说，该接口是可选的，如果调用了这个接口表明设置了UDP socket默认的网络地址.
+// 对于TCP来说，这里就是三次握手发生的地方
+
+int connect(int socketFileDescriptor, sockaddr *serverAddress, int serverAddressLength)
+
+// 通过DNS查找特定的IP，如果找不到返回NULL
+hostent *gethostbyname(char *hostname)
+
+// 发送数据，发送成功后返回成功发送的字节数，否则返回-1
+int send(int socketFileDescriptor,char *buffer, int flags)
+
+// 接收数据，成功后返回成功读取的字节数，否则返回-1
+int receive(int socketFileDesciptor,char *buffer,int flags)
+
+// 下面两个方法是UDP的方法
+
+// UDP发送,返回状态同上
+int sendto(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *destinationAddress, int destinationAddressLength)
+
+// UDP读取，返回状态同上
+int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags, sockaddr *fromAddress, int fromAddressLength)
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;通过观察方法，我们发现socket其实就是&lt;em&gt;确认目标 -&amp;gt;建立连接 -&amp;gt; 传送/读取 -&amp;gt; 断开&lt;/em&gt; 的过程&lt;/p&gt;
 &lt;p&gt;我们再来看看TCP和UDP下socket操作的不同的地方&lt;/p&gt;
 &lt;p&gt;####TCP&lt;/p&gt;
@@ -1151,8 +1805,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     <summary type="html">
     
       &lt;p&gt;##写在前面&lt;/p&gt;
-&lt;p&gt;最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。对与socket的认识还是学习java的时候知道可以使用socket进行客户端与服务器端的通信，可是当时并没有去实践。欠下的债都是要还的。&lt;/p&gt;
-&lt;p&gt;此外为什么我每篇博文的开头都写点自己的感受。我觉得博客不仅仅是记录自己的技术积累，也是抒发自己心情的一个途经，所以我会在每篇文章前面写一点点自己在写博文的时候的心情。&lt;br&gt;
+&lt;p&gt;最近一直在找更好的实习，发现网络编程是一个优秀的程序员必备的技能。而自己在学校中学到的东西很少（逃。要不是有之前的实习和做个一个小小的项目，对于很多知识可能还只是停留在书本上（其实就是没进脑）。最近有人问我是否了解socket，我顿时语塞。对与s
     
     </summary>
     
@@ -1169,7 +1822,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     <updated>2015-09-24T09:05:48.000Z</updated>
     
     <content type="html">&lt;p&gt;#写在最前面&lt;/p&gt;
-&lt;p&gt;最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  &lt;/p&gt;
+&lt;p&gt;最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
 &lt;p&gt;#正文&lt;/p&gt;
 &lt;p&gt;##GCD是什么鬼&lt;/p&gt;
 &lt;p&gt;GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流程性是不可争辩的事实。GCD内部自动管理线程 的生命周期，不需要我们自己去手动管理。我们只需要调用对应的API就可以了。GCD是基于C语言开发的，不过由于使用了block，所以使用起来很方便。在了解GCD之前，我们需要了解一点多线程运行的原理。&lt;/p&gt;
@@ -1190,8 +1843,18 @@ requestOperationManager.securityPolicy = securityPolicy;
 &lt;/li&gt;
 &lt;/ol&gt;
 &lt;h4 id=&quot;队列组&quot;&gt;&lt;a href=&quot;#队列组&quot; class=&quot;headerlink&quot; title=&quot;队列组&quot;&gt;&lt;/a&gt;队列组&lt;/h4&gt;&lt;p&gt;  对列组就是将多个队列添加到一个组里。这样的方式使我们可以在队列里所有的任务都完成后收到一个通知方法。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;objective-c&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;// 创建队列组&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  dispatch_group_t group = dispatch_group_create();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  dispatch_group_async(group, globalQueue, ^&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    for (NSInteger i = 0; i &amp;lt; 3; i++)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        NSLog(@&amp;quot;group - queue - %@&amp;quot;, [NSThread currentThread]);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  &amp;#125;);&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;h2 id=&quot;NSOperation-和-NSOperationQueue&quot;&gt;&lt;a href=&quot;#NSOperation-和-NSOperationQueue&quot; class=&quot;headerlink&quot; title=&quot;NSOperation 和 NSOperationQueue&quot;&gt;&lt;/a&gt;NSOperation 和 NSOperationQueue&lt;/h2&gt;&lt;p&gt;  NSOperation 和 NSOperationQueue是苹果对GCD的基于面向对象的完全封装，使其更容易理解。操作方式也更简单&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;  objective-c
+
+  // 创建队列组
+    dispatch_group_t group = dispatch_group_create();
+
+    dispatch_group_async(group, globalQueue, ^{
+      for (NSInteger i = 0; i &amp;lt; 3; i++)
+      {
+          NSLog(@&amp;quot;group - queue - %@&amp;quot;, [NSThread currentThread]);
+      }
+    });
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&quot;NSOperation-和-NSOperationQueue&quot;&gt;&lt;a href=&quot;#NSOperation-和-NSOperationQueue&quot; class=&quot;headerlink&quot; title=&quot;NSOperation 和 NSOperationQueue&quot;&gt;&lt;/a&gt;NSOperation 和 NSOperationQueue&lt;/h2&gt;&lt;p&gt;  NSOperation 和 NSOperationQueue是苹果对GCD的基于面向对象的完全封装，使其更容易理解。操作方式也更简单&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;将要执行的任务封装到一个&lt;code&gt;NSOperation&lt;/code&gt;对象中&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;将任务添加到一个&lt;code&gt;NSOperationQueue&lt;/code&gt;中&lt;/p&gt;
@@ -1216,7 +1879,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     <summary type="html">
     
       &lt;p&gt;#写在最前面&lt;/p&gt;
-&lt;p&gt;最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&lt;br&gt;
+&lt;p&gt;最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&lt;br&gt;&amp;lt;!--more--&amp;g
     
     </summary>
     
@@ -1233,7 +1896,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     <updated>2015-09-24T09:05:52.000Z</updated>
     
     <content type="html">&lt;p&gt;#HTTP学习&lt;/p&gt;
-&lt;p&gt;HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去总结了一下，做一个备忘。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  &lt;/p&gt;
+&lt;p&gt;HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去总结了一下，做一个备忘。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
 &lt;p&gt;##HTTP简单分析&lt;/p&gt;
 &lt;p&gt;HTTP是一个基于请求/响应模式的、无状态的协议。即，浏览器与服务端连接之后，浏览器向服务器发送一个请求，服务器返回响应信息之后，双方的链接就被关闭。&lt;/p&gt;
 &lt;p&gt;HTTP1.0是典型的请求/响应模式。&lt;/p&gt;
@@ -1305,52 +1968,55 @@ requestOperationManager.securityPolicy = securityPolicy;
 &lt;/ol&gt;
 &lt;p&gt;全部取值如下：&lt;/p&gt;
 &lt;blockquote&gt;
-&lt;pre&gt;&lt;code&gt; 100——客户必须继续发出请求
-101——客户要求服务器根据请求转换HTTP协议版本
+&lt;pre&gt;&lt;code&gt;    100——客户必须继续发出请求
+   101——客户要求服务器根据请求转换HTTP协议版本
 
 
-  200——交易成功
- 201——提示知道新文件的URL
- 202——接受和处理、但处理未完成
- 203——返回信息不确定或不完整
- 204——请求收到，但返回信息为空
- 205——服务器完成了请求，用户代理必须复位当前已经浏览过的文件
- 206——服务器已经完成了部分用户的GET请求
+     200——交易成功
+    201——提示知道新文件的URL
+    202——接受和处理、但处理未完成
+    203——返回信息不确定或不完整
+    204——请求收到，但返回信息为空
+    205——服务器完成了请求，用户代理必须复位当前已经浏览过的文件
+    206——服务器已经完成了部分用户的GET请求
 
-   300——请求的资源可在多处得到
- 301——删除请求数据
- 302——在其他地址发现了请求数据
- 303——建议客户访问其他URL或访问方式
- 304——客户端已经执行了GET，但文件未变化
- 305——请求的资源必须从服务器指定的地址得到
- 306——前一版本HTTP中使用的代码，现行版本中不再使用
- 307——申明请求的资源临时性删除
+      300——请求的资源可在多处得到
+    301——删除请求数据
+    302——在其他地址发现了请求数据
+    303——建议客户访问其他URL或访问方式
+    304——客户端已经执行了GET，但文件未变化
+    305——请求的资源必须从服务器指定的地址得到
+    306——前一版本HTTP中使用的代码，现行版本中不再使用
+    307——申明请求的资源临时性删除
 
-  400——错误请求，如语法错误
- 401——请求授权失败
- 402——保留有效ChargeTo头响应
- 403——请求不允许
- 404——没有发现文件、查询或URl
- 405——用户在Request-Line字段定义的方法不允许
- 406——根据用户发送的Accept拖，请求资源不可访问
- 407——类似401，用户必须首先在代理服务器上得到授权
- 408——客户端没有在用户指定的饿时间内完成请求
- 409——对当前资源状态，请求不能完成
- 410——服务器上不再有此资源且无进一步的参考地址
- 411——服务器拒绝用户定义的Content-Length属性请求
- 412——一个或多个请求头字段在当前请求中错误
- 413——请求的资源大于服务器允许的大小
- 414——请求的资源URL长于服务器允许的长度
- 415——请求资源不支持请求项目格式
- 416——请求中包含Range请求头字段，在当前请求资源范围内没有range指示值，请求也不包含If-Range请求头字段
- 417——服务器不满足请求Expect头字段指定的期望值，如果是代理服务器，可能是下一级服务器不能满足请求
+     400——错误请求，如语法错误
+    401——请求授权失败
+    402——保留有效ChargeTo头响应
+    403——请求不允许
+    404——没有发现文件、查询或URl
+    405——用户在Request-Line字段定义的方法不允许
+    406——根据用户发送的Accept拖，请求资源不可访问
+    407——类似401，用户必须首先在代理服务器上得到授权
+    408——客户端没有在用户指定的饿时间内完成请求
+    409——对当前资源状态，请求不能完成
+    410——服务器上不再有此资源且无进一步的参考地址
+    411——服务器拒绝用户定义的Content-Length属性请求
+    412——一个或多个请求头字段在当前请求中错误
+    413——请求的资源大于服务器允许的大小
+    414——请求的资源URL长于服务器允许的长度
+    415——请求资源不支持请求项目格式
+    416——请求中包含Range请求头字段，在当前请求资源范围内没有range指示值，请求也不包含If-Range请求头字段
+    417——服务器不满足请求Expect头字段指定的期望值，如果是代理服务器，可能是下一级服务器不能满足请求
 
-    500——服务器产生内部错误
- 501——服务器不支持请求的函数
- 502——服务器暂时不可用，有时是为了防止发生系统过载
- 503——服务器过载或暂停维修
- 504——关口过载，服务器使用另一个关口或服务来响应用户，等待时间设定值较长
- 505——服务器不支持或拒绝支请求头中指定的HTTP版本
+       500——服务器产生内部错误
+    501——服务器不支持请求的函数
+    502——服务器暂时不可用，有时是为了防止发生系统过载
+    503——服务器过载或暂停维修
+    504——关口过载，服务器使用另一个关口或服务来响应用户，等待时间设定值较长
+    505——服务器不支持或拒绝支请求头中指定的HTTP版本
+
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;/blockquote&gt;
 &lt;p&gt;常见的错误主要有400 404 403 500 503等等&lt;/p&gt;
 &lt;p&gt;相应正文，包含了请求获得的资源，有HTML文件，JSON格式数据，文件的URL等等&lt;/p&gt;
@@ -1365,53 +2031,90 @@ requestOperationManager.securityPolicy = securityPolicy;
 
 请求时的缓存指令包括：no-cache（用于指示请求或响应消息不能缓存）、no-store、max-age、max-stale、min-fresh、only-if-cached;
 响应时的缓存指令包括：public、private、no-cache、no-store、no-transform、must-revalidate、proxy-revalidate、max-age、s-maxage.
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2）Date&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Date普通报头域表示消息产生的日期和时间
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;3）Connection&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Connection普通报头域允许发送指定连接的选项。例如指定连接是连续，或者指定“close”选项，通知服务器，在响应完成后，关闭连接
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
 &lt;h4 id=&quot;请求报头&quot;&gt;&lt;a href=&quot;#请求报头&quot; class=&quot;headerlink&quot; title=&quot;请求报头&quot;&gt;&lt;/a&gt;请求报头&lt;/h4&gt;&lt;p&gt;请求报头允许客户端向服务器端传递请求的附加信息以及客户端自身的信息。&lt;br&gt;（在APP中，一些身份验证的信息可能需要在header中添加）&lt;/p&gt;
 &lt;p&gt;常见的请求报头：&lt;/p&gt;
 &lt;p&gt;1)Accept&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Accept请求报头域用于指定客户端接受哪些类型的信息。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2)Accept-Charset&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Accept-Charset请求报头域用于指定客户端接受的字符集。如果在请求消息中没有设置这个域，缺省是任何字符集都可以接受。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;3）Accept-Encoding&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Accept-Encoding请求报头域类似于Accept，但是它是用于指定可接受的内容编码。如果请求消息中没有设置这个域服务器假定客户端对各种内容编码都可以接受。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;4）Accept-Language&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Accept-Language请求报头域类似于Accept，但是它是用于指定一种自然语言如果请求消息中没有设置这个报头域，服务器假定客户端对各种语言都可以接受。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;5）Authorization&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Authorization请求报头域主要用于证明客户端有权查看某个资源。当浏览器访问一个页面时，如果收到服务器的响应代码为401（未授权），可以发送一个包含Authorization请求报头域的请求，要求服务器对其进行验证。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;6）Host&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;发送请求时，该报头域是必需的。Host请求报头域主要用于指定被请求资源的Internet主机和端口号，它通常从HTTP URL中提取出来的。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;7）User-Agent&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;User-Agent请求报头域允许客户端将它的操作系统、浏览器和其它属性告诉服务器。不过，这个报头域不是必需的，如果我们自己编写一个浏览器，不使用User-Agent请求报头域，那么服务器端就无法得知我们的信息了。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
 &lt;h4 id=&quot;响应报头&quot;&gt;&lt;a href=&quot;#响应报头&quot; class=&quot;headerlink&quot; title=&quot;响应报头&quot;&gt;&lt;/a&gt;响应报头&lt;/h4&gt;&lt;p&gt;响应报头允许服务器传递不能放在状态行中的附加响应信息，以及关于服务器的信息和对Request-URI所标识的资源进行下一步访问的信息。&lt;/p&gt;
 &lt;p&gt;常见的实体报头：&lt;/p&gt;
 &lt;p&gt;1）Location&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Location响应报头域用于重定向接受者到一个新的位置。Location响应报头域常用在更换域名的时候。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2）Server&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Server响应报头域包含了服务器用来处理请求的软件信息。与User-Agent请求报头域是相对应的。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;3）WWW-Authenticate&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;WWW-Authenticate响应报头域必须被包含在401（未授权的）响应消息中，客户端收到401响应消息时候，并发送Authorization报头域请求服务器对其进行验证时，服务端响应报头就包含该报头域。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
 &lt;h4 id=&quot;实体报头&quot;&gt;&lt;a href=&quot;#实体报头&quot; class=&quot;headerlink&quot; title=&quot;实体报头&quot;&gt;&lt;/a&gt;实体报头&lt;/h4&gt;&lt;p&gt;请求和响应消息都可以传送一个实体。一个实体由实体报头域和实体正文组成，但并不是说实体报头域和实体正文要在一起发送，可以只发送实体报头域。实体报头定义了关于实体正文（eg：有无实体正文）和请求所标识的资源的元信息。&lt;/p&gt;
 &lt;p&gt;实体报头包括：&lt;/p&gt;
 &lt;p&gt;常见的实体报头：&lt;/p&gt;
 &lt;p&gt;1）Content-Encoding&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Content-Encoding实体报头域被用作媒体类型的修饰符，它的值指示了已经被应用到实体正文的附加内容的编码，因而要获得Content-Type报头域中所引用的媒体类型，必须采用相应的解码机制。Content-Encoding主要用于记录文档的压缩方法。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2）Content-Language&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Content-Language实体报头域描述了资源所用的自然语言。没有设置该域则认为实体内容将提供给所有的语言
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;阅读者。&lt;/p&gt;
 &lt;p&gt;3）Content-Length&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Content-Length实体报头域用于指明实体正文的长度，以字节方式存储的十进制数字来表示。即一个数字字符占一个字节，用其对应的ASCII码来存储传输。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;4）Content-Type&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Content-Type实体报头域用语指明发送给接收者的实体正文的媒体类型。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;5）Expires&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Expires实体报头域给出响应过期的日期和时间。为了让代理服务器或浏览器在一段时间以后更新缓存中(再次访问曾访问过的页面时，直接从缓存中加载，缩短响应时间和降低服务器负载)的页面，我们可以使用Expires实体报头域指定页面过期的时间。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;6）Last-Modified&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;Last-Modified实体报头域用于指示资源的最后修改日期和时间。
+
+
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;##总结&lt;/p&gt;
 &lt;p&gt;HTTP协议的内容不是多，常用的内容就几个，但是需要非常熟悉，因为HTTP协议是网络交互重要的协议之一。&lt;/p&gt;
 &lt;p&gt;接下来花一些时间去回顾TCP/IP协议，内容多就会有几篇文章来记录学习的一些笔记心得。&lt;/p&gt;
@@ -1420,7 +2123,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     <summary type="html">
     
       &lt;p&gt;#HTTP学习&lt;/p&gt;
-&lt;p&gt;HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去总结了一下，做一个备忘。&lt;br&gt;
+&lt;p&gt;HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去
     
     </summary>
     
@@ -1437,17 +2140,60 @@ requestOperationManager.securityPolicy = securityPolicy;
     <updated>2016-04-04T05:58:10.000Z</updated>
     
     <content type="html">&lt;p&gt;##Block是个什么&lt;/p&gt;
-&lt;p&gt;和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  &lt;/p&gt;
+&lt;p&gt;和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
 &lt;p&gt;###Blcok 是什么&lt;/p&gt;
 &lt;p&gt;block是在iOS SDK 4.0引入的黑魔法。从他诞生的时候，Apple就倾注了大量的心血。字面上看，block就是一个代码块。在许多语言中都可以看到相似的语法设计。但是block自身由于可以在内联执行的时候还可以传递参数，同时自身可以作为参数在函数之间来传递，所有有了许多神奇的用法（好吧是我觉得很神奇）&lt;/p&gt;
 &lt;p&gt;一个典型的block的应用如下&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;BOOL (^isName)(NSString *) = ^(NSString *name) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     if ([name isEqualToString:@&amp;quot;csb&amp;quot;])&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;         return YES;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     else&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;         return NO;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt; BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@&amp;quot;csb&amp;quot;])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;定义一个block开头是和函数一样是返回类型，（^）跟着是block的名字，后面跟着是传入的数据类型。括号里面是代码块。&lt;/p&gt;
 &lt;p&gt;一个完整的例子&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;- (void)blockTest&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    BOOL (^isName)(NSString *) = ^(NSString *name) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      if ([name isEqualToString:@&amp;quot;csb&amp;quot;])&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          return YES;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      else&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          return NO;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    self.sark.name = @&amp;quot;csb&amp;quot;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSLog(@&amp;quot;is csb ? %@&amp;quot;, isName(self.sark.name) ? @&amp;quot;yes&amp;quot; : @&amp;quot;no&amp;quot;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
+- (void)blockTest
+{
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:@&amp;quot;csb&amp;quot;])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @&amp;quot;csb&amp;quot;;
+    NSLog(@&amp;quot;is csb ? %@&amp;quot;, isName(self.sark.name) ? @&amp;quot;yes&amp;quot; : @&amp;quot;no&amp;quot;);
+}
+&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;那么block有什么特别之处？前面提到了，block能够使用block外的参数，我们来实验下&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;- (void)blockTest&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSString *csbName = @&amp;quot;csbzhixing&amp;quot;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    BOOL (^isName)(NSString *) = ^(NSString *name) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      if ([name isEqualToString:csbName])&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          return YES;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      else&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          return NO;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    self.sark.name = @&amp;quot;csbzhixing&amp;quot;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    NSLog(@&amp;quot;is csb ? %@&amp;quot;, isName(self.sark.name) ? @&amp;quot;yes&amp;quot; : @&amp;quot;no&amp;quot;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;p&gt;输出&lt;br&gt;&lt;code&gt;2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)blockTest
+{
+    NSString *csbName = @&amp;quot;csbzhixing&amp;quot;;
+    BOOL (^isName)(NSString *) = ^(NSString *name) {
+      if ([name isEqualToString:csbName])
+      {
+          return YES;
+      }
+      else
+      {
+          return NO;
+      }
+    };
+
+    self.sark.name = @&amp;quot;csbzhixing&amp;quot;;
+    NSLog(@&amp;quot;is csb ? %@&amp;quot;, isName(self.sark.name) ? @&amp;quot;yes&amp;quot; : @&amp;quot;no&amp;quot;);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;输出&lt;br&gt;&lt;code&gt;2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;注意到，定义了block后，修改了block中引用的局部变量，那么block中的局部变量仍然会保持不变。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/a60eb087f6bfd358.png&quot; alt=&quot;pic1&quot;&gt;&lt;/p&gt;
 &lt;p&gt;好吧，如果我们的确有这个需求怎么弄呢？使用&lt;code&gt;_block&lt;/code&gt;修饰符来修饰局部变量可以解决这个问题&lt;/p&gt;
@@ -1475,7 +2221,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     <summary type="html">
     
       &lt;p&gt;##Block是个什么&lt;/p&gt;
-&lt;p&gt;和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&lt;br&gt;
+&lt;p&gt;和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一
     
     </summary>
     
@@ -1495,7 +2241,8 @@ requestOperationManager.securityPolicy = securityPolicy;
 &lt;p&gt;参考&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;– &lt;a href=&quot;http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;– &lt;a href=&quot;http://objccn.io/issue-7-3/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://objccn.io/issue-7-3/&lt;/a&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
+&lt;li&gt;– &lt;a href=&quot;http://objccn.io/issue-7-3/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://objccn.io/issue-7-3/&lt;/a&gt;&lt;p&gt;&amp;lt;!--more--&amp;gt;  
+&lt;/p&gt;
 #KVO&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h2 id=&quot;KVO简单使用&quot;&gt;&lt;a href=&quot;#KVO简单使用&quot; class=&quot;headerlink&quot; title=&quot;KVO简单使用&quot;&gt;&lt;/a&gt;KVO简单使用&lt;/h2&gt;&lt;h4 id=&quot;KVO-Key-Value-Observing-，是观察者模式在Foundation中的实现&quot;&gt;&lt;a href=&quot;#KVO-Key-Value-Observing-，是观察者模式在Foundation中的实现&quot; class=&quot;headerlink&quot; title=&quot;KVO(Key Value Observing)，是观察者模式在Foundation中的实现&quot;&gt;&lt;/a&gt;KVO(Key Value Observing)，是观察者模式在Foundation中的实现&lt;/h4&gt;&lt;p&gt;观察者模式，比较容易理解，就是一方对另一方观察，如果进行了改变，那么就要观察者接收到了消息就用进行相应的操作。在KVO中，总结起来就死以下几个操作。&lt;/p&gt;
@@ -1518,13 +2265,23 @@ requestOperationManager.securityPolicy = securityPolicy;
 &lt;p&gt;context 是一个指针当&lt;code&gt;observeValueForKeyPath:ofObject:change:context:&lt;/code&gt;方法执行时context会提供给观察者。context可以是C指针或者一个对象引用，既可以当作一个唯一的标识来分辨被观察的变更，也可以向观察者提供数据。&lt;/p&gt;
 &lt;h4 id=&quot;当观察者接受到消息的时&quot;&gt;&lt;a href=&quot;#当观察者接受到消息的时&quot; class=&quot;headerlink&quot; title=&quot;当观察者接受到消息的时&quot;&gt;&lt;/a&gt;当观察者接受到消息的时&lt;/h4&gt;&lt;p&gt;当被观察的属性变更时，观察者会接到&lt;code&gt;observeValueForKeyPath:ofObject:change:context:&lt;/code&gt;消息，所有的观察者都必须实现这个方法。&lt;br&gt;观察者会被提供触发通知的对象和keyPath，一个包含变更详细信息的字典，还有一个注册观察者时提供的context指针。&lt;/p&gt;
 &lt;p&gt;关于change字典，总共包含以下五个键值&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;NSString *const NSKeyValueChangeKindKey;  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;NSString *const NSKeyValueChangeNewKey;  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;NSString *const NSKeyValueChangeOldKey;  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;NSString *const NSKeyValueChangeIndexesKey;  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;NSString *const NSKeyValueChangeNotificationIsPriorKey;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;ol&gt;
+&lt;pre&gt;&lt;code&gt;NSString *const NSKeyValueChangeKindKey;  
+NSString *const NSKeyValueChangeNewKey;  
+NSString *const NSKeyValueChangeOldKey;  
+NSString *const NSKeyValueChangeIndexesKey;  
+NSString *const NSKeyValueChangeNotificationIsPriorKey;
+&lt;/code&gt;&lt;/pre&gt;&lt;ol&gt;
 &lt;li&gt;NSKeyValueChangeKindKey&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;指明了变更的类型，值为“NSKeyValueChange”枚举中的某一个，类型为NSNumber。&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;enum &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   NSKeyValueChangeSetting = 1,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   NSKeyValueChangeInsertion = 2,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   NSKeyValueChangeRemoval = 3,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   NSKeyValueChangeReplacement = 4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;typedef NSUInteger NSKeyValueChange;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;ol&gt;
+&lt;pre&gt;&lt;code&gt;enum {
+   NSKeyValueChangeSetting = 1,
+   NSKeyValueChangeInsertion = 2,
+   NSKeyValueChangeRemoval = 3,
+   NSKeyValueChangeReplacement = 4
+};
+typedef NSUInteger NSKeyValueChange;
+&lt;/code&gt;&lt;/pre&gt;&lt;ol&gt;
 &lt;li&gt;NSKeyValueChangeNewKey&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;如果 &lt;code&gt;NSKeyValueChangeKindKey&lt;/code&gt;的值为 &lt;code&gt;NSKeyValueChangeSetting&lt;/code&gt;，并且 &lt;code&gt;NSKeyValueObservingOptionNew&lt;/code&gt;选项在注册观察者时也指定了，那么这个键的值就是属性变更后的新值。&lt;br&gt;对于 &lt;code&gt;NSKeyValueChangeInsertion&lt;/code&gt;或者&lt;code&gt;NSKeyValueChangeReplacement&lt;/code&gt;，如果 &lt;code&gt;NSKeyValueObservingOptionNew&lt;/code&gt;选项在注册观察者时也指定了，这个键的值是一个数组，其包含了插入或替换的对象&lt;/p&gt;
@@ -1556,11 +2313,7 @@ requestOperationManager.securityPolicy = securityPolicy;
     
     <summary type="html">
     
-      &lt;p&gt;从学习Objective-C以来，有两个地方一直搞不明白。一个是KVO和KVC的应用和与Delegate的应用场景的区别，一个是Block的应用场景。总结起来就死对Objective-C的数据传送的应用不理解。乘着放假几天对这个知识点进行了一些学习和总结，学习了一个小demo，在这里记录一下自己的学习情况。&lt;/p&gt;
-&lt;p&gt;参考&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;– &lt;a href=&quot;http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/&quot;&gt;http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;– &lt;a href=&quot;http://objccn.io/issue-7-3/&quot;&gt;http://objccn.io/issue-7-3/&lt;/a&gt;
+      &lt;p&gt;从学习Objective-C以来，有两个地方一直搞不明白。一个是KVO和KVC的应用和与Delegate的应用场景的区别，一个是Block的应用场景。总结起来就死对Objective-C的数据传送的应用不理解。乘着放假几天对这个知识点进行了一些学习和总结，学习了一个小dem
     
     </summary>
     
