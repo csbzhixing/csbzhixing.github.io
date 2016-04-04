@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+  <title>runtime | 学海无涯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- —–（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。
+##runtime 关联对象
+从关联对象说起，是因为">
+<meta property="og:type" content="article">
+<meta property="og:title" content="runtime">
+<meta property="og:url" content="http://csbzhixing.github.io/2015/11/01/runtime/index.html">
+<meta property="og:site_name" content="学海无涯">
+<meta property="og:description" content="从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- —–（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。
+##runtime 关联对象
+从关联对象说起，是因为">
+<meta property="og:image" content="http://csbzhixing.github.io/media/14463463210542.jpg">
+<meta property="og:image" content="http://csbzhixing.github.io/media/14463464447032.jpg">
+<meta property="og:image" content="http://csbzhixing.github.io/media/14463464914602.jpg">
+<meta property="og:image" content="http://csbzhixing.github.io/media/14463464837182.jpg">
+<meta property="og:image" content="http://csbzhixing.github.io/media/14463917464901.jpg">
+<meta property="og:updated_time" content="2015-11-01T16:57:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="runtime">
+<meta name="twitter:description" content="从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- —–（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。
+##runtime 关联对象
+从关联对象说起，是因为">
+<meta name="twitter:image" content="http://csbzhixing.github.io/media/14463463210542.jpg">
+  
+    <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+	<header id="header" class="inner">
+		<a href="/" class="profilepic">
+			
+			<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+		</a>
+
+		<hgroup>
+		  <h1 class="header-author"><a href="/">之行</a></h1>
+		</hgroup>
+
+		
+
+		
+			<div class="switch-btn">
+				<div class="icon">
+					<div class="icon-ctn">
+						<div class="icon-wrap icon-house" data-idx="0">
+							<div class="birdhouse"></div>
+							<div class="birdhouse_holes"></div>
+						</div>
+						<div class="icon-wrap icon-ribbon hide" data-idx="1">
+							<div class="ribbon"></div>
+						</div>
+						
+						<div class="icon-wrap icon-link hide" data-idx="2">
+							<div class="loopback_l"></div>
+							<div class="loopback_r"></div>
+						</div>
+						
+						
+						<div class="icon-wrap icon-me hide" data-idx="3">
+							<div class="user"></div>
+							<div class="shoulder"></div>
+						</div>
+						
+					</div>
+					
+				</div>
+				<div class="tips-box hide">
+					<div class="tips-arrow"></div>
+					<ul class="tips-inner">
+						<li>Menu</li>
+						<li>Tags</li>
+						
+						<li>Links</li>
+						
+						
+						<li>About</li>
+						
+					</ul>
+				</div>
+			</div>
+		
+
+		<div class="switch-area">
+			<div class="switch-wrap">
+				<section class="switch-part switch-part1">
+					<nav class="header-menu">
+						<ul>
+						
+							<li><a href="/">主页</a></li>
+				        
+							<li><a href="/archives">所有文章</a></li>
+				        
+						</ul>
+					</nav>
+					<nav class="header-nav">
+						<div class="social">
+							
+								<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+					        
+								<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+					        
+								<a class="rss" target="_blank" href="#" title="rss">rss</a>
+					        
+								<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+					        
+						</div>
+					</nav>
+				</section>
+				
+				
+				<section class="switch-part switch-part2">
+					<div class="widget tagcloud" id="js-tagcloud">
+						
+					</div>
+				</section>
+				
+				
+				
+				<section class="switch-part switch-part3">
+					<div id="js-friends">
+					
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">奥巴马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">卡卡的美丽传说</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">本泽马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">吉格斯的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">习大大大不同</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">托蒂的博客</a>
+			        
+			        </div>
+				</section>
+				
+
+				
+				
+				<section class="switch-part switch-part4">
+				
+					<div id="js-aboutme">我是谁，我从哪里来，我到哪里去？我就是我，是颜色不一样的吃货…</div>
+				</section>
+				
+			</div>
+		</div>
+	</header>				
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+  	<div class="overlay">
+  		<div class="slider-trigger"></div>
+  		<h1 class="header-author js-mobile-header hide">之行</h1>
+  	</div>
+	<div class="intrude-less">
+		<header id="header" class="inner">
+			<div class="profilepic">
+			
+				<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+			</div>
+			<hgroup>
+			  <h1 class="header-author">之行</h1>
+			</hgroup>
+			
+			<nav class="header-menu">
+				<ul>
+				
+					<li><a href="/">主页</a></li>
+		        
+					<li><a href="/archives">所有文章</a></li>
+		        
+		        <div class="clearfix"></div>
+				</ul>
+			</nav>
+			<nav class="header-nav">
+				<div class="social">
+					
+						<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+			        
+						<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+			        
+						<a class="rss" target="_blank" href="#" title="rss">rss</a>
+			        
+						<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+			        
+				</div>
+			</nav>
+		</header>				
+	</div>
+</nav>
+
+      <div class="body-wrap"><article id="post-runtime" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2015/11/01/runtime/" class="article-date">
+  	<time datetime="2015-11-01T02:07:27.000Z" itemprop="datePublished">2015-11-01</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      runtime
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+        
+	<div class="article-category tagcloud">
+	<a class="article-category-link" href="/categories/Objective-C/">Objective-C</a>
+	</div>
+
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- —–（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。</p>
+<p>##runtime 关联对象</p>
+<p>从关联对象说起，是因为在最近的项目中用到了这个方法。当时的场景是，我需要创建一个category，里面需要一个block对象。然而我们知道，我们不能在category中添加成员变量。如果我们尝试添加的话，编译器会报错。当然，使用全局变量能解决这个问题，但明显是一个很优雅的方法，也很容易造成错误。Objective-C针对这一中问题，提供了一个解决方案，就是<code>关联对象(Associated Object)。</code></p>
+<p>我们可以想象，关联对象就是一个key - value的模型，把对象通过特定的Key链接到相关的实例上。不过由于使用的是C的借口，所以key是一个void指针。同时，我们要需要为这个关联对象设定内存管理策略。相关的内存的管理策略如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">OBJC_ASSOCIATION_ASSIGN</span><br><span class="line"></span><br><span class="line">OBJC_ASSOCIATION_RETAIN_NONATOMIC</span><br><span class="line"></span><br><span class="line">OBJC_ASSOCIATION_COPY_NONATOMIC</span><br><span class="line"></span><br><span class="line">OBJC_ASSOCIATION_RETAIN</span><br><span class="line"></span><br><span class="line">OBJC_ASSOCIATION_COPY</span><br></pre></td></tr></table></figure>
+<p>对<code>OBJC_ASSOCIATION_ASSIGN</code>的，当关联对象所关联的实例被释放掉后，对象不会被释放掉。而<code>OBJC_ASSOCIATION_RETAIN</code>和<code>OBJC_ASSOCIATION_COPY</code>两个的话，在实例被释放掉同时，关联对象也会被release掉。当我们用同一个key去关联另外的实例对象的时候，也会自动释放掉之前关联的对象。这种情况下，先前的关联对象会被妥善地处理掉，并且新的对象会使用它的内存。</p>
+<p>关联对象的的runtime函数如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">// 设置关联对象</span><br><span class="line"></span><br><span class="line">void objc_setAssociatedObject ( id object, const void *key, id value, objc_AssociationPolicy policy );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 获取关联对象</span><br><span class="line"></span><br><span class="line">id objc_getAssociatedObject ( id object, const void *key );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 移除关联对象</span><br><span class="line"></span><br><span class="line">void objc_removeAssociatedObjects ( id object );</span><br></pre></td></tr></table></figure>
+<p>下面就给出在项目中实际遇到的问题给做一个例子。</p>
+<p>首先在头文件中定义了以下内容。</p>
+<p><img src="/media/14463463210542.jpg" alt=""></p>
+<p>可以看到，这个category是为了扩展vc，让vc具有一个弹出系统通讯录的功能。</p>
+<p>在.m文件中，如下实现block关联对象</p>
+<p><img src="/media/14463464447032.jpg" alt=""></p>
+<p>然后就像正常的对象一样操作就行了</p>
+<p><img src="/media/14463464914602.jpg" alt=""></p>
+<p><img src="/media/14463464837182.jpg" alt=""></p>
+<p>在上面看到，我对关联对象使用的key是用了<code>@selector()</code>。那为什么可以使用SEL来代替设定一个固定的key呢？</p>
+<h2 id="方法与消息"><a href="#方法与消息" class="headerlink" title="方法与消息"></a>方法与消息</h2><ul>
+<li>SEL</li>
+</ul>
+<p>又叫选择器，是表示一个方法的selector的指针，其定义如下：</p>
+<p><code>typedef struct objc_selector *SEL;</code><br>objc_selector结构体的详细定义没有在<objc runtime.h="">头文件中找到。方法的selector用于表示运行时方法的名字。Objective-C在编译时，会依据每一个方法的名字、参数序列，生成一个唯一的整型标识(Int类型的地址)，这个标识就是SEL。</objc></p>
+<ul>
+<li>IMP</li>
+</ul>
+<p>通过SEL找到函数后，就可以获取到该函数的IMP。IMP实际上是一个函数指针，指向方法实现的首地址。其定义如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id (*IMP)(id, SEL, ...)</span><br></pre></td></tr></table></figure>
+<p>通过取得IMP，我们可以跳过runtime的消息传递机制，直接通过IMP执行指向的函数实现。这样一来可以提高效率，省去了消息传递中的一系列过程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">回答上面的问题</span><br><span class="line"></span><br><span class="line">我们知道，在同一个类文件里面，不能存在同一个名字的方法，即使是参数类型不同业不行。同理，同一个类文件里面不能存在同一个名字的对象，所以set方法是唯一的，所以可以使用SEL来获取唯一的整理标识来作为key。</span><br></pre></td></tr></table></figure>
+<p>##下面是看的一些文章的摘录和自己的一项心得，主要是给自己做一个备忘。</p>
+<p>选择器相关的操作函数包括：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">// 返回给定选择器指定的方法的名称</span><br><span class="line">const char * sel_getName ( SEL sel );</span><br><span class="line">// 在Objective-C Runtime系统中注册一个方法，将方法名映射到一个选择器，并返回这个选择器</span><br><span class="line"></span><br><span class="line">SEL sel_registerName ( const char *str );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 在Objective-C Runtime系统中注册一个方法</span><br><span class="line"></span><br><span class="line">SEL sel_getUid ( const char *str );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 比较两个选择器</span><br><span class="line"></span><br><span class="line">BOOL sel_isEqual ( SEL lhs, SEL rhs );</span><br></pre></td></tr></table></figure>
+<p>方法操作的函数如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">// 调用指定方法的实现</span><br><span class="line">// receiver不能为空</span><br><span class="line">// 比method_getImplementation和method_getName更快</span><br><span class="line"></span><br><span class="line">id method_invoke ( id receiver, Method m, ... );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 调用返回一个数据结构的方法的实现</span><br><span class="line"></span><br><span class="line">void method_invoke_stret ( id receiver, Method m, ... );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 获取方法名</span><br><span class="line">// 返回一个SEL。如果要获取方法名得C字符串，要用sel_getName(method_getName(method))。</span><br><span class="line"></span><br><span class="line">SEL method_getName ( Method m );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 返回方法的实现</span><br><span class="line">// 注意该函数返回值是方法之前的实现。</span><br><span class="line">IMP method_getImplementation ( Method m );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 获取描述方法参数和返回值类型的字符串</span><br><span class="line"></span><br><span class="line">const char * method_getTypeEncoding ( Method m );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 获取方法的返回值类型的字符串</span><br><span class="line"></span><br><span class="line">char * method_copyReturnType ( Method m );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 获取方法的指定位置参数的类型字符串</span><br><span class="line"></span><br><span class="line">char * method_copyArgumentType ( Method m, unsigned int index );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 通过引用返回方法的返回值类型字符串</span><br><span class="line"></span><br><span class="line">void method_getReturnType ( Method m, char *dst, size_t dst_len );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 返回方法的参数的个数</span><br><span class="line"></span><br><span class="line">unsigned int method_getNumberOfArguments ( Method m );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 通过引用返回方法指定位置参数的类型字符串</span><br><span class="line"></span><br><span class="line">void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 返回指定方法的方法描述结构体</span><br><span class="line"></span><br><span class="line">struct objc_method_description * method_getDescription ( Method m );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 设置方法的实现</span><br><span class="line"></span><br><span class="line">IMP method_setImplementation ( Method m, IMP imp );</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 交换两个方法的实现</span><br><span class="line"></span><br><span class="line">void method_exchangeImplementations ( Method m1, Method m2 );</span><br></pre></td></tr></table></figure>
+<p>##方法调用流程</p>
+<p>在Objective-C中，消息会一直到运行时绑定的方法实现上。我们常用的[receiver message]会被runtime转换为一个函数调用<code>objc_msgSend</code>。如下</p>
+<p><code>objc_msgSend(receiver, selector)</code><br>如果消息中还有其它参数，则该方法的形式如下所示：</p>
+<p><code>objc_msgSend(receiver, selector, arg1, arg2, ...)</code></p>
+<p>这个函数在执行的过程中完成了所有动态绑定的过程。</p>
+<ol>
+<li>找到SEL对应的方法实现。由于一个方法可能在不同的类有不同的实现，所有我们要依赖于接受者的类来确定确切的实现。</li>
+<li>调用方法的实现，将参数传入。</li>
+<li>将方法的返回这作为的自己的返回值。</li>
+</ol>
+<p>一个基本消息的框架</p>
+<p><img src="/media/14463917464901.jpg" alt=""></p>
+<p>注意到，在<code>objc_msgSend</code>中有两个隐藏参数：</p>
+<ol>
+<li>消息接受对象</li>
+<li>方法的selecor</li>
+</ol>
+<p>隐藏是以为内在定义的方法中没有申明，是在编译期被插入实现代码的。</p>
+<p>##消息转发</p>
+<p>当一个对象能接受一个消息的时候，那么一切都会按照我们想得去做，但是如果不能接受消息的时候，会发生什么？一般情况下，如果不能相应[object message],编译期会报错。如果是以perform来调用的，那么在运行时才会确定object是否会接收消息，如果不行的话，就会造成程序崩溃。</p>
+<p>当然，我们可以通过<code>respondsToSelector:</code>来判断一下是否会响应这个消息，但是我们要用runtime来搞一搞，所以我们应该从<code>消息转发机制</code>来考虑。</p>
+<p>消息转发机制基本分为三个步骤</p>
+<ol>
+<li>动态方法解析</li>
+<li>备用接收者</li>
+<li>完成转发</li>
+</ol>
+<p>###动态方法解析</p>
+<p>当当对象接收到位置的消息时，首先会调用类的<code>+resolveInstanceMethod:(实例方法)</code>或者<code>+resolveClassMethod:(类方法)</code>。因此，我们可以去增加一个处理方法。在消息不能被对象接收的时候就运行这个方法，前提是这个方法已经被实现了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">void functionForMethod1(id self, SEL _cmd) &#123;</span><br><span class="line"></span><br><span class="line">   NSLog(@&quot;%@, %p&quot;, self, _cmd);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">+ (BOOL)resolveInstanceMethod:(SEL)sel &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    NSString *selectorString = NSStringFromSelector(sel);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    if ([selectorString isEqualToString:@&quot;method1&quot;]) &#123;</span><br><span class="line"></span><br><span class="line">        class_addMethod(self.class, @selector(method1), (IMP)functionForMethod1, &quot;@:&quot;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    return [super resolveInstanceMethod:sel];</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="备用接收者"><a href="#备用接收者" class="headerlink" title="备用接收者"></a>备用接收者</h3><p>当我们的对象不能处理消息的时候，我们将消息转发到一个备用的对象，只要这个对象的类实现了这个方法<br><code>- (id)forwardingTargetForSelector:(SEL)aSelector</code></p>
+<p>如果返回的不是一个nil的话，那么这个对象就会被作为消息的心的接收者。而在外部看来，这个消息仍然被我们的发送的对象处理了。注意，这个方法返回的对象不是self自身，不然就是个无限循环了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br></pre></td><td class="code"><pre><span class="line">@interface SUTRuntimeMethodHelper : NSObject</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)method2;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@implementation SUTRuntimeMethodHelper</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)method2 &#123;</span><br><span class="line"></span><br><span class="line">    NSLog(@&quot;%@, %p&quot;, self, _cmd);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#pragma mark -</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@interface SUTRuntimeMethod () &#123;</span><br><span class="line"></span><br><span class="line">    SUTRuntimeMethodHelper *_helper;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@implementation SUTRuntimeMethod</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">+ (instancetype)object &#123;</span><br><span class="line"></span><br><span class="line">    return [[self alloc] init];</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (instancetype)init &#123;</span><br><span class="line"></span><br><span class="line">    self = [super init];</span><br><span class="line"></span><br><span class="line">    if (self != nil) &#123;</span><br><span class="line"></span><br><span class="line">        _helper = [[SUTRuntimeMethodHelper alloc] init];</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    return self;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)test &#123;</span><br><span class="line"></span><br><span class="line">    [self performSelector:@selector(method2)];</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (id)forwardingTargetForSelector:(SEL)aSelector &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    NSLog(@&quot;forwardingTargetForSelector&quot;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    NSString *selectorString = NSStringFromSelector(aSelector);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    // 将消息转发给_helper来处理</span><br><span class="line"></span><br><span class="line">    if ([selectorString isEqualToString:@&quot;method2&quot;]) &#123;</span><br><span class="line"></span><br><span class="line">        return _helper;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    return [super forwardingTargetForSelector:aSelector];</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+<p>###完成的消息转发</p>
+<p>如果上述的行为都不能解决的话，runtime在这时候会给对象最后一次机会：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">- (void)forwardInvocation:(NSInvocation *)anInvocation</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>这个时候，消息的所有未处理的内容都被封装到了anInvocation中，包括SEL,target，参数。我们在这里可以选着将消息转发给其他的对象。</p>
+<p>forwardInvocation:方法的实现有两个任务：</p>
+<p>定位可以响应封装在anInvocation中的消息的对象。这个对象不需要能处理所有未知消息。<br>使用anInvocation作为参数，将消息发送到选中的对象。anInvocation将会保留调用结果，运行时系统会提取这一结果并将其发送到消息的原始发送者。</p>
+</blockquote>
+<p>对于这一块，还没有具体的实践，毕竟到这一步，用runtime来解决不如好好回去check以下代码吧。</p>
+<p>##Method Swizze</p>
+<p>Method Swizzling是改变一个selector的实际实现的技术.这样，我们可以在runtime的时候修改类分发的队形的函数，修改对应的实现。</p>
+<p>例如，我们想在每一个<code>viewDidAppear</code>增加一个跟踪代码，观察哪个vc被调用了，那么我们就可以通过<code>Method Swizzling</code></p>
+<p>###Swizzling 注意事项</p>
+<p><code>Swizzling应该总是在+load中执行</code></p>
+<p>在Objective-C中，运行时会自动调用每个类的两个方法。+load会在类初始加载时调用，+initialize会在第一次调用类的类方法或实例方法之前被调用。这两个方法是可选的，且只有在实现了它们时才会被调用。由于method swizzling会影响到类的全局状态，因此要尽量避免在并发处理中出现竞争的情况。+load能保证在类的初始化过程中被加载，并保证这种改变应用级别的行为的一致性。相比之下，+initialize在其执行时不提供这种保证—事实上，如果在应用中没为给这个类发送消息，则它可能永远不会被调用。</p>
+<p>+load在父类，子类，分类的实现都会分别调用，所以+load更适合</p>
+<p>###Swizzling应该总是在dispatch_once中执行</p>
+<p>与上面相同，因为swizzling会改变全局状态，所以我们需要在运行时采取一些预防措施。原子性就是这样一种措施，它确保代码只被执行一次，不管有多少个线程。GCD的dispatch_once可以确保这种行为，我们应该将其作为method swizzling的最佳实践。</p>
+<p>###特别的地方</p>
+<p>&gt;</p>
+<ol>
+<li>总是调用方法的原始实现(除非有更好的理由不这么做)：API提供了一个输入与输出约定，但其内部实现是一个黑盒。Swizzle一个方法而不调用原始实现可能会打破私有状态底层操作，从而影响到程序的其它部分。</li>
+<li>避免冲突：给自定义的分类方法加前缀，从而使其与所依赖的代码库不会存在命名冲突。</li>
+<li>明白是怎么回事：简单地拷贝粘贴swizzle代码而不理解它是如何工作的，不仅危险，而且会浪费学习Objective-C运行时的机会。阅读Objective-C Runtime Reference和查看<objc runtime.h="">头文件以了解事件是如何发生的。</objc></li>
+<li>小心操作：无论我们对Foundation, UIKit或其它内建框架执行Swizzle操作抱有多大信心，需要知道在下一版本中许多事可能会不一样。</li>
+</ol>
+<p>##总结</p>
+<p>runtime到这里，大概讲了下两个问题，方法转发和关联对象。觉得还是不够，因为很多东西写起来发现自己也不是很了解，暂且做一个笔记。</p>
+<p>这里感谢南峰子，写得runtime教程非常详细，给了我很多帮助。</p>
+<p>本文参考了大量下面三篇文章的内容。</p>
+<p><a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/" target="_blank" rel="external"></a></p>
+<p><a href="http://southpeak.github.io/blog/2014/11/03/objective-c-runtime-yun-xing-shi-zhi-san-:fang-fa-yu-xiao-xi-zhuan-fa/" target="_blank" rel="external"></a></p>
+<p><a href="http://southpeak.github.io/blog/2014/10/30/objective-c-runtime-yun-xing-shi-zhi-er-:cheng-yuan-bian-liang-yu-shu-xing/" target="_blank" rel="external"></a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/11/06/week-code-1/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          一周刷题总结 - 1
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/10/25/list/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">list</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+
+
+
+<div class="duoshuo">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="runtime" data-title="runtime" data-url="http://csbzhixing.github.io/2015/11/01/runtime/"></div>
+	<!-- 多说评论框 end -->
+	<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+	<script type="text/javascript">
+	var duoshuoQuery = {short_name:"true"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+	<!-- 多说公共JS代码 end -->
+</div>
+
+
+
+
+</div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info">
+    	<div class="footer-left">
+    		&copy; 2016 之行
+    	</div>
+      	<div class="footer-right">
+      		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
+      	</div>
+    </div>
+  </div>
+</footer>
+    </div>
+    
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+
+<script>
+	var yiliaConfig = {
+		fancybox: true,
+		mathjax: true,
+		animate: undefined,
+		isHome: false,
+		isPost: true,
+		isArchive: false,
+		isTag: false,
+		isCategory: false,
+		open_in_new: undefined
+	}
+</script>
+<script src="http://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  </div>
+</body>
+</html>

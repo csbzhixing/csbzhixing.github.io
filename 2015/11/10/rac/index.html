@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+  <title>rac | 学海无涯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="RAC学习RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;
+##RAC的改变
+RAC通过信号将不同的部分联系在了一起。
+RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rac">
+<meta property="og:url" content="http://csbzhixing.github.io/2015/11/10/rac/index.html">
+<meta property="og:site_name" content="学海无涯">
+<meta property="og:description" content="RAC学习RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;
+##RAC的改变
+RAC通过信号将不同的部分联系在了一起。
+RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它">
+<meta property="og:updated_time" content="2015-11-09T16:46:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="rac">
+<meta name="twitter:description" content="RAC学习RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;
+##RAC的改变
+RAC通过信号将不同的部分联系在了一起。
+RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它">
+  
+    <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+	<header id="header" class="inner">
+		<a href="/" class="profilepic">
+			
+			<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+		</a>
+
+		<hgroup>
+		  <h1 class="header-author"><a href="/">之行</a></h1>
+		</hgroup>
+
+		
+
+		
+			<div class="switch-btn">
+				<div class="icon">
+					<div class="icon-ctn">
+						<div class="icon-wrap icon-house" data-idx="0">
+							<div class="birdhouse"></div>
+							<div class="birdhouse_holes"></div>
+						</div>
+						<div class="icon-wrap icon-ribbon hide" data-idx="1">
+							<div class="ribbon"></div>
+						</div>
+						
+						<div class="icon-wrap icon-link hide" data-idx="2">
+							<div class="loopback_l"></div>
+							<div class="loopback_r"></div>
+						</div>
+						
+						
+						<div class="icon-wrap icon-me hide" data-idx="3">
+							<div class="user"></div>
+							<div class="shoulder"></div>
+						</div>
+						
+					</div>
+					
+				</div>
+				<div class="tips-box hide">
+					<div class="tips-arrow"></div>
+					<ul class="tips-inner">
+						<li>Menu</li>
+						<li>Tags</li>
+						
+						<li>Links</li>
+						
+						
+						<li>About</li>
+						
+					</ul>
+				</div>
+			</div>
+		
+
+		<div class="switch-area">
+			<div class="switch-wrap">
+				<section class="switch-part switch-part1">
+					<nav class="header-menu">
+						<ul>
+						
+							<li><a href="/">主页</a></li>
+				        
+							<li><a href="/archives">所有文章</a></li>
+				        
+						</ul>
+					</nav>
+					<nav class="header-nav">
+						<div class="social">
+							
+								<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+					        
+								<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+					        
+								<a class="rss" target="_blank" href="#" title="rss">rss</a>
+					        
+								<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+					        
+						</div>
+					</nav>
+				</section>
+				
+				
+				<section class="switch-part switch-part2">
+					<div class="widget tagcloud" id="js-tagcloud">
+						
+					</div>
+				</section>
+				
+				
+				
+				<section class="switch-part switch-part3">
+					<div id="js-friends">
+					
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">奥巴马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">卡卡的美丽传说</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">本泽马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">吉格斯的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">习大大大不同</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">托蒂的博客</a>
+			        
+			        </div>
+				</section>
+				
+
+				
+				
+				<section class="switch-part switch-part4">
+				
+					<div id="js-aboutme">我是谁，我从哪里来，我到哪里去？我就是我，是颜色不一样的吃货…</div>
+				</section>
+				
+			</div>
+		</div>
+	</header>				
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+  	<div class="overlay">
+  		<div class="slider-trigger"></div>
+  		<h1 class="header-author js-mobile-header hide">之行</h1>
+  	</div>
+	<div class="intrude-less">
+		<header id="header" class="inner">
+			<div class="profilepic">
+			
+				<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+			</div>
+			<hgroup>
+			  <h1 class="header-author">之行</h1>
+			</hgroup>
+			
+			<nav class="header-menu">
+				<ul>
+				
+					<li><a href="/">主页</a></li>
+		        
+					<li><a href="/archives">所有文章</a></li>
+		        
+		        <div class="clearfix"></div>
+				</ul>
+			</nav>
+			<nav class="header-nav">
+				<div class="social">
+					
+						<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+			        
+						<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+			        
+						<a class="rss" target="_blank" href="#" title="rss">rss</a>
+			        
+						<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+			        
+				</div>
+			</nav>
+		</header>				
+	</div>
+</nav>
+
+      <div class="body-wrap"><article id="post-rac" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2015/11/10/rac/" class="article-date">
+  	<time datetime="2015-11-09T16:39:45.000Z" itemprop="datePublished">2015-11-10</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      rac
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+        
+	<div class="article-category tagcloud">
+	<a class="article-category-link" href="/categories/Objective-C/">Objective-C</a>
+	</div>
+
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="RAC学习"><a href="#RAC学习" class="headerlink" title="RAC学习"></a>RAC学习</h1><p>RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;</p>
+<p>##RAC的改变</p>
+<p>RAC通过信号将不同的部分联系在了一起。</p>
+<p>RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。</p>
+<p>###KVO</p>
+<p>RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[RACAble(self.username) subscribeNext:^(NSString *newName) &#123;</span><br><span class="line">    NSLog(@&quot;%@&quot;, newName);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// 只有当名字以&apos;j&apos;开头，才会被记录</span><br><span class="line">[[RACAble(self.username)</span><br><span class="line">   filter:^(NSString *newName) &#123;</span><br><span class="line">       return [newName hasPrefix:@&quot;j&quot;];</span><br><span class="line">   &#125;]</span><br><span class="line">   subscribeNext:^(NSString *newName) &#123;</span><br><span class="line">       NSLog(@&quot;%@&quot;, newName);</span><br><span class="line">   &#125;];</span><br></pre></td></tr></table></figure>
+<p>###UI Event</p>
+<p>根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">RAC(self.logInButton, enabled) = [RACSignal</span><br><span class="line">        combineLatest:@[</span><br><span class="line">            self.usernameTextField.rac_textSignal,</span><br><span class="line">            self.passwordTextField.rac_textSignal,</span><br><span class="line">            RACObserve(LoginManager.sharedManager, loggingIn),</span><br><span class="line">            RACObserve(self, loggedIn)</span><br><span class="line">        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) &#123;</span><br><span class="line">            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);</span><br><span class="line">        &#125;];</span><br></pre></td></tr></table></figure>
+<p>每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。</p>
+<p>###网络异步</p>
+<p>当我们有需求的时候，可以自己创建<code>RACSubject</code>类型。我们可以认为<code>RACSubject</code>是一个具有高度自定义的信号(是RACSignal的子类)；</p>
+<p>当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- (void)doTest</span><br><span class="line">&#123;</span><br><span class="line">    RACSubject *subject = [self doRequest];</span><br><span class="line">    </span><br><span class="line">    [subject subscribeNext:^(NSString *value)&#123;</span><br><span class="line">        NSLog(@&quot;value:%@&quot;, value);</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (RACSubject *)doRequest</span><br><span class="line">&#123;</span><br><span class="line">    RACSubject *subject = [RACSubject subject];</span><br><span class="line">    // 模拟2秒后得到请求内容</span><br><span class="line">    // 只触发1次</span><br><span class="line">    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的</span><br><span class="line">    // subscribeNext就是定义了一个接收体</span><br><span class="line">    [[[[RACSignal interval:2] take:1] map:^id(id _)&#123;</span><br><span class="line">        // the value is from url request</span><br><span class="line">        NSString *value = @&quot;content fetched from web&quot;;</span><br><span class="line">        [subject sendNext:value];</span><br><span class="line">        return nil;</span><br><span class="line">    &#125;] subscribeNext:^(id _)&#123;&#125;];</span><br><span class="line">    return subject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>##常见的概念</p>
+<p>###Signal and Subscriber</p>
+<p>在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。</p>
+<p>当信号获得了相关数据后，就会执行订阅者的<code>sendNext, sendComplete, sendError</code>方法。订阅者也有相关的方法来获取相关的数据，比如<code>[signal subscribeNext:error:completed]</code>。这个时候只要没有<code>sendError</code>和<code>sendComplete</code>传过来，就会有源源不断的数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[RACObserve(self, username) subscribeNext: ^(NSString *newName)&#123;</span><br><span class="line">    NSLog(@&quot;newName:%@&quot;, newName);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。</p>
+<p>信号是可以被处理的，通常有以下几种处理信号的方式</p>
+<ol>
+<li>map 修改</li>
+<li>filter 过滤</li>
+<li>combine 组合</li>
+<li>chain 串联</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">RAC(self.logInButton, enabled) = [RACSignal</span><br><span class="line">        combineLatest:@[</span><br><span class="line">            self.usernameTextField.rac_textSignal,</span><br><span class="line">            self.passwordTextField.rac_textSignal,</span><br><span class="line">            RACObserve(LoginManager.sharedManager, loggingIn),</span><br><span class="line">            RACObserve(self, loggedIn)</span><br><span class="line">        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) &#123;</span><br><span class="line">            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);</span><br><span class="line">        &#125;];</span><br></pre></td></tr></table></figure>
+<p>上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。</p>
+<p>###冷信号和热信号</p>
+<p>上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。</p>
+<p>注意，如果一个信号有多个订阅者的时候，signal里面的block会被执行多次，要控制的话就要通过replay的方法去控制。</p>
+<p>###UI Category</p>
+<p>RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。</p>
+<p>我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪<code>NSArray</code>来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。</p>
+<p>还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法<code>rac_prepareForReuseSignal</code>，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[[[self.cancelButton</span><br><span class="line">    rac_signalForControlEvents:UIControlEventTouchUpInside]</span><br><span class="line">    takeUntil:self.rac_prepareForReuseSignal]</span><br><span class="line">    subscribeNext:^(UIButton *x) &#123;</span><br><span class="line">    // do other things</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法<code>rac_command</code>。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) &#123;</span><br><span class="line">    // Assume that we&apos;re logged in at first. We&apos;ll replace this signal later if not.</span><br><span class="line">    RACSignal *authSignal = [RACSignal empty];</span><br><span class="line">    </span><br><span class="line">    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) &#123;</span><br><span class="line">        // Not logged in. Replace signal.</span><br><span class="line">        authSignal = [[RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscriber) &#123;</span><br><span class="line">            @strongify(self);</span><br><span class="line">            </span><br><span class="line">            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&quot;FRPLoginViewController&quot; bundle:nil];</span><br><span class="line">            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];</span><br><span class="line">            </span><br><span class="line">            [self presentViewController:navigationController animated:YES completion:^&#123;</span><br><span class="line">                [subscriber sendCompleted];</span><br><span class="line">            &#125;];</span><br><span class="line">            </span><br><span class="line">            return nil;</span><br><span class="line">        &#125;]];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    return [authSignal then:^RACSignal *&#123;</span><br><span class="line">        @strongify(self);</span><br><span class="line">        return [[self.viewModel.voteCommand execute:nil] ignoreValues];</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;];</span><br><span class="line">[voteButton.rac_command.errors subscribeNext:^(id x) &#123;</span><br><span class="line">    [x subscribeNext:^(NSError *error) &#123;</span><br><span class="line">        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。</p>
+<p>对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。</p>
+<p>##小结<br>由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。</p>
+<p>后面可能还是想结合网络请求来看看怎么使用RAC，毕竟多数的业务都是网络请求-&gt;数据组织-&gt;页面展示-&gt;交互的过程。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/11/13/leetcode2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          一周刷题总结 - 2
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/11/06/week-code-1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">一周刷题总结 - 1</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+
+
+
+<div class="duoshuo">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="rac" data-title="rac" data-url="http://csbzhixing.github.io/2015/11/10/rac/"></div>
+	<!-- 多说评论框 end -->
+	<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+	<script type="text/javascript">
+	var duoshuoQuery = {short_name:"true"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+	<!-- 多说公共JS代码 end -->
+</div>
+
+
+
+
+</div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info">
+    	<div class="footer-left">
+    		&copy; 2016 之行
+    	</div>
+      	<div class="footer-right">
+      		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
+      	</div>
+    </div>
+  </div>
+</footer>
+    </div>
+    
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+
+<script>
+	var yiliaConfig = {
+		fancybox: true,
+		mathjax: true,
+		animate: undefined,
+		isHome: false,
+		isPost: true,
+		isArchive: false,
+		isTag: false,
+		isCategory: false,
+		open_in_new: undefined
+	}
+</script>
+<script src="http://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  </div>
+</body>
+</html>

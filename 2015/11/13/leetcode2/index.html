@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+  <title>一周刷题总结 - 2 | 学海无涯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="又到了一周题目总结时间。到现在为止总共完成了三十道题，每天大概做1-3题。感觉这个步骤还是比较适合自己的进度的。
+
+leetcode 9
+
+给出一个Int值，判断是否是回文数字。
+我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。
+代码如下
+1234567891">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一周刷题总结 - 2">
+<meta property="og:url" content="http://csbzhixing.github.io/2015/11/13/leetcode2/index.html">
+<meta property="og:site_name" content="学海无涯">
+<meta property="og:description" content="又到了一周题目总结时间。到现在为止总共完成了三十道题，每天大概做1-3题。感觉这个步骤还是比较适合自己的进度的。
+
+leetcode 9
+
+给出一个Int值，判断是否是回文数字。
+我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。
+代码如下
+1234567891">
+<meta property="og:updated_time" content="2015-11-13T16:03:13.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一周刷题总结 - 2">
+<meta name="twitter:description" content="又到了一周题目总结时间。到现在为止总共完成了三十道题，每天大概做1-3题。感觉这个步骤还是比较适合自己的进度的。
+
+leetcode 9
+
+给出一个Int值，判断是否是回文数字。
+我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。
+代码如下
+1234567891">
+  
+    <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+	<header id="header" class="inner">
+		<a href="/" class="profilepic">
+			
+			<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+		</a>
+
+		<hgroup>
+		  <h1 class="header-author"><a href="/">之行</a></h1>
+		</hgroup>
+
+		
+
+		
+			<div class="switch-btn">
+				<div class="icon">
+					<div class="icon-ctn">
+						<div class="icon-wrap icon-house" data-idx="0">
+							<div class="birdhouse"></div>
+							<div class="birdhouse_holes"></div>
+						</div>
+						<div class="icon-wrap icon-ribbon hide" data-idx="1">
+							<div class="ribbon"></div>
+						</div>
+						
+						<div class="icon-wrap icon-link hide" data-idx="2">
+							<div class="loopback_l"></div>
+							<div class="loopback_r"></div>
+						</div>
+						
+						
+						<div class="icon-wrap icon-me hide" data-idx="3">
+							<div class="user"></div>
+							<div class="shoulder"></div>
+						</div>
+						
+					</div>
+					
+				</div>
+				<div class="tips-box hide">
+					<div class="tips-arrow"></div>
+					<ul class="tips-inner">
+						<li>Menu</li>
+						<li>Tags</li>
+						
+						<li>Links</li>
+						
+						
+						<li>About</li>
+						
+					</ul>
+				</div>
+			</div>
+		
+
+		<div class="switch-area">
+			<div class="switch-wrap">
+				<section class="switch-part switch-part1">
+					<nav class="header-menu">
+						<ul>
+						
+							<li><a href="/">主页</a></li>
+				        
+							<li><a href="/archives">所有文章</a></li>
+				        
+						</ul>
+					</nav>
+					<nav class="header-nav">
+						<div class="social">
+							
+								<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+					        
+								<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+					        
+								<a class="rss" target="_blank" href="#" title="rss">rss</a>
+					        
+								<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+					        
+						</div>
+					</nav>
+				</section>
+				
+				
+				<section class="switch-part switch-part2">
+					<div class="widget tagcloud" id="js-tagcloud">
+						
+					</div>
+				</section>
+				
+				
+				
+				<section class="switch-part switch-part3">
+					<div id="js-friends">
+					
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">奥巴马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">卡卡的美丽传说</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">本泽马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">吉格斯的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">习大大大不同</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">托蒂的博客</a>
+			        
+			        </div>
+				</section>
+				
+
+				
+				
+				<section class="switch-part switch-part4">
+				
+					<div id="js-aboutme">我是谁，我从哪里来，我到哪里去？我就是我，是颜色不一样的吃货…</div>
+				</section>
+				
+			</div>
+		</div>
+	</header>				
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+  	<div class="overlay">
+  		<div class="slider-trigger"></div>
+  		<h1 class="header-author js-mobile-header hide">之行</h1>
+  	</div>
+	<div class="intrude-less">
+		<header id="header" class="inner">
+			<div class="profilepic">
+			
+				<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+			</div>
+			<hgroup>
+			  <h1 class="header-author">之行</h1>
+			</hgroup>
+			
+			<nav class="header-menu">
+				<ul>
+				
+					<li><a href="/">主页</a></li>
+		        
+					<li><a href="/archives">所有文章</a></li>
+		        
+		        <div class="clearfix"></div>
+				</ul>
+			</nav>
+			<nav class="header-nav">
+				<div class="social">
+					
+						<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+			        
+						<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+			        
+						<a class="rss" target="_blank" href="#" title="rss">rss</a>
+			        
+						<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+			        
+				</div>
+			</nav>
+		</header>				
+	</div>
+</nav>
+
+      <div class="body-wrap"><article id="post-leetcode2" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2015/11/13/leetcode2/" class="article-date">
+  	<time datetime="2015-11-13T14:08:35.000Z" itemprop="datePublished">2015-11-13</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      一周刷题总结 - 2
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+        
+	<div class="article-category tagcloud">
+	<a class="article-category-link" href="/categories/数据结构/">数据结构</a>
+	</div>
+
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>又到了一周题目总结时间。到现在为止总共完成了三十道题，每天大概做1-3题。感觉这个步骤还是比较适合自己的进度的。</p>
+<ul>
+<li>leetcode 9</li>
+</ul>
+<p>给出一个Int值，判断是否是回文数字。</p>
+<p>我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。</p>
+<p>代码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">isPalindrome</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x&lt;<span class="number">0</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">if</span>(x&lt;<span class="number">10</span>) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> y=<span class="number">0</span>,temp = x;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span>(temp)</span><br><span class="line">    &#123;</span><br><span class="line">        y = y*<span class="number">10</span> + (temp%<span class="number">10</span>);</span><br><span class="line">        temp/=<span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> x==y;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>leetcode 26</li>
+</ul>
+<p>移除一个数组中重复的数字。</p>
+<p>根据题意，我们只需要将重复的数字不停地移动到数组末尾，然后缩短数组大小就可以了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">removeDuplicates</span><span class="params">(<span class="keyword">int</span>* nums, <span class="keyword">int</span> numsSize)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(numsSize&lt;<span class="number">2</span>) <span class="keyword">return</span> numsSize;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> cur = <span class="number">0</span>;<span class="keyword">int</span> temp = nums[<span class="number">0</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i&lt;numsSize;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(nums[i] == temp) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            nums[cur+<span class="number">1</span>] = nums[i];</span><br><span class="line">            cur++;</span><br><span class="line">            temp = nums[i];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="keyword">return</span> cur+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>leetcode 136</li>
+</ul>
+<p>给出一个数组，找出数组中唯一一个只出现了一次的数，其他的数都出现了两次，要求线性时间内完成且不能用额外的空间。</p>
+<p>这道题给的难度分类是中等，但是我看了下题目的通过率很高，说明又很巧妙地方法。我自己在开始做得时候想到的都都要用额外的存储空间。在看了别人的方法后才知道原来可以用异或方法，因为异或方法相当于交换了两个数。所以我们要做得就是遍历一次数组，用一个数与每个数组的数异或，最后保留的数就是唯一一个出现了一次的数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">removeDuplicates</span><span class="params">(<span class="keyword">int</span>* nums, <span class="keyword">int</span> numsSize)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(numsSize&lt;<span class="number">2</span>) <span class="keyword">return</span> numsSize;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> cur = <span class="number">0</span>;<span class="keyword">int</span> temp = nums[<span class="number">0</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i&lt;numsSize;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(nums[i] == temp) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            nums[cur+<span class="number">1</span>] = nums[i];</span><br><span class="line">            cur++;</span><br><span class="line">            temp = nums[i];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> cur+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同样地,leetcode还给出了一道相似的题目，就是</p>
+<ul>
+<li>leetcode 260</li>
+</ul>
+<p>这道题目和上面的题目基本一样，唯独不同的是给出的数组中有两个数只出现了一次。</p>
+<p>题目中提到了，要在线性时间内完成，我们还是要考虑从上面的题目中怎么改进就可以完成这道题目。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span>* <span class="title">singleNumber</span><span class="params">(<span class="keyword">int</span>* nums, <span class="keyword">int</span> numsSize, <span class="keyword">int</span>* returnSize)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, *result = <span class="built_in">calloc</span>(*returnSize = <span class="number">2</span>, <span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; numsSize; result[<span class="number">0</span>] ^= nums[i++]);</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; numsSize; i++)</span><br><span class="line">        <span class="keyword">if</span>(nums[i] &amp; result[<span class="number">0</span>] &amp; -result[<span class="number">0</span>])</span><br><span class="line">            result[<span class="number">1</span>] ^= nums[i];</span><br><span class="line">    result[<span class="number">0</span>] ^= result[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法，首先找出了一个result[0]，这个是保存了两个出现了一次的的数字的异或结果a xor b;<br>我们知道 如果a != b的话，那么a xor b就会保准他们每个数字的一部分的二进制。<br>那么第二部我们通过异或就可以刷选出一个结果。<br>通过 a xor b的结果再异或，就可以得出另一个结果。</p>
+<p>通过上面两道题目可以得出，简简单单的异或有时候可是非常强大的。</p>
+<p>##小结</p>
+<p>虽然每周做得题目不止这么多，但是受限时间，只能慢慢整理，优先整理我觉得值得思考的题目。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/12/03/xcode-color/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          让Xcode的控制台更给力点
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/11/10/rac/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">rac</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+
+
+
+<div class="duoshuo">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="leetcode2" data-title="一周刷题总结 - 2" data-url="http://csbzhixing.github.io/2015/11/13/leetcode2/"></div>
+	<!-- 多说评论框 end -->
+	<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+	<script type="text/javascript">
+	var duoshuoQuery = {short_name:"true"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+	<!-- 多说公共JS代码 end -->
+</div>
+
+
+
+
+</div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info">
+    	<div class="footer-left">
+    		&copy; 2016 之行
+    	</div>
+      	<div class="footer-right">
+      		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
+      	</div>
+    </div>
+  </div>
+</footer>
+    </div>
+    
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+
+<script>
+	var yiliaConfig = {
+		fancybox: true,
+		mathjax: true,
+		animate: undefined,
+		isHome: false,
+		isPost: true,
+		isArchive: false,
+		isTag: false,
+		isCategory: false,
+		open_in_new: undefined
+	}
+</script>
+<script src="http://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  </div>
+</body>
+</html>
