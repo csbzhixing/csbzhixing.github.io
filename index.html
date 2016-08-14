@@ -114,7 +114,7 @@
 				
 				<section class="switch-part switch-part2">
 					<div class="widget tagcloud" id="js-tagcloud">
-						
+						<a href="/tags/心得/" style="font-size: 10px;">心得</a>
 					</div>
 				</section>
 				
@@ -197,6 +197,414 @@
 </nav>
 
       <div class="body-wrap">
+  
+    <article id="post-用GCD来实现个Timer" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/08/15/用GCD来实现个Timer/" class="article-date">
+  	<time datetime="2016-08-14T16:04:39.000Z" itemprop="datePublished">2016-08-15</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/08/15/用GCD来实现个Timer/">用GCD来实现个Timer</a>
+    </h1>
+  
+
+      </header>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>##少用NSTimer</p>
+<p>在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用<code>NSTimer</code>这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。</p>
+<p><code>NSTimer</code>有哪些坑，一个个来数一数</p>
+<h3 id="Timer必须作用在一个运行中的runloop"><a href="#Timer必须作用在一个运行中的runloop" class="headerlink" title="Timer必须作用在一个运行中的runloop"></a>Timer必须作用在一个运行中的<code>runloop</code></h3><p>用过<code>NSTimer</code>的都知道，在创建了<code>NSTimer</code>之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是有runLoop的（实际上一般很少会在主线程开timer）。如果是在子线程，那么就要手动激活runLoop先，不然就调用时无效的。</p>
+<h3 id="操作必须在同一个线程中"><a href="#操作必须在同一个线程中" class="headerlink" title="操作必须在同一个线程中"></a>操作必须在同一个线程中</h3><p>NSTimer的创建与撤销必须在同一个线程操作、performSelector的创建与撤销必须在同一个线程操作</p>
+<h3 id="内存泄漏"><a href="#内存泄漏" class="headerlink" title="内存泄漏"></a>内存泄漏</h3><p>一般用NSTimer最容易出现的问题。首先来分析为什么会出现这个情况。</p>
+<p>通常，我们创建一个<code>NSTimer</code>的方法是调用以下的API：</p>
+<pre><code>+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
++ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
+
+- (instancetype)initWithFireDate:(NSDate *)date interval:(NSTimeInterval)ti target:(id)t selector:(SEL)s userInfo:(nullable id)ui repeats:(BOOL)rep NS_DESIGNATED_INITIALIZER;
+</code></pre><p>这个时候，target会被timer持有，引用计数+1。</p>
+<p>此时，如果直接销毁target，即使在target的deallco里面调用了[timer invaild]也无用。因为timer和target相关，因此必须提前调用[timer invaild]。这种BUG最常见的的就是一个<code>UIViewController</code>pop的时候，timer没有被invaild，结果<code>UIViewController</code>没有被销毁，导致了内存泄漏。</p>
+<blockquote>
+<p>This method is the only way to remove a timer from an NSRunLoop object. The NSRunLoop object removes its strong reference to the timer, either just before the invalidate method returns or at some later point.</p>
+<p>If it was configured with target and user info objects, the receiver removes its strong references to those objects as well.<br>You must send this message from the thread on which the timer was installed. If you send this message from another thread, the input source associated with the timer may not be removed from its run loop, which could prevent the thread from exiting properly.</p>
+</blockquote>
+<p>注意到官方文档中提到，runLoop会持有NSTimer的引用，因此除了调用<code>invaild</code>方法外，没有别的方法.</p>
+<p>##用GCD代替NSTimer</p>
+<p>用过GCD的都说好，可以说把GCD玩的很溜的话，很多异步并行问题都能解决，在这里我们就要去解决NSTimer的坑的问题。这里用三个开源库来抛砖引玉，讲讲不同的实现由什么优缺点。</p>
+<p>###RNTimer</p>
+<p>这个库很老了，12年后就没有更新了，内容也很简单，只有两个文件，因为代码很少，直接上源码了</p>
+<h4 id="源码摘要"><a href="#源码摘要" class="headerlink" title="源码摘要"></a>源码摘要</h4><pre><code class="Objective-C">
+@interface RNTimer : NSObject
+
+/**---------------------------------------------------------------------------------------
+ @name Creating a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Creates and returns a new repeating RNTimer object and starts running it
+
+ After `seconds` seconds have elapsed, the timer fires, executing the block.
+ You will generally need to use a weakSelf pointer to avoid a retain loop.
+ The timer is attached to the main GCD queue.
+
+ @param seconds The number of seconds between firings of the timer. Must be greater than 0.
+ @param block Block to execute. Must be non-nil
+
+ @return A new RNTimer object, configured according to the specified parameters.
+*/
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds block:(dispatch_block_t)block;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Firing a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Causes the block to be executed.
+
+ This does not modify the timer. It will still fire on schedule.
+*/
+- (void)fire;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Stopping a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Stops the receiver from ever firing again
+
+ Once invalidated, a timer cannot be reused.
+
+*/
+
+
+@interface RNTimer ()
+@property (nonatomic, readwrite, copy) dispatch_block_t block;
+@property (nonatomic, readwrite, assign) dispatch_source_t source;
+@end
+
+@implementation RNTimer
+@synthesize block = _block;
+@synthesize source = _source;
+
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds
+                                                                            block:(void (^)(void))block {
+    NSParameterAssert(seconds);
+    NSParameterAssert(block);
+
+    RNTimer *timer = [[self alloc] init];
+    timer.block = block;
+    timer.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                0, 0,
+                                                                                dispatch_get_main_queue());
+    uint64_t nsec = (uint64_t)(seconds * NSEC_PER_SEC);
+    dispatch_source_set_timer(timer.source,
+                                                        dispatch_time(DISPATCH_TIME_NOW, nsec),
+                                                        nsec, 0);
+    dispatch_source_set_event_handler(timer.source, block);
+    dispatch_resume(timer.source);
+    return timer;
+}
+
+- (void)invalidate {
+    if (self.source) {
+        dispatch_source_cancel(self.source);
+        dispatch_release(self.source);
+        self.source = nil;
+    }
+    self.block = nil;
+}
+
+- (void)dealloc {
+    [self invalidate];
+}
+
+- (void)fire {
+    self.block();
+}
+</code></pre>
+<h4 id="实现分析"><a href="#实现分析" class="headerlink" title="实现分析"></a>实现分析</h4><p>实现很简单，用的是最基本的方法，即创建了一个<code>dispatch_source_t</code>，传入<code>block</code>，然后通过<code>dispatch_source_set_timer</code>将timer添加到<code>dispatch_source</code>，设置事件处理为传入的block,然后执行timer。</p>
+<p>提供两个和<code>NSTimer</code>一样的方法，<code>invalidate</code>和<code>fire</code>。<code>fire</code>会立即执行block，但是不会使timer失效，依然会按照预定计划执行。</p>
+<p>在API定义上，保持了和<code>NSTimer</code>一样的定义，所以切换起来没有压力。但是简单也以为这功能不完善。</p>
+<ol>
+<li>无法暂停挂起timer</li>
+<li>无法指定线程</li>
+<li>无法添加新的任务到timer中</li>
+</ol>
+<h3 id="MSWeakTimer"><a href="#MSWeakTimer" class="headerlink" title="MSWeakTimer"></a>MSWeakTimer</h3><p><code>MSWeakTimer</code>的API设计成和<code>NSTimer</code>一样，调用的方法也一致，直接使用并没有什么副作用。</p>
+<pre><code class="Objective-C">
+- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                         /**
+ * Creates an `MSWeakTimer` object and schedules it to start ticking inmediately.
+ */
++ (instancetype)scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval
+                                                                                target:(id)target
+                                                                            selector:(SEL)selector
+                                                                            userInfo:(id)userInfo
+                                                                             repeats:(BOOL)repeats
+                                                                 dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                                                                 /**
+ * Starts the timer if it hadn&#39;t been schedule yet.
+ * @warning calling this method on an already scheduled timer results in undefined behavior.
+ */
+- (void)schedule;
+
+/**
+ * Sets the amount of time after the scheduled fire date that the timer may fire to the given interval.
+ * @discussion Setting a tolerance for a timer allows it to fire later than the scheduled fire date, improving the ability of the system to optimize for increased power savings and responsiveness. The timer may fire at any time between its scheduled fire date and the scheduled fire date plus the tolerance. The timer will not fire before the scheduled fire date. For repeating timers, the next fire date is calculated from the original fire date regardless of tolerance applied at individual fire times, to avoid drift. The default value is zero, which means no additional tolerance is applied. The system reserves the right to apply a small amount of tolerance to certain timers regardless of the value of this property.
+ As the user of the timer, you will have the best idea of what an appropriate tolerance for a timer may be. A general rule of thumb, though, is to set the tolerance to at least 10% of the interval, for a repeating timer. Even a small amount of tolerance will have a significant positive impact on the power usage of your application. The system may put a maximum value of the tolerance.
+ */
+@property (atomic, assign) NSTimeInterval tolerance;
+
+/**
+ * Causes the timer to be fired synchronously manually on the queue from which you call this method.
+ * You can use this method to fire a repeating timer without interrupting its regular firing schedule.
+ * If the timer is non-repeating, it is automatically invalidated after firing, even if its scheduled fire date has not arrived.
+ */
+- (void)fire;
+
+/**
+ * You can call this method on repeatable timers in order to stop it from running and trying
+ * to call the delegate method.
+ * @note `MSWeakTimer` won&#39;t invoke the `selector` on `target` again after calling this method.
+ * You can call this method from any queue, it doesn&#39;t have to be the queue from where you scheduled it.
+ * Since it doesn&#39;t retain the delegate, unlike a regular `NSTimer`, your `dealloc` method will actually be called
+ * and it&#39;s easier to place the `invalidate` call there, instead of figuring out a safe place to do it.
+ */
+- (void)invalidate;
+
+- (id)userInfo;
+</code></pre>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>先来看初始化方法：</p>
+<pre><code>- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue
+{
+        NSParameterAssert(target);
+        NSParameterAssert(selector);
+        NSParameterAssert(dispatchQueue);
+
+        if ((self = [super init]))
+        {
+                self.timeInterval = timeInterval;
+                self.target = target;
+                self.selector = selector;
+                self.userInfo = userInfo;
+                self.repeats = repeats;
+
+                NSString *privateQueueName = [NSString stringWithFormat:@&quot;com.mindsnacks.msweaktimer.%p&quot;, self];
+                self.privateSerialQueue = dispatch_queue_create([privateQueueName cStringUsingEncoding:NSASCIIStringEncoding], DISPATCH_QUEUE_SERIAL);
+                dispatch_set_target_queue(self.privateSerialQueue, dispatchQueue);
+
+                self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                        0,
+                                                                                        0,
+                                                                                        self.privateSerialQueue);
+        }
+
+        return self;
+}
+</code></pre><p>将传入的参数复制给当前类的属性，然后初始化<code>privateSerialQueue</code>，<code>privateSerialQueue</code>的名称是<code>privateQueueName</code>，可变参数为当前对象的内存地址。调用<code>dispatch_set_target_queue</code>将传参的<code>dispatchQueue</code>优先级赋给<code>privateSerialQueue</code>。最后，初始化<code>timer</code>。</p>
+<p>然后看执行函数</p>
+<pre><code>- (void)schedule
+{
+        [self resetTimerProperties];
+
+        __weak MSWeakTimer *weakSelf = self;
+
+        dispatch_source_set_event_handler(self.timer, ^{
+                [weakSelf timerFired];
+        });
+
+        dispatch_resume(self.timer);
+}
+</code></pre><p>首先调用了<code>resetTimerProperties</code></p>
+<pre><code>- (void)resetTimerProperties
+{
+        int64_t intervalInNanoseconds = (int64_t)(self.timeInterval * NSEC_PER_SEC);
+        int64_t toleranceInNanoseconds = (int64_t)(self.tolerance * NSEC_PER_SEC);
+
+        dispatch_source_set_timer(self.timer,
+                                                            dispatch_time(DISPATCH_TIME_NOW, intervalInNanoseconds),
+                                                            (uint64_t)intervalInNanoseconds,
+                                                            toleranceInNanoseconds
+                                                            );
+}
+</code></pre><p><code>resetTimerProperties</code>重置<code>timer</code>。</p>
+<p><code>intervalInNanoseconds</code>和<code>toleranceInNanoseconds</code></p>
+<p>充当<code>interval</code>和<code>leeway</code></p>
+<p>在执行完<code>resetTimerProperties</code>后，<code>dispatch_source_set_event_handler</code>一个block到<code>timer</code>，执行<code>timerFired</code>：</p>
+<pre><code>- (void)timerFired
+{
+        // Checking attomatically if the timer has already been invalidated.
+        if (OSAtomicAnd32OrigBarrier(1, &amp;_timerFlags.timerIsInvalidated))
+        {
+                return;
+        }
+
+        // We&#39;re not worried about this warning because the selector we&#39;re calling doesn&#39;t return a +1 object.
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored &quot;-Warc-performSelector-leaks&quot;
+                [self.target performSelector:self.selector withObject:self];
+        #pragma clang diagnostic pop
+
+        if (!self.repeats)
+        {
+                [self invalidate];
+        }
+}
+</code></pre><p>这里<code>OSAtomicAnd32OrigBarrier</code>是个值得关注的函数。</p>
+<p><code>OSAtomicAnd32OrigBarrier</code>是一个原子操作的布尔与运算，且带有内存屏障。<code>OSAtomicAnd32OrigBarrier</code>保证了在与操作之前数据结构的存储结构发生改变。</p>
+<p>详细的只是可以参考下面这篇文章</p>
+<p><a href="">http://southpeak.github.io/blog/2014/10/17/osatomicyuan-zi-cao-zuo/</a></p>
+<p>在这里，<code>_timerFlags.timerIsInvalidated</code>与1做与操作，如果返回return 则返回，如果不是，执行.</p>
+<p>这里如果不加入<code>invalidate</code>的话，恐怕说不清楚为什么这里要做这个判断</p>
+<pre><code>- (void)invalidate
+{
+        // We check with an atomic operation if it has already been invalidated. Ideally we would synchronize this on the private queue,
+        // but since we can&#39;t know the context from which this method will be called, dispatch_sync might cause a deadlock.
+        if (!OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated))
+        {
+                dispatch_source_t timer = self.timer;
+                dispatch_async(self.privateSerialQueue, ^{
+                        dispatch_source_cancel(timer);
+                        ms_release_gcd_object(timer);
+                });
+        }
+}
+</code></pre><pre><code>    if (!OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated))
+</code></pre><p><code>OSAtomicTestAndSetBarrier</code>和<code>OSAtomicAnd32OrigBarrier</code>正好可以作为一个相对操作。</p>
+<p><code>OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated)</code>会指定变量中的一个bit，把它设置为‘1’并返回旧值。如果要指定32bit integer最低位，n应该是7。因此如果第一次调用<code>OSAtomicTestAndSetBarrier</code>的话，返回false同时话将<code>timerIsInvalidated</code>置成1.由于原子操作和内存屏障，这个方法不会和<code>OSAtomicAnd32OrigBarrier</code>一同执行。如果执行到<code>timerFired</code>的时候，<code>OSAtomicAnd32OrigBarrier(1, &amp;_timerFlags.timerIsInvalidated)</code>返回true，就会返回了。通过这个方法保证了在调用<code>invalidate</code>后将timer失效。</p>
+<p><code>timerFired</code>如果能执行，则通过<code>performSelector</code>来调用对用的<code>SEL</code></p>
+<p>在<code>invalidate</code>中，如果需要释放，需要调用<code>dispatch_async</code>。原因是我们虽然通过原子操作保证了<code>invalidated</code>，但是我们无法确定当前的上下文情况，使用<code>dispatch_async</code>可能会造成死锁。</p>
+<p>主流程分析就是如此，<code>MSWeakTimer</code>最值得关注的就是上面讲解决线程同步的方法。</p>
+<p><code>MSWeakTimer</code>解决了前面提到的问题中无法添加指定线程（实际上也不是添加到那个线程，而是新开了一个线程）。由于模仿的是<code>NSTimer</code>的API，所以另外两个方法也没有解决。</p>
+<h2 id="我的实现-–-ZXGCDTimer"><a href="#我的实现-–-ZXGCDTimer" class="headerlink" title="我的实现 – ZXGCDTimer"></a>我的实现 – ZXGCDTimer</h2><p>在参考了上面的两个开源库后，自己动手撸了一个简单的基于GCD的Timer。基本解决了上面提到了三个问题。</p>
+<p>代码地址：<a href="">https://github.com/csbzhixing/ZXGCDTimer</a></p>
+<p>思路是，通过<code>ZXGCDTimerManager</code>提供对外操作包括创建，执行，取消，挂起，回复功能。每个timer通过<code>ZXGCDTimer</code>为单位去管理，以<code>timerName</code>去区分不同的timer。支持自定义线程，支持新增Action。</p>
+<p>由于是自己处于研究目的写的，可能存在各种问题，也欢迎大家提出批评和指正。</p>
+
+      
+    </div>
+    
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+    
+  </div>
+  
+</article>
+
+
+
+
+
+
+
+
+
+  
+    <article id="post-post" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/04/07/post/" class="article-date">
+  	<time datetime="2016-04-06T16:03:44.000Z" itemprop="datePublished">2016-04-07</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/04/07/post/">一年</a>
+    </h1>
+  
+
+      </header>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>转眼间，我已经实习一年了。
+转眼间，要大学毕业了。
+
+</code></pre><p>如果不看日历，不去想时间，似乎和一年前的这个时候也没有什么不同。一样的担心，一样的焦虑。<br>一年前，因为自己陷入了学习的盲区，不知道如何去提升自己，只好想办法找个实习，想说自己找找自己的学习的方向。这么一做，就是一年过去了。</p>
+<p>实习的一年，可以说很辛苦，也很充实。辛苦是因为不仅仅要完成自己学习上的东西，还要去完成工作上的事情，这点对我来说的确是不小的挑战。大学的前两年里面，每天白天上上课，晚上搞下作业，然后就可以快乐的玩耍了。然而到了实习，白天的工作就足以让自己心力交瘁，晚上回到学校后还有许多课业要补习。即使如此，我也没有后悔。如果不是实习，我现在可能还在盲目不知道怎么去找工作；如果不是实习，自己可能现在还在纠结自己未来在哪个方向前进；如果不是实习，可能现在还有改不掉的一堆学生气。</p>
+<pre><code>时间不会让人成长，只有痛苦可以
+
+
+</code></pre><p>还记得刚开始实习的时候特别痛苦。用学校那套学习方法进入工作肯定是行不通的。所以开始的一个月，在iOS上并没有什么长进。硬生生的啃了几本书也然并卵。到了第二个月，接触了项目，有了目标，一点点的去实现一个个目标，结合原理，才真正有了一点点突破。</p>
+<pre><code>知识永远学不完，钱永远赚不完，找到自己的路就行
+
+
+</code></pre><p>十月份换了个实习，回到了深圳。一个原因是原来的公司人员变动，自己也觉得平台太小已经没法接触更多的东西了，除此外回到深圳也可以解放自己更多时间来学习。于是乎很幸运的来到了现在的公司。在这里，从头开发了多个APP，接触了React Native。从一个辅助慢慢成为一个独立的开发。这个时候，很多同学已经确定下来了Offer.看着同学一个个比较自己的offer的时候，自己的心态也有点小小的波动。但是，最后，还是决定扎下来。现有的平台对于自己来说是足够的。一方面身边有足够厉害的人能够提携自己，一方面在项目和时间上能够让自己去深入学习和提高。比较1K,2k这点差距，技术积累和做人的学习恐怕才是最重要的。    </p>
+<pre><code>一年后
+
+
+</code></pre><p>虽然前不久才写完新年总结，之后也好久没有更新什么技术文章，这个总结也算另开一个头。已经从毕设中解放的我有更多时间去深入iOS和js了。希望在一年后的今天，能够在两个技术栈上都有不小的成就。</p>
+
+      
+    </div>
+    
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/心得/">心得</a></li></ul>
+	</div>
+
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+    
+  </div>
+  
+</article>
+
+
+
+
+
+
+
+
+
   
     <article id="post-2016" class="article article-type-post" itemscope itemprop="blogPost">
   
@@ -1602,165 +2010,6 @@ listLink search_list(listLink, int);
       
 	<div class="article-category tagcloud">
 	<a class="article-category-link" href="/categories/Network/">Network</a>
-	</div>
-
-
-      
-      <div class="clearfix"></div>
-    </div>
-    
-  </div>
-  
-</article>
-
-
-
-
-
-
-
-
-
-  
-    <article id="post-other" class="article article-type-post" itemscope itemprop="blogPost">
-  
-    <div class="article-meta">
-      <a href="/2015/10/09/other/" class="article-date">
-  	<time datetime="2015-10-09T05:36:46.000Z" itemprop="datePublished">2015-10-09</time>
-</a>
-    </div>
-  
-  <div class="article-inner">
-    
-      <input type="hidden" class="isFancy" />
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/10/09/other/">改变，一刻都不能停止</a>
-    </h1>
-  
-
-      </header>
-      
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="杂谈，生活，学习"><a href="#杂谈，生活，学习" class="headerlink" title="杂谈，生活，学习"></a>杂谈，生活，学习</h1><p>##从iTunes store说起</p>
-<p>9.30号凌晨，在我半睡半醒的时候，准备更新下一些APP。然后就发现了iTunes 提醒我要同意新的协议，当时很困就睡着了，没有想太多。早上起来，发现apple music可以用了！没错！免费三个月，续费十块钱一个月！然后看了下电影。一堆一块钱的正版电影你相信吗？？！。</p>
-<p>好吧，为何我那么激动吗，对于很多人是不理解的。相对于一些必须消费的商品。图书，音乐，电影，游戏，软件这些虚拟服务，在许多人眼里就是免费的午餐。从来没想到过我们为何要去为这些东西掏钱。所以，很多人并不看好苹果这次在大陆推行的这些服务。然而我认为，苹果这是以一己之力，将要改变中国人对版权的认识。为什么这么说？价格说明一切。</p>
-<p>如今，出去吃顿饭一个人动不动上百，一杯果汁奶茶都几十块钱的时代，却还在为一个优秀APP几十块钱而烦恼。入手新手机后，买了几款APP。其中有一个第三方微博客户端墨客。我家里很不理解为什么有微博客户端我还会去选择掏钱去买。我觉得，仅仅是干净舒适的UI设计就足够我花这个钱，而且再不用看到一大堆乱七八糟的推广，能够最快的看到自己需要的内容，这一切仅仅18块钱，难道不比买一包烟，喝一杯果汁来的值得吗？</p>
-<h2 id="新的工作，一样的生活"><a href="#新的工作，一样的生活" class="headerlink" title="新的工作，一样的生活"></a>新的工作，一样的生活</h2><p>国庆第一天，把宿舍几乎所有的东西都带回家了。8号到了新公司报道。在国庆的时候，好好的回顾了下以前的堕落的生活，顺便整理了下自己的学习和工作上的问题。发现自己任然有许多地方的欠缺。牛逼的人，总是有强迫症的。而我，似乎不能称为牛逼的人，就是因为没有强迫症。面对代码，能Copy/Paste的话就做了，没有想到怎么去重构，去思考怎么做的更好。面对重复的东西，总是尽可能去避免。不愿意耐心的去解决的困难的问题，总是想依赖其他的人的经验来解决。不踏过千千万万个坑，怎么能说自己是个出色的工程师？总不能一辈子都在搬砖吧。养成强迫症，才不会总是固守原来的生活。</p>
-<p>##深度和广度</p>
-<p>在面试的时候，和这家公司的团队老大有一番交流让我感触很深。搞技术的，除了要有深度，还要有广度。对于广度和深度，之前也和某老大谈过。全栈好不好，这个话恐怕只有自己到了那个层次才能谈谈。毕竟现在，哪怕仅仅是一个方面，自己都很难保证能解决多数的问题。如今进入到了这个团队，感受到了身边的牛人还真的很多，许多都是多面手。看来不能仅仅把自己的困在一个方面。多学多用给你才是王道。后面打算整理下自己的技能树，然后根据轻重来设计自己的学习路线。</p>
-<p>##让思维和身体都跑起来吧！</p>
-<p><img src="/media/14443703278870.jpg" alt=""></p>
-<p>坚持跑步已经有了两个月。虽然中间因为各种原因停顿了几次，这个月的跑量一直没上去。然而现在固定了下来，也要恢复到之前的运动模式。身体的运动，也改善了我思考的模式。不再会因为因为小小的事情而去分心。执行力也越来越好，也容易控制自己的情绪了。思维跟随的身体，一起奔跑的感觉，实在是太好不过了。</p>
-<p>最后一句话，送给自己。</p>
-<p>##一切不变的，就是改变</p>
-<p>˙</p>
-
-      
-    </div>
-    
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-	<a class="article-category-link" href="/categories/personal/">personal</a>
-	</div>
-
-
-      
-      <div class="clearfix"></div>
-    </div>
-    
-  </div>
-  
-</article>
-
-
-
-
-
-
-
-
-
-  
-    <article id="post-update-self" class="article article-type-post" itemscope itemprop="blogPost">
-  
-    <div class="article-meta">
-      <a href="/2015/09/29/update-self/" class="article-date">
-  	<time datetime="2015-09-29T06:27:00.000Z" itemprop="datePublished">2015-09-29</time>
-</a>
-    </div>
-  
-  <div class="article-inner">
-    
-      <input type="hidden" class="isFancy" />
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/09/29/update-self/">个人知识管理</a>
-    </h1>
-  
-
-      </header>
-      
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>9月25号上周五收到了新的iphone6s plus。在折腾了几天后，整理了出自己的一套效率工作系统，目前看来效果良好，不知道未来使用几个月是否会给自己带来不一样的体验。</p>
-<p>下面是系统大纲</p>
-<p><img src="/media/14435106554403.jpg" alt="大纲"></p>
-<p>##效率工具</p>
-<p>好的计划是成功的一般。在之前由于国内安卓机无法使用谷歌服务，许多需要谷歌服务框架的软件都用不了，一直以来都没有建立一个体系工具。入手iPhone之后，借助于VPN，能够很好的结合谷歌服务和苹果云服务了。</p>
-<ol>
-<li>sunrise。我能找到免费的日历里面最好的。能够同步iCloud和谷歌日历。能够跨平台。界面也很美观。能够同步iCloud日历就不用手动在sunrise上面添加行程，只需要在mac或者iPhone上面添加提醒事项就可以了。</li>
-<li>Noti:Do 限免入手的。小而美的TODO软件。能够同步到系统的提醒事项。使用简单方便。</li>
-<li>apple的提醒事项。系统内置的软件，对比了几个大而全的第三方软件后，我发现提醒事项已经能够满足多数的需求了，能够iCloud同步，非常方便。</li>
-<li>SimpleNote。简单好用的第三方笔记软件。没有使用自带note是因为同步出现了一些问题。SimpleNote同步也很方便，能够在web上使用也使得在Windows上也能使用。将一些需要备忘的比如邮箱，账号放入非常好。同时在iPhone上支持使用Touch ID加密，感觉太棒了。</li>
-</ol>
-<p>##存储</p>
-<p>网盘的使用参考了许多，最终选择了国内的坚果云和国外的DropBox</p>
-<p>##邮件</p>
-<p>在大学的时候，并没有很注意使用邮件，所有要邮件订阅的地方都是一个QQ邮箱就搞定了。后来发现其实邮件用处实在是太大了。不仅可以订阅消息，注册，沟通，还可以做计划，安排，备份（网盘）。</p>
-<ol>
-<li>GMail。这估计是所有Geek的第一选择。唯一的缺点就是要翻墙。而且我发现GMail的SMTP的服务器在mac上特别不好连接。GMail的账号可以通行所有谷歌服务，而且可以很便捷地登陆国外的网站服务。</li>
-<li>QQ。综合来看，现在国内邮箱服务做的最好的就是QQ邮箱了。没什么太大的槽点，后缀稍微low点，但是可以改成foxmail。</li>
-<li>apple mail.app 。苹果自带的邮箱软件。在这上面找了几个免费的，感觉都不是很好。许多人也说其实自带的就已经能够满足需求了。嗯，还是原生的好。</li>
-</ol>
-<p>##资讯</p>
-<p>网络时代是信息大爆炸的时代，怎么根据自己的需求去订制整理咨询是很重要的。在辗转了一大咨询类APP以后，发现要么太复杂要么内容单一。最后决定通过RSS订阅来自己调整信息源。</p>
-<ol>
-<li>微博客户端 Moke。收费的客户端，18元人民币，少数几个花钱的APP。没有广告真的很清爽，有许多手势但是还没有掌握好。</li>
-<li>Pocket。对于Pocket，我是作为文档存放整理的地方。好的文章先加入到Pocket中，然后根据内容分类，后面决定每周花时间整理一个分类。</li>
-<li>知乎。上了知乎身体一天不如一天了。。。开玩笑的。知乎还是有很多干货，需要自己去挖掘，但是随着用户群体的扩大，感觉回答的质量下降的很厉害，太多的耍机灵简直浪费我生命。。</li>
-<li>Feedly。RSS订阅软件。看中的就是他跨平台的能力。缺点是要翻墙。。。而且很多功能必须付费才开通（我想分享我的订阅都要付费。。。）。</li>
-</ol>
-<h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><ol>
-<li>MWeb。又是一个付费应用，而且很不便宜。。9.9刀。但是我感觉物超所值。功能很强大的MarkDown写作软件。现在习惯了用MWeb觉得Word真的。。跟不上他的设计了。</li>
-<li>SimpleNote。一些简单的备忘，临时的灵感记录，上面已经讲过了。</li>
-</ol>
-<p>##为什么要建立个人知识管理系统</p>
-<p>在最近几个月的学习中，我发现自己接收了太多的信息而不能很好的吸收，时间安排也太随性浪费了很多时间。既然买了新手机，不能和一般人一样作为一个娱乐工具，也应该去帮助自己提高。所以在做了一番工作后，自己设计了这一个系统，可能不完善，很简单，但也是个开始。</p>
-
-      
-    </div>
-    
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-	<a class="article-category-link" href="/categories/personal/">personal</a>
 	</div>
 
 

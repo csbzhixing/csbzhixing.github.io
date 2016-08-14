@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+  <title>用GCD来实现个Timer | 学海无涯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="##少用NSTimer
+在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用NSTimer这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。
+NSTimer有哪些坑，一个个来数一数
+Timer必须作用在一个运行中的runloop用过NSTimer的都知道，在创建了NSTimer之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用GCD来实现个Timer">
+<meta property="og:url" content="http://csbzhixing.github.io/2016/08/15/用GCD来实现个Timer/index.html">
+<meta property="og:site_name" content="学海无涯">
+<meta property="og:description" content="##少用NSTimer
+在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用NSTimer这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。
+NSTimer有哪些坑，一个个来数一数
+Timer必须作用在一个运行中的runloop用过NSTimer的都知道，在创建了NSTimer之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是">
+<meta property="og:updated_time" content="2016-08-14T16:07:37.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用GCD来实现个Timer">
+<meta name="twitter:description" content="##少用NSTimer
+在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用NSTimer这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。
+NSTimer有哪些坑，一个个来数一数
+Timer必须作用在一个运行中的runloop用过NSTimer的都知道，在创建了NSTimer之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是">
+  
+    <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+	<header id="header" class="inner">
+		<a href="/" class="profilepic">
+			
+			<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+		</a>
+
+		<hgroup>
+		  <h1 class="header-author"><a href="/">之行</a></h1>
+		</hgroup>
+
+		
+
+		
+			<div class="switch-btn">
+				<div class="icon">
+					<div class="icon-ctn">
+						<div class="icon-wrap icon-house" data-idx="0">
+							<div class="birdhouse"></div>
+							<div class="birdhouse_holes"></div>
+						</div>
+						<div class="icon-wrap icon-ribbon hide" data-idx="1">
+							<div class="ribbon"></div>
+						</div>
+						
+						<div class="icon-wrap icon-link hide" data-idx="2">
+							<div class="loopback_l"></div>
+							<div class="loopback_r"></div>
+						</div>
+						
+						
+						<div class="icon-wrap icon-me hide" data-idx="3">
+							<div class="user"></div>
+							<div class="shoulder"></div>
+						</div>
+						
+					</div>
+					
+				</div>
+				<div class="tips-box hide">
+					<div class="tips-arrow"></div>
+					<ul class="tips-inner">
+						<li>Menu</li>
+						<li>Tags</li>
+						
+						<li>Links</li>
+						
+						
+						<li>Über</li>
+						
+					</ul>
+				</div>
+			</div>
+		
+
+		<div class="switch-area">
+			<div class="switch-wrap">
+				<section class="switch-part switch-part1">
+					<nav class="header-menu">
+						<ul>
+						
+							<li><a href="/">主页</a></li>
+				        
+							<li><a href="/archives">所有文章</a></li>
+				        
+						</ul>
+					</nav>
+					<nav class="header-nav">
+						<div class="social">
+							
+								<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+					        
+								<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+					        
+								<a class="rss" target="_blank" href="#" title="rss">rss</a>
+					        
+								<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+					        
+						</div>
+					</nav>
+				</section>
+				
+				
+				<section class="switch-part switch-part2">
+					<div class="widget tagcloud" id="js-tagcloud">
+						<a href="/tags/心得/" style="font-size: 10px;">心得</a>
+					</div>
+				</section>
+				
+				
+				
+				<section class="switch-part switch-part3">
+					<div id="js-friends">
+					
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">奥巴马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">卡卡的美丽传说</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">本泽马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">吉格斯的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">习大大大不同</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">托蒂的博客</a>
+			        
+			        </div>
+				</section>
+				
+
+				
+				
+				<section class="switch-part switch-part4">
+				
+					<div id="js-aboutme">我是谁，我从哪里来，我到哪里去？我就是我，是颜色不一样的吃货…</div>
+				</section>
+				
+			</div>
+		</div>
+	</header>				
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+  	<div class="overlay">
+  		<div class="slider-trigger"></div>
+  		<h1 class="header-author js-mobile-header hide">之行</h1>
+  	</div>
+	<div class="intrude-less">
+		<header id="header" class="inner">
+			<div class="profilepic">
+			
+				<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+			</div>
+			<hgroup>
+			  <h1 class="header-author">之行</h1>
+			</hgroup>
+			
+			<nav class="header-menu">
+				<ul>
+				
+					<li><a href="/">主页</a></li>
+		        
+					<li><a href="/archives">所有文章</a></li>
+		        
+		        <div class="clearfix"></div>
+				</ul>
+			</nav>
+			<nav class="header-nav">
+				<div class="social">
+					
+						<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+			        
+						<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+			        
+						<a class="rss" target="_blank" href="#" title="rss">rss</a>
+			        
+						<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+			        
+				</div>
+			</nav>
+		</header>				
+	</div>
+</nav>
+
+      <div class="body-wrap"><article id="post-用GCD来实现个Timer" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/08/15/用GCD来实现个Timer/" class="article-date">
+  	<time datetime="2016-08-14T16:04:39.000Z" itemprop="datePublished">2016-08-15</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      用GCD来实现个Timer
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+        
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>##少用NSTimer</p>
+<p>在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用<code>NSTimer</code>这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。</p>
+<p><code>NSTimer</code>有哪些坑，一个个来数一数</p>
+<h3 id="Timer必须作用在一个运行中的runloop"><a href="#Timer必须作用在一个运行中的runloop" class="headerlink" title="Timer必须作用在一个运行中的runloop"></a>Timer必须作用在一个运行中的<code>runloop</code></h3><p>用过<code>NSTimer</code>的都知道，在创建了<code>NSTimer</code>之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是有runLoop的（实际上一般很少会在主线程开timer）。如果是在子线程，那么就要手动激活runLoop先，不然就调用时无效的。</p>
+<h3 id="操作必须在同一个线程中"><a href="#操作必须在同一个线程中" class="headerlink" title="操作必须在同一个线程中"></a>操作必须在同一个线程中</h3><p>NSTimer的创建与撤销必须在同一个线程操作、performSelector的创建与撤销必须在同一个线程操作</p>
+<h3 id="内存泄漏"><a href="#内存泄漏" class="headerlink" title="内存泄漏"></a>内存泄漏</h3><p>一般用NSTimer最容易出现的问题。首先来分析为什么会出现这个情况。</p>
+<p>通常，我们创建一个<code>NSTimer</code>的方法是调用以下的API：</p>
+<pre><code>+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
++ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
+
+- (instancetype)initWithFireDate:(NSDate *)date interval:(NSTimeInterval)ti target:(id)t selector:(SEL)s userInfo:(nullable id)ui repeats:(BOOL)rep NS_DESIGNATED_INITIALIZER;
+</code></pre><p>这个时候，target会被timer持有，引用计数+1。</p>
+<p>此时，如果直接销毁target，即使在target的deallco里面调用了[timer invaild]也无用。因为timer和target相关，因此必须提前调用[timer invaild]。这种BUG最常见的的就是一个<code>UIViewController</code>pop的时候，timer没有被invaild，结果<code>UIViewController</code>没有被销毁，导致了内存泄漏。</p>
+<blockquote>
+<p>This method is the only way to remove a timer from an NSRunLoop object. The NSRunLoop object removes its strong reference to the timer, either just before the invalidate method returns or at some later point.</p>
+<p>If it was configured with target and user info objects, the receiver removes its strong references to those objects as well.<br>You must send this message from the thread on which the timer was installed. If you send this message from another thread, the input source associated with the timer may not be removed from its run loop, which could prevent the thread from exiting properly.</p>
+</blockquote>
+<p>注意到官方文档中提到，runLoop会持有NSTimer的引用，因此除了调用<code>invaild</code>方法外，没有别的方法.</p>
+<p>##用GCD代替NSTimer</p>
+<p>用过GCD的都说好，可以说把GCD玩的很溜的话，很多异步并行问题都能解决，在这里我们就要去解决NSTimer的坑的问题。这里用三个开源库来抛砖引玉，讲讲不同的实现由什么优缺点。</p>
+<p>###RNTimer</p>
+<p>这个库很老了，12年后就没有更新了，内容也很简单，只有两个文件，因为代码很少，直接上源码了</p>
+<h4 id="源码摘要"><a href="#源码摘要" class="headerlink" title="源码摘要"></a>源码摘要</h4><pre><code class="Objective-C">
+@interface RNTimer : NSObject
+
+/**---------------------------------------------------------------------------------------
+ @name Creating a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Creates and returns a new repeating RNTimer object and starts running it
+
+ After `seconds` seconds have elapsed, the timer fires, executing the block.
+ You will generally need to use a weakSelf pointer to avoid a retain loop.
+ The timer is attached to the main GCD queue.
+
+ @param seconds The number of seconds between firings of the timer. Must be greater than 0.
+ @param block Block to execute. Must be non-nil
+
+ @return A new RNTimer object, configured according to the specified parameters.
+*/
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds block:(dispatch_block_t)block;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Firing a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Causes the block to be executed.
+
+ This does not modify the timer. It will still fire on schedule.
+*/
+- (void)fire;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Stopping a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Stops the receiver from ever firing again
+
+ Once invalidated, a timer cannot be reused.
+
+*/
+
+
+@interface RNTimer ()
+@property (nonatomic, readwrite, copy) dispatch_block_t block;
+@property (nonatomic, readwrite, assign) dispatch_source_t source;
+@end
+
+@implementation RNTimer
+@synthesize block = _block;
+@synthesize source = _source;
+
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds
+                                                                            block:(void (^)(void))block {
+    NSParameterAssert(seconds);
+    NSParameterAssert(block);
+
+    RNTimer *timer = [[self alloc] init];
+    timer.block = block;
+    timer.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                0, 0,
+                                                                                dispatch_get_main_queue());
+    uint64_t nsec = (uint64_t)(seconds * NSEC_PER_SEC);
+    dispatch_source_set_timer(timer.source,
+                                                        dispatch_time(DISPATCH_TIME_NOW, nsec),
+                                                        nsec, 0);
+    dispatch_source_set_event_handler(timer.source, block);
+    dispatch_resume(timer.source);
+    return timer;
+}
+
+- (void)invalidate {
+    if (self.source) {
+        dispatch_source_cancel(self.source);
+        dispatch_release(self.source);
+        self.source = nil;
+    }
+    self.block = nil;
+}
+
+- (void)dealloc {
+    [self invalidate];
+}
+
+- (void)fire {
+    self.block();
+}
+</code></pre>
+<h4 id="实现分析"><a href="#实现分析" class="headerlink" title="实现分析"></a>实现分析</h4><p>实现很简单，用的是最基本的方法，即创建了一个<code>dispatch_source_t</code>，传入<code>block</code>，然后通过<code>dispatch_source_set_timer</code>将timer添加到<code>dispatch_source</code>，设置事件处理为传入的block,然后执行timer。</p>
+<p>提供两个和<code>NSTimer</code>一样的方法，<code>invalidate</code>和<code>fire</code>。<code>fire</code>会立即执行block，但是不会使timer失效，依然会按照预定计划执行。</p>
+<p>在API定义上，保持了和<code>NSTimer</code>一样的定义，所以切换起来没有压力。但是简单也以为这功能不完善。</p>
+<ol>
+<li>无法暂停挂起timer</li>
+<li>无法指定线程</li>
+<li>无法添加新的任务到timer中</li>
+</ol>
+<h3 id="MSWeakTimer"><a href="#MSWeakTimer" class="headerlink" title="MSWeakTimer"></a>MSWeakTimer</h3><p><code>MSWeakTimer</code>的API设计成和<code>NSTimer</code>一样，调用的方法也一致，直接使用并没有什么副作用。</p>
+<pre><code class="Objective-C">
+- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                         /**
+ * Creates an `MSWeakTimer` object and schedules it to start ticking inmediately.
+ */
++ (instancetype)scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval
+                                                                                target:(id)target
+                                                                            selector:(SEL)selector
+                                                                            userInfo:(id)userInfo
+                                                                             repeats:(BOOL)repeats
+                                                                 dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                                                                 /**
+ * Starts the timer if it hadn&#39;t been schedule yet.
+ * @warning calling this method on an already scheduled timer results in undefined behavior.
+ */
+- (void)schedule;
+
+/**
+ * Sets the amount of time after the scheduled fire date that the timer may fire to the given interval.
+ * @discussion Setting a tolerance for a timer allows it to fire later than the scheduled fire date, improving the ability of the system to optimize for increased power savings and responsiveness. The timer may fire at any time between its scheduled fire date and the scheduled fire date plus the tolerance. The timer will not fire before the scheduled fire date. For repeating timers, the next fire date is calculated from the original fire date regardless of tolerance applied at individual fire times, to avoid drift. The default value is zero, which means no additional tolerance is applied. The system reserves the right to apply a small amount of tolerance to certain timers regardless of the value of this property.
+ As the user of the timer, you will have the best idea of what an appropriate tolerance for a timer may be. A general rule of thumb, though, is to set the tolerance to at least 10% of the interval, for a repeating timer. Even a small amount of tolerance will have a significant positive impact on the power usage of your application. The system may put a maximum value of the tolerance.
+ */
+@property (atomic, assign) NSTimeInterval tolerance;
+
+/**
+ * Causes the timer to be fired synchronously manually on the queue from which you call this method.
+ * You can use this method to fire a repeating timer without interrupting its regular firing schedule.
+ * If the timer is non-repeating, it is automatically invalidated after firing, even if its scheduled fire date has not arrived.
+ */
+- (void)fire;
+
+/**
+ * You can call this method on repeatable timers in order to stop it from running and trying
+ * to call the delegate method.
+ * @note `MSWeakTimer` won&#39;t invoke the `selector` on `target` again after calling this method.
+ * You can call this method from any queue, it doesn&#39;t have to be the queue from where you scheduled it.
+ * Since it doesn&#39;t retain the delegate, unlike a regular `NSTimer`, your `dealloc` method will actually be called
+ * and it&#39;s easier to place the `invalidate` call there, instead of figuring out a safe place to do it.
+ */
+- (void)invalidate;
+
+- (id)userInfo;
+</code></pre>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>先来看初始化方法：</p>
+<pre><code>- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue
+{
+        NSParameterAssert(target);
+        NSParameterAssert(selector);
+        NSParameterAssert(dispatchQueue);
+
+        if ((self = [super init]))
+        {
+                self.timeInterval = timeInterval;
+                self.target = target;
+                self.selector = selector;
+                self.userInfo = userInfo;
+                self.repeats = repeats;
+
+                NSString *privateQueueName = [NSString stringWithFormat:@&quot;com.mindsnacks.msweaktimer.%p&quot;, self];
+                self.privateSerialQueue = dispatch_queue_create([privateQueueName cStringUsingEncoding:NSASCIIStringEncoding], DISPATCH_QUEUE_SERIAL);
+                dispatch_set_target_queue(self.privateSerialQueue, dispatchQueue);
+
+                self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                        0,
+                                                                                        0,
+                                                                                        self.privateSerialQueue);
+        }
+
+        return self;
+}
+</code></pre><p>将传入的参数复制给当前类的属性，然后初始化<code>privateSerialQueue</code>，<code>privateSerialQueue</code>的名称是<code>privateQueueName</code>，可变参数为当前对象的内存地址。调用<code>dispatch_set_target_queue</code>将传参的<code>dispatchQueue</code>优先级赋给<code>privateSerialQueue</code>。最后，初始化<code>timer</code>。</p>
+<p>然后看执行函数</p>
+<pre><code>- (void)schedule
+{
+        [self resetTimerProperties];
+
+        __weak MSWeakTimer *weakSelf = self;
+
+        dispatch_source_set_event_handler(self.timer, ^{
+                [weakSelf timerFired];
+        });
+
+        dispatch_resume(self.timer);
+}
+</code></pre><p>首先调用了<code>resetTimerProperties</code></p>
+<pre><code>- (void)resetTimerProperties
+{
+        int64_t intervalInNanoseconds = (int64_t)(self.timeInterval * NSEC_PER_SEC);
+        int64_t toleranceInNanoseconds = (int64_t)(self.tolerance * NSEC_PER_SEC);
+
+        dispatch_source_set_timer(self.timer,
+                                                            dispatch_time(DISPATCH_TIME_NOW, intervalInNanoseconds),
+                                                            (uint64_t)intervalInNanoseconds,
+                                                            toleranceInNanoseconds
+                                                            );
+}
+</code></pre><p><code>resetTimerProperties</code>重置<code>timer</code>。</p>
+<p><code>intervalInNanoseconds</code>和<code>toleranceInNanoseconds</code></p>
+<p>充当<code>interval</code>和<code>leeway</code></p>
+<p>在执行完<code>resetTimerProperties</code>后，<code>dispatch_source_set_event_handler</code>一个block到<code>timer</code>，执行<code>timerFired</code>：</p>
+<pre><code>- (void)timerFired
+{
+        // Checking attomatically if the timer has already been invalidated.
+        if (OSAtomicAnd32OrigBarrier(1, &amp;_timerFlags.timerIsInvalidated))
+        {
+                return;
+        }
+
+        // We&#39;re not worried about this warning because the selector we&#39;re calling doesn&#39;t return a +1 object.
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored &quot;-Warc-performSelector-leaks&quot;
+                [self.target performSelector:self.selector withObject:self];
+        #pragma clang diagnostic pop
+
+        if (!self.repeats)
+        {
+                [self invalidate];
+        }
+}
+</code></pre><p>这里<code>OSAtomicAnd32OrigBarrier</code>是个值得关注的函数。</p>
+<p><code>OSAtomicAnd32OrigBarrier</code>是一个原子操作的布尔与运算，且带有内存屏障。<code>OSAtomicAnd32OrigBarrier</code>保证了在与操作之前数据结构的存储结构发生改变。</p>
+<p>详细的只是可以参考下面这篇文章</p>
+<p><a href="">http://southpeak.github.io/blog/2014/10/17/osatomicyuan-zi-cao-zuo/</a></p>
+<p>在这里，<code>_timerFlags.timerIsInvalidated</code>与1做与操作，如果返回return 则返回，如果不是，执行.</p>
+<p>这里如果不加入<code>invalidate</code>的话，恐怕说不清楚为什么这里要做这个判断</p>
+<pre><code>- (void)invalidate
+{
+        // We check with an atomic operation if it has already been invalidated. Ideally we would synchronize this on the private queue,
+        // but since we can&#39;t know the context from which this method will be called, dispatch_sync might cause a deadlock.
+        if (!OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated))
+        {
+                dispatch_source_t timer = self.timer;
+                dispatch_async(self.privateSerialQueue, ^{
+                        dispatch_source_cancel(timer);
+                        ms_release_gcd_object(timer);
+                });
+        }
+}
+</code></pre><pre><code>    if (!OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated))
+</code></pre><p><code>OSAtomicTestAndSetBarrier</code>和<code>OSAtomicAnd32OrigBarrier</code>正好可以作为一个相对操作。</p>
+<p><code>OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated)</code>会指定变量中的一个bit，把它设置为‘1’并返回旧值。如果要指定32bit integer最低位，n应该是7。因此如果第一次调用<code>OSAtomicTestAndSetBarrier</code>的话，返回false同时话将<code>timerIsInvalidated</code>置成1.由于原子操作和内存屏障，这个方法不会和<code>OSAtomicAnd32OrigBarrier</code>一同执行。如果执行到<code>timerFired</code>的时候，<code>OSAtomicAnd32OrigBarrier(1, &amp;_timerFlags.timerIsInvalidated)</code>返回true，就会返回了。通过这个方法保证了在调用<code>invalidate</code>后将timer失效。</p>
+<p><code>timerFired</code>如果能执行，则通过<code>performSelector</code>来调用对用的<code>SEL</code></p>
+<p>在<code>invalidate</code>中，如果需要释放，需要调用<code>dispatch_async</code>。原因是我们虽然通过原子操作保证了<code>invalidated</code>，但是我们无法确定当前的上下文情况，使用<code>dispatch_async</code>可能会造成死锁。</p>
+<p>主流程分析就是如此，<code>MSWeakTimer</code>最值得关注的就是上面讲解决线程同步的方法。</p>
+<p><code>MSWeakTimer</code>解决了前面提到的问题中无法添加指定线程（实际上也不是添加到那个线程，而是新开了一个线程）。由于模仿的是<code>NSTimer</code>的API，所以另外两个方法也没有解决。</p>
+<h2 id="我的实现-–-ZXGCDTimer"><a href="#我的实现-–-ZXGCDTimer" class="headerlink" title="我的实现 – ZXGCDTimer"></a>我的实现 – ZXGCDTimer</h2><p>在参考了上面的两个开源库后，自己动手撸了一个简单的基于GCD的Timer。基本解决了上面提到了三个问题。</p>
+<p>代码地址：<a href="">https://github.com/csbzhixing/ZXGCDTimer</a></p>
+<p>思路是，通过<code>ZXGCDTimerManager</code>提供对外操作包括创建，执行，取消，挂起，回复功能。每个timer通过<code>ZXGCDTimer</code>为单位去管理，以<code>timerName</code>去区分不同的timer。支持自定义线程，支持新增Action。</p>
+<p>由于是自己处于研究目的写的，可能存在各种问题，也欢迎大家提出批评和指正。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/04/07/post/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">一年</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+
+
+
+<div class="duoshuo">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="用GCD来实现个Timer" data-title="用GCD来实现个Timer" data-url="http://csbzhixing.github.io/2016/08/15/用GCD来实现个Timer/"></div>
+	<!-- 多说评论框 end -->
+	<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+	<script type="text/javascript">
+	var duoshuoQuery = {short_name:"true"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+	<!-- 多说公共JS代码 end -->
+</div>
+
+
+
+
+</div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info">
+    	<div class="footer-left">
+    		&copy; 2016 之行
+    	</div>
+      	<div class="footer-right">
+      		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
+      	</div>
+    </div>
+  </div>
+</footer>
+    </div>
+    
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+
+<script>
+	var yiliaConfig = {
+		fancybox: true,
+		mathjax: true,
+		animate: undefined,
+		isHome: false,
+		isPost: true,
+		isArchive: false,
+		isTag: false,
+		isCategory: false,
+		open_in_new: undefined
+	}
+</script>
+<script src="http://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  </div>
+</body>
+</html>

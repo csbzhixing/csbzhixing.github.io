@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2016-01-01T16:51:28.000Z</updated>
+  <updated>2016-08-14T16:07:37.000Z</updated>
   <id>http://csbzhixing.github.io/</id>
   
   <author>
@@ -14,6 +14,349 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>用GCD来实现个Timer</title>
+    <link href="http://csbzhixing.github.io/2016/08/15/%E7%94%A8GCD%E6%9D%A5%E5%AE%9E%E7%8E%B0%E4%B8%AATimer/"/>
+    <id>http://csbzhixing.github.io/2016/08/15/用GCD来实现个Timer/</id>
+    <published>2016-08-14T16:04:39.000Z</published>
+    <updated>2016-08-14T16:07:37.000Z</updated>
+    
+    <content type="html">&lt;p&gt;##少用NSTimer&lt;/p&gt;
+&lt;p&gt;在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用&lt;code&gt;NSTimer&lt;/code&gt;这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;NSTimer&lt;/code&gt;有哪些坑，一个个来数一数&lt;/p&gt;
+&lt;h3 id=&quot;Timer必须作用在一个运行中的runloop&quot;&gt;&lt;a href=&quot;#Timer必须作用在一个运行中的runloop&quot; class=&quot;headerlink&quot; title=&quot;Timer必须作用在一个运行中的runloop&quot;&gt;&lt;/a&gt;Timer必须作用在一个运行中的&lt;code&gt;runloop&lt;/code&gt;&lt;/h3&gt;&lt;p&gt;用过&lt;code&gt;NSTimer&lt;/code&gt;的都知道，在创建了&lt;code&gt;NSTimer&lt;/code&gt;之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是有runLoop的（实际上一般很少会在主线程开timer）。如果是在子线程，那么就要手动激活runLoop先，不然就调用时无效的。&lt;/p&gt;
+&lt;h3 id=&quot;操作必须在同一个线程中&quot;&gt;&lt;a href=&quot;#操作必须在同一个线程中&quot; class=&quot;headerlink&quot; title=&quot;操作必须在同一个线程中&quot;&gt;&lt;/a&gt;操作必须在同一个线程中&lt;/h3&gt;&lt;p&gt;NSTimer的创建与撤销必须在同一个线程操作、performSelector的创建与撤销必须在同一个线程操作&lt;/p&gt;
+&lt;h3 id=&quot;内存泄漏&quot;&gt;&lt;a href=&quot;#内存泄漏&quot; class=&quot;headerlink&quot; title=&quot;内存泄漏&quot;&gt;&lt;/a&gt;内存泄漏&lt;/h3&gt;&lt;p&gt;一般用NSTimer最容易出现的问题。首先来分析为什么会出现这个情况。&lt;/p&gt;
+&lt;p&gt;通常，我们创建一个&lt;code&gt;NSTimer&lt;/code&gt;的方法是调用以下的API：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
++ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
+
+- (instancetype)initWithFireDate:(NSDate *)date interval:(NSTimeInterval)ti target:(id)t selector:(SEL)s userInfo:(nullable id)ui repeats:(BOOL)rep NS_DESIGNATED_INITIALIZER;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这个时候，target会被timer持有，引用计数+1。&lt;/p&gt;
+&lt;p&gt;此时，如果直接销毁target，即使在target的deallco里面调用了[timer invaild]也无用。因为timer和target相关，因此必须提前调用[timer invaild]。这种BUG最常见的的就是一个&lt;code&gt;UIViewController&lt;/code&gt;pop的时候，timer没有被invaild，结果&lt;code&gt;UIViewController&lt;/code&gt;没有被销毁，导致了内存泄漏。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;This method is the only way to remove a timer from an NSRunLoop object. The NSRunLoop object removes its strong reference to the timer, either just before the invalidate method returns or at some later point.&lt;/p&gt;
+&lt;p&gt;If it was configured with target and user info objects, the receiver removes its strong references to those objects as well.&lt;br&gt;You must send this message from the thread on which the timer was installed. If you send this message from another thread, the input source associated with the timer may not be removed from its run loop, which could prevent the thread from exiting properly.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;注意到官方文档中提到，runLoop会持有NSTimer的引用，因此除了调用&lt;code&gt;invaild&lt;/code&gt;方法外，没有别的方法.&lt;/p&gt;
+&lt;p&gt;##用GCD代替NSTimer&lt;/p&gt;
+&lt;p&gt;用过GCD的都说好，可以说把GCD玩的很溜的话，很多异步并行问题都能解决，在这里我们就要去解决NSTimer的坑的问题。这里用三个开源库来抛砖引玉，讲讲不同的实现由什么优缺点。&lt;/p&gt;
+&lt;p&gt;###RNTimer&lt;/p&gt;
+&lt;p&gt;这个库很老了，12年后就没有更新了，内容也很简单，只有两个文件，因为代码很少，直接上源码了&lt;/p&gt;
+&lt;h4 id=&quot;源码摘要&quot;&gt;&lt;a href=&quot;#源码摘要&quot; class=&quot;headerlink&quot; title=&quot;源码摘要&quot;&gt;&lt;/a&gt;源码摘要&lt;/h4&gt;&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
+@interface RNTimer : NSObject
+
+/**---------------------------------------------------------------------------------------
+ @name Creating a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Creates and returns a new repeating RNTimer object and starts running it
+
+ After `seconds` seconds have elapsed, the timer fires, executing the block.
+ You will generally need to use a weakSelf pointer to avoid a retain loop.
+ The timer is attached to the main GCD queue.
+
+ @param seconds The number of seconds between firings of the timer. Must be greater than 0.
+ @param block Block to execute. Must be non-nil
+
+ @return A new RNTimer object, configured according to the specified parameters.
+*/
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds block:(dispatch_block_t)block;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Firing a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Causes the block to be executed.
+
+ This does not modify the timer. It will still fire on schedule.
+*/
+- (void)fire;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Stopping a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Stops the receiver from ever firing again
+
+ Once invalidated, a timer cannot be reused.
+
+*/
+
+
+@interface RNTimer ()
+@property (nonatomic, readwrite, copy) dispatch_block_t block;
+@property (nonatomic, readwrite, assign) dispatch_source_t source;
+@end
+
+@implementation RNTimer
+@synthesize block = _block;
+@synthesize source = _source;
+
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds
+                                                                            block:(void (^)(void))block {
+    NSParameterAssert(seconds);
+    NSParameterAssert(block);
+
+    RNTimer *timer = [[self alloc] init];
+    timer.block = block;
+    timer.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                0, 0,
+                                                                                dispatch_get_main_queue());
+    uint64_t nsec = (uint64_t)(seconds * NSEC_PER_SEC);
+    dispatch_source_set_timer(timer.source,
+                                                        dispatch_time(DISPATCH_TIME_NOW, nsec),
+                                                        nsec, 0);
+    dispatch_source_set_event_handler(timer.source, block);
+    dispatch_resume(timer.source);
+    return timer;
+}
+
+- (void)invalidate {
+    if (self.source) {
+        dispatch_source_cancel(self.source);
+        dispatch_release(self.source);
+        self.source = nil;
+    }
+    self.block = nil;
+}
+
+- (void)dealloc {
+    [self invalidate];
+}
+
+- (void)fire {
+    self.block();
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h4 id=&quot;实现分析&quot;&gt;&lt;a href=&quot;#实现分析&quot; class=&quot;headerlink&quot; title=&quot;实现分析&quot;&gt;&lt;/a&gt;实现分析&lt;/h4&gt;&lt;p&gt;实现很简单，用的是最基本的方法，即创建了一个&lt;code&gt;dispatch_source_t&lt;/code&gt;，传入&lt;code&gt;block&lt;/code&gt;，然后通过&lt;code&gt;dispatch_source_set_timer&lt;/code&gt;将timer添加到&lt;code&gt;dispatch_source&lt;/code&gt;，设置事件处理为传入的block,然后执行timer。&lt;/p&gt;
+&lt;p&gt;提供两个和&lt;code&gt;NSTimer&lt;/code&gt;一样的方法，&lt;code&gt;invalidate&lt;/code&gt;和&lt;code&gt;fire&lt;/code&gt;。&lt;code&gt;fire&lt;/code&gt;会立即执行block，但是不会使timer失效，依然会按照预定计划执行。&lt;/p&gt;
+&lt;p&gt;在API定义上，保持了和&lt;code&gt;NSTimer&lt;/code&gt;一样的定义，所以切换起来没有压力。但是简单也以为这功能不完善。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;无法暂停挂起timer&lt;/li&gt;
+&lt;li&gt;无法指定线程&lt;/li&gt;
+&lt;li&gt;无法添加新的任务到timer中&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&quot;MSWeakTimer&quot;&gt;&lt;a href=&quot;#MSWeakTimer&quot; class=&quot;headerlink&quot; title=&quot;MSWeakTimer&quot;&gt;&lt;/a&gt;MSWeakTimer&lt;/h3&gt;&lt;p&gt;&lt;code&gt;MSWeakTimer&lt;/code&gt;的API设计成和&lt;code&gt;NSTimer&lt;/code&gt;一样，调用的方法也一致，直接使用并没有什么副作用。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
+- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                         /**
+ * Creates an `MSWeakTimer` object and schedules it to start ticking inmediately.
+ */
++ (instancetype)scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval
+                                                                                target:(id)target
+                                                                            selector:(SEL)selector
+                                                                            userInfo:(id)userInfo
+                                                                             repeats:(BOOL)repeats
+                                                                 dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                                                                 /**
+ * Starts the timer if it hadn&amp;#39;t been schedule yet.
+ * @warning calling this method on an already scheduled timer results in undefined behavior.
+ */
+- (void)schedule;
+
+/**
+ * Sets the amount of time after the scheduled fire date that the timer may fire to the given interval.
+ * @discussion Setting a tolerance for a timer allows it to fire later than the scheduled fire date, improving the ability of the system to optimize for increased power savings and responsiveness. The timer may fire at any time between its scheduled fire date and the scheduled fire date plus the tolerance. The timer will not fire before the scheduled fire date. For repeating timers, the next fire date is calculated from the original fire date regardless of tolerance applied at individual fire times, to avoid drift. The default value is zero, which means no additional tolerance is applied. The system reserves the right to apply a small amount of tolerance to certain timers regardless of the value of this property.
+ As the user of the timer, you will have the best idea of what an appropriate tolerance for a timer may be. A general rule of thumb, though, is to set the tolerance to at least 10% of the interval, for a repeating timer. Even a small amount of tolerance will have a significant positive impact on the power usage of your application. The system may put a maximum value of the tolerance.
+ */
+@property (atomic, assign) NSTimeInterval tolerance;
+
+/**
+ * Causes the timer to be fired synchronously manually on the queue from which you call this method.
+ * You can use this method to fire a repeating timer without interrupting its regular firing schedule.
+ * If the timer is non-repeating, it is automatically invalidated after firing, even if its scheduled fire date has not arrived.
+ */
+- (void)fire;
+
+/**
+ * You can call this method on repeatable timers in order to stop it from running and trying
+ * to call the delegate method.
+ * @note `MSWeakTimer` won&amp;#39;t invoke the `selector` on `target` again after calling this method.
+ * You can call this method from any queue, it doesn&amp;#39;t have to be the queue from where you scheduled it.
+ * Since it doesn&amp;#39;t retain the delegate, unlike a regular `NSTimer`, your `dealloc` method will actually be called
+ * and it&amp;#39;s easier to place the `invalidate` call there, instead of figuring out a safe place to do it.
+ */
+- (void)invalidate;
+
+- (id)userInfo;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h4 id=&quot;实现&quot;&gt;&lt;a href=&quot;#实现&quot; class=&quot;headerlink&quot; title=&quot;实现&quot;&gt;&lt;/a&gt;实现&lt;/h4&gt;&lt;p&gt;先来看初始化方法：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue
+{
+        NSParameterAssert(target);
+        NSParameterAssert(selector);
+        NSParameterAssert(dispatchQueue);
+
+        if ((self = [super init]))
+        {
+                self.timeInterval = timeInterval;
+                self.target = target;
+                self.selector = selector;
+                self.userInfo = userInfo;
+                self.repeats = repeats;
+
+                NSString *privateQueueName = [NSString stringWithFormat:@&amp;quot;com.mindsnacks.msweaktimer.%p&amp;quot;, self];
+                self.privateSerialQueue = dispatch_queue_create([privateQueueName cStringUsingEncoding:NSASCIIStringEncoding], DISPATCH_QUEUE_SERIAL);
+                dispatch_set_target_queue(self.privateSerialQueue, dispatchQueue);
+
+                self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                        0,
+                                                                                        0,
+                                                                                        self.privateSerialQueue);
+        }
+
+        return self;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;将传入的参数复制给当前类的属性，然后初始化&lt;code&gt;privateSerialQueue&lt;/code&gt;，&lt;code&gt;privateSerialQueue&lt;/code&gt;的名称是&lt;code&gt;privateQueueName&lt;/code&gt;，可变参数为当前对象的内存地址。调用&lt;code&gt;dispatch_set_target_queue&lt;/code&gt;将传参的&lt;code&gt;dispatchQueue&lt;/code&gt;优先级赋给&lt;code&gt;privateSerialQueue&lt;/code&gt;。最后，初始化&lt;code&gt;timer&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;然后看执行函数&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)schedule
+{
+        [self resetTimerProperties];
+
+        __weak MSWeakTimer *weakSelf = self;
+
+        dispatch_source_set_event_handler(self.timer, ^{
+                [weakSelf timerFired];
+        });
+
+        dispatch_resume(self.timer);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;首先调用了&lt;code&gt;resetTimerProperties&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)resetTimerProperties
+{
+        int64_t intervalInNanoseconds = (int64_t)(self.timeInterval * NSEC_PER_SEC);
+        int64_t toleranceInNanoseconds = (int64_t)(self.tolerance * NSEC_PER_SEC);
+
+        dispatch_source_set_timer(self.timer,
+                                                            dispatch_time(DISPATCH_TIME_NOW, intervalInNanoseconds),
+                                                            (uint64_t)intervalInNanoseconds,
+                                                            toleranceInNanoseconds
+                                                            );
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;resetTimerProperties&lt;/code&gt;重置&lt;code&gt;timer&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;intervalInNanoseconds&lt;/code&gt;和&lt;code&gt;toleranceInNanoseconds&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;充当&lt;code&gt;interval&lt;/code&gt;和&lt;code&gt;leeway&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;在执行完&lt;code&gt;resetTimerProperties&lt;/code&gt;后，&lt;code&gt;dispatch_source_set_event_handler&lt;/code&gt;一个block到&lt;code&gt;timer&lt;/code&gt;，执行&lt;code&gt;timerFired&lt;/code&gt;：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)timerFired
+{
+        // Checking attomatically if the timer has already been invalidated.
+        if (OSAtomicAnd32OrigBarrier(1, &amp;amp;_timerFlags.timerIsInvalidated))
+        {
+                return;
+        }
+
+        // We&amp;#39;re not worried about this warning because the selector we&amp;#39;re calling doesn&amp;#39;t return a +1 object.
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored &amp;quot;-Warc-performSelector-leaks&amp;quot;
+                [self.target performSelector:self.selector withObject:self];
+        #pragma clang diagnostic pop
+
+        if (!self.repeats)
+        {
+                [self invalidate];
+        }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这里&lt;code&gt;OSAtomicAnd32OrigBarrier&lt;/code&gt;是个值得关注的函数。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;OSAtomicAnd32OrigBarrier&lt;/code&gt;是一个原子操作的布尔与运算，且带有内存屏障。&lt;code&gt;OSAtomicAnd32OrigBarrier&lt;/code&gt;保证了在与操作之前数据结构的存储结构发生改变。&lt;/p&gt;
+&lt;p&gt;详细的只是可以参考下面这篇文章&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;&quot;&gt;http://southpeak.github.io/blog/2014/10/17/osatomicyuan-zi-cao-zuo/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;在这里，&lt;code&gt;_timerFlags.timerIsInvalidated&lt;/code&gt;与1做与操作，如果返回return 则返回，如果不是，执行.&lt;/p&gt;
+&lt;p&gt;这里如果不加入&lt;code&gt;invalidate&lt;/code&gt;的话，恐怕说不清楚为什么这里要做这个判断&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)invalidate
+{
+        // We check with an atomic operation if it has already been invalidated. Ideally we would synchronize this on the private queue,
+        // but since we can&amp;#39;t know the context from which this method will be called, dispatch_sync might cause a deadlock.
+        if (!OSAtomicTestAndSetBarrier(7, &amp;amp;_timerFlags.timerIsInvalidated))
+        {
+                dispatch_source_t timer = self.timer;
+                dispatch_async(self.privateSerialQueue, ^{
+                        dispatch_source_cancel(timer);
+                        ms_release_gcd_object(timer);
+                });
+        }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;pre&gt;&lt;code&gt;    if (!OSAtomicTestAndSetBarrier(7, &amp;amp;_timerFlags.timerIsInvalidated))
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;OSAtomicTestAndSetBarrier&lt;/code&gt;和&lt;code&gt;OSAtomicAnd32OrigBarrier&lt;/code&gt;正好可以作为一个相对操作。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;OSAtomicTestAndSetBarrier(7, &amp;amp;_timerFlags.timerIsInvalidated)&lt;/code&gt;会指定变量中的一个bit，把它设置为‘1’并返回旧值。如果要指定32bit integer最低位，n应该是7。因此如果第一次调用&lt;code&gt;OSAtomicTestAndSetBarrier&lt;/code&gt;的话，返回false同时话将&lt;code&gt;timerIsInvalidated&lt;/code&gt;置成1.由于原子操作和内存屏障，这个方法不会和&lt;code&gt;OSAtomicAnd32OrigBarrier&lt;/code&gt;一同执行。如果执行到&lt;code&gt;timerFired&lt;/code&gt;的时候，&lt;code&gt;OSAtomicAnd32OrigBarrier(1, &amp;amp;_timerFlags.timerIsInvalidated)&lt;/code&gt;返回true，就会返回了。通过这个方法保证了在调用&lt;code&gt;invalidate&lt;/code&gt;后将timer失效。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;timerFired&lt;/code&gt;如果能执行，则通过&lt;code&gt;performSelector&lt;/code&gt;来调用对用的&lt;code&gt;SEL&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;在&lt;code&gt;invalidate&lt;/code&gt;中，如果需要释放，需要调用&lt;code&gt;dispatch_async&lt;/code&gt;。原因是我们虽然通过原子操作保证了&lt;code&gt;invalidated&lt;/code&gt;，但是我们无法确定当前的上下文情况，使用&lt;code&gt;dispatch_async&lt;/code&gt;可能会造成死锁。&lt;/p&gt;
+&lt;p&gt;主流程分析就是如此，&lt;code&gt;MSWeakTimer&lt;/code&gt;最值得关注的就是上面讲解决线程同步的方法。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;MSWeakTimer&lt;/code&gt;解决了前面提到的问题中无法添加指定线程（实际上也不是添加到那个线程，而是新开了一个线程）。由于模仿的是&lt;code&gt;NSTimer&lt;/code&gt;的API，所以另外两个方法也没有解决。&lt;/p&gt;
+&lt;h2 id=&quot;我的实现-–-ZXGCDTimer&quot;&gt;&lt;a href=&quot;#我的实现-–-ZXGCDTimer&quot; class=&quot;headerlink&quot; title=&quot;我的实现 – ZXGCDTimer&quot;&gt;&lt;/a&gt;我的实现 – ZXGCDTimer&lt;/h2&gt;&lt;p&gt;在参考了上面的两个开源库后，自己动手撸了一个简单的基于GCD的Timer。基本解决了上面提到了三个问题。&lt;/p&gt;
+&lt;p&gt;代码地址：&lt;a href=&quot;&quot;&gt;https://github.com/csbzhixing/ZXGCDTimer&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;思路是，通过&lt;code&gt;ZXGCDTimerManager&lt;/code&gt;提供对外操作包括创建，执行，取消，挂起，回复功能。每个timer通过&lt;code&gt;ZXGCDTimer&lt;/code&gt;为单位去管理，以&lt;code&gt;timerName&lt;/code&gt;去区分不同的timer。支持自定义线程，支持新增Action。&lt;/p&gt;
+&lt;p&gt;由于是自己处于研究目的写的，可能存在各种问题，也欢迎大家提出批评和指正。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;##少用NSTimer&lt;/p&gt;
+&lt;p&gt;在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用&lt;code&gt;NSTimer&lt;/code&gt;这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;NSTimer&lt;/code&gt;有哪
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>一年</title>
+    <link href="http://csbzhixing.github.io/2016/04/07/post/"/>
+    <id>http://csbzhixing.github.io/2016/04/07/post/</id>
+    <published>2016-04-06T16:03:44.000Z</published>
+    <updated>2016-04-06T16:04:24.000Z</updated>
+    
+    <content type="html">&lt;pre&gt;&lt;code&gt;转眼间，我已经实习一年了。
+转眼间，要大学毕业了。
+
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;如果不看日历，不去想时间，似乎和一年前的这个时候也没有什么不同。一样的担心，一样的焦虑。&lt;br&gt;一年前，因为自己陷入了学习的盲区，不知道如何去提升自己，只好想办法找个实习，想说自己找找自己的学习的方向。这么一做，就是一年过去了。&lt;/p&gt;
+&lt;p&gt;实习的一年，可以说很辛苦，也很充实。辛苦是因为不仅仅要完成自己学习上的东西，还要去完成工作上的事情，这点对我来说的确是不小的挑战。大学的前两年里面，每天白天上上课，晚上搞下作业，然后就可以快乐的玩耍了。然而到了实习，白天的工作就足以让自己心力交瘁，晚上回到学校后还有许多课业要补习。即使如此，我也没有后悔。如果不是实习，我现在可能还在盲目不知道怎么去找工作；如果不是实习，自己可能现在还在纠结自己未来在哪个方向前进；如果不是实习，可能现在还有改不掉的一堆学生气。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;时间不会让人成长，只有痛苦可以
+
+
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;还记得刚开始实习的时候特别痛苦。用学校那套学习方法进入工作肯定是行不通的。所以开始的一个月，在iOS上并没有什么长进。硬生生的啃了几本书也然并卵。到了第二个月，接触了项目，有了目标，一点点的去实现一个个目标，结合原理，才真正有了一点点突破。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;知识永远学不完，钱永远赚不完，找到自己的路就行
+
+
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;十月份换了个实习，回到了深圳。一个原因是原来的公司人员变动，自己也觉得平台太小已经没法接触更多的东西了，除此外回到深圳也可以解放自己更多时间来学习。于是乎很幸运的来到了现在的公司。在这里，从头开发了多个APP，接触了React Native。从一个辅助慢慢成为一个独立的开发。这个时候，很多同学已经确定下来了Offer.看着同学一个个比较自己的offer的时候，自己的心态也有点小小的波动。但是，最后，还是决定扎下来。现有的平台对于自己来说是足够的。一方面身边有足够厉害的人能够提携自己，一方面在项目和时间上能够让自己去深入学习和提高。比较1K,2k这点差距，技术积累和做人的学习恐怕才是最重要的。    &lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;一年后
+
+
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;虽然前不久才写完新年总结，之后也好久没有更新什么技术文章，这个总结也算另开一个头。已经从毕设中解放的我有更多时间去深入iOS和js了。希望在一年后的今天，能够在两个技术栈上都有不小的成就。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;pre&gt;&lt;code&gt;转眼间，我已经实习一年了。
+转眼间，要大学毕业了。
+
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;如果不看日历，不去想时间，似乎和一年前的这个时候也没有什么不同。一样的担心，一样的焦虑。&lt;br&gt;一年前，因为自己陷入了学习的盲区，不知道如何去提升自己，只好想办法找个实习，
+    
+    </summary>
+    
+    
+      <category term="心得" scheme="http://csbzhixing.github.io/tags/%E5%BF%83%E5%BE%97/"/>
+    
+  </entry>
   
   <entry>
     <title>2016</title>
@@ -2128,194 +2471,6 @@ int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags,
     </summary>
     
       <category term="Network" scheme="http://csbzhixing.github.io/categories/Network/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>block</title>
-    <link href="http://csbzhixing.github.io/2015/09/07/block/"/>
-    <id>http://csbzhixing.github.io/2015/09/07/block/</id>
-    <published>2015-09-07T09:25:40.000Z</published>
-    <updated>2016-04-04T05:58:10.000Z</updated>
-    
-    <content type="html">&lt;p&gt;##Block是个什么&lt;/p&gt;
-&lt;p&gt;和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一直不能很顺利的阅读各类代码，在项目中也是一知半解的应用，所以在这里想总结下。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
-&lt;p&gt;###Blcok 是什么&lt;/p&gt;
-&lt;p&gt;block是在iOS SDK 4.0引入的黑魔法。从他诞生的时候，Apple就倾注了大量的心血。字面上看，block就是一个代码块。在许多语言中都可以看到相似的语法设计。但是block自身由于可以在内联执行的时候还可以传递参数，同时自身可以作为参数在函数之间来传递，所有有了许多神奇的用法（好吧是我觉得很神奇）&lt;/p&gt;
-&lt;p&gt;一个典型的block的应用如下&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt; BOOL (^isName)(NSString *) = ^(NSString *name) {
-      if ([name isEqualToString:@&amp;quot;csb&amp;quot;])
-      {
-          return YES;
-      }
-      else
-      {
-          return NO;
-      }
-    };
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;定义一个block开头是和函数一样是返回类型，（^）跟着是block的名字，后面跟着是传入的数据类型。括号里面是代码块。&lt;/p&gt;
-&lt;p&gt;一个完整的例子&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&quot;Objective-C&quot;&gt;
-- (void)blockTest
-{
-    BOOL (^isName)(NSString *) = ^(NSString *name) {
-      if ([name isEqualToString:@&amp;quot;csb&amp;quot;])
-      {
-          return YES;
-      }
-      else
-      {
-          return NO;
-      }
-    };
-
-    self.sark.name = @&amp;quot;csb&amp;quot;;
-    NSLog(@&amp;quot;is csb ? %@&amp;quot;, isName(self.sark.name) ? @&amp;quot;yes&amp;quot; : @&amp;quot;no&amp;quot;);
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;那么block有什么特别之处？前面提到了，block能够使用block外的参数，我们来实验下&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;- (void)blockTest
-{
-    NSString *csbName = @&amp;quot;csbzhixing&amp;quot;;
-    BOOL (^isName)(NSString *) = ^(NSString *name) {
-      if ([name isEqualToString:csbName])
-      {
-          return YES;
-      }
-      else
-      {
-          return NO;
-      }
-    };
-
-    self.sark.name = @&amp;quot;csbzhixing&amp;quot;;
-    NSLog(@&amp;quot;is csb ? %@&amp;quot;, isName(self.sark.name) ? @&amp;quot;yes&amp;quot; : @&amp;quot;no&amp;quot;);
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;输出&lt;br&gt;&lt;code&gt;2015-09-07 16:48:25.452 CSBRepository[83032:1549339] is csb ? yes&lt;/code&gt;&lt;/p&gt;
-&lt;p&gt;注意到，定义了block后，修改了block中引用的局部变量，那么block中的局部变量仍然会保持不变。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/a60eb087f6bfd358.png&quot; alt=&quot;pic1&quot;&gt;&lt;/p&gt;
-&lt;p&gt;好吧，如果我们的确有这个需求怎么弄呢？使用&lt;code&gt;_block&lt;/code&gt;修饰符来修饰局部变量可以解决这个问题&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/ba1814837f233066.png&quot; alt=&quot;pic2&quot;&gt;&lt;/p&gt;
-&lt;p&gt;block调用实例变量，这个没有好说的。。直接用就是了。&lt;/p&gt;
-&lt;p&gt;##小小的问题，循环引用&lt;/p&gt;
-&lt;p&gt;需要注意的一个问题是block的retain cycle问题，即循环引用。&lt;/p&gt;
-&lt;p&gt;如果要细究这个问题，要回到老生常谈的引用计数的问题上。有许多很详细的文章解释了为何存在这种问题，在这里我只简单的谈下我的理解。&lt;/p&gt;
-&lt;p&gt;retain cycle的问题根源在于block和object可能会互相强引用，互相retain了对方，这样就导致了retain cycle的问题。到了最后就发现两者谁也释放不了谁，导致了崩溃。（你不让我，我不让你怎么行）。&lt;/p&gt;
-&lt;p&gt;解决的方法就是打破这种循环，使用弱引用。这点可以参考最有名的第三方库AFNetworking的源码，在block上afn的写法最值得参考学习。&lt;/p&gt;
-&lt;p&gt;##Block该用在什么地方&lt;/p&gt;
-&lt;p&gt;在项目中，主要应用block的地方有场景之间的数据传输，UI刷新，网络请求等等。在参考官方的建议和大神的博客后，总结了一下几个方面&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;枚举 – 通过block获取对象和控制枚举进程&lt;/li&gt;
-&lt;li&gt;View动画 – 规定动画，参考官方的demo可以很快的了解&lt;/li&gt;
-&lt;li&gt;通知 – 事件完成后执行block内的代码，比如网络请求成功后&lt;/li&gt;
-&lt;li&gt;完成 – 同上&lt;/li&gt;
-&lt;li&gt;GCD多线程 – 这个是下一篇想要去了解学习的内容&lt;/li&gt;
-&lt;li&gt;错误处理 – 错误发生的时候执行&lt;/li&gt;
-&lt;li&gt;排序 &lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;深入学习block还有很多的内容，比如block是怎么实现，block的类型等等。这里只是我目前学习的一个小结，有机会还要再深入的学习。&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;##Block是个什么&lt;/p&gt;
-&lt;p&gt;和kvo/kvc一样，block的使用也是我在学习Objective-C的过程中碰到的一个大拦路虎。第一遍过语法的时候并没有太注意这部分的内容。而到了后面阅读各类大神的源码的时候，发现block的应用非常多。而对这块内容的疏忽导致自己一
-    
-    </summary>
-    
-      <category term="Objective-C" scheme="http://csbzhixing.github.io/categories/Objective-C/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>kvo/kvc小结</title>
-    <link href="http://csbzhixing.github.io/2015/09/07/kvo-kvc/"/>
-    <id>http://csbzhixing.github.io/2015/09/07/kvo-kvc/</id>
-    <published>2015-09-07T03:50:52.000Z</published>
-    <updated>2016-04-04T05:58:37.000Z</updated>
-    
-    <content type="html">&lt;p&gt;从学习Objective-C以来，有两个地方一直搞不明白。一个是KVO和KVC的应用和与Delegate的应用场景的区别，一个是Block的应用场景。总结起来就死对Objective-C的数据传送的应用不理解。乘着放假几天对这个知识点进行了一些学习和总结，学习了一个小demo，在这里记录一下自己的学习情况。&lt;/p&gt;
-&lt;p&gt;参考&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;– &lt;a href=&quot;http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://yulingtianxia.com/blog/2014/05/12/objective-czhong-de-kvche-kvo/&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;– &lt;a href=&quot;http://objccn.io/issue-7-3/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://objccn.io/issue-7-3/&lt;/a&gt;&lt;p&gt;&amp;lt;!--more--&amp;gt;  
-&lt;/p&gt;
-#KVO&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2 id=&quot;KVO简单使用&quot;&gt;&lt;a href=&quot;#KVO简单使用&quot; class=&quot;headerlink&quot; title=&quot;KVO简单使用&quot;&gt;&lt;/a&gt;KVO简单使用&lt;/h2&gt;&lt;h4 id=&quot;KVO-Key-Value-Observing-，是观察者模式在Foundation中的实现&quot;&gt;&lt;a href=&quot;#KVO-Key-Value-Observing-，是观察者模式在Foundation中的实现&quot; class=&quot;headerlink&quot; title=&quot;KVO(Key Value Observing)，是观察者模式在Foundation中的实现&quot;&gt;&lt;/a&gt;KVO(Key Value Observing)，是观察者模式在Foundation中的实现&lt;/h4&gt;&lt;p&gt;观察者模式，比较容易理解，就是一方对另一方观察，如果进行了改变，那么就要观察者接收到了消息就用进行相应的操作。在KVO中，总结起来就死以下几个操作。&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;当一个object有观察者的时候，动态创建这个object的子类。&lt;/li&gt;
-&lt;li&gt;对于每一个被观察的属性Property,重写他的set方法&lt;/li&gt;
-&lt;li&gt;在重写的set方法中，调用 &lt;code&gt;- willChangeValueForKey&lt;/code&gt; 和 &lt;code&gt;- didChangeValueForKey&lt;/code&gt; 方法&lt;/li&gt;
-&lt;li&gt;当一个属性Property没有被观察的时候，删除重写的方法&lt;/li&gt;
-&lt;li&gt;当没有observer观察任何一个property的时候，删除动态创建的子类&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;使用的时候，主要通过以下几个方法来使用&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;addObserver:&amp;lt;#(NSObject *)#&amp;gt; forKeyPath:&amp;lt;#(NSString *)#&amp;gt; options:&amp;lt;#(NSKeyValueObservingOptions)#&amp;gt; context:&amp;lt;#(void *)#&amp;gt;&lt;/code&gt;&lt;/p&gt;
-&lt;p&gt;通过这个方法来为一个对象添加观察者，观察减值“key”,option是观察返回的类型字典，总共有以下几种&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;NSKeyValueObservingOptionOld – 变化前的值&lt;/li&gt;
-&lt;li&gt;NSKeyValueObservingOptionNew – 变化后的值&lt;/li&gt;
-&lt;li&gt;NSKeyValueObservingOptionPrior – 值变化前进行通知&lt;/li&gt;
-&lt;li&gt;NSKeyValueObservingOptionInitial – 在添加观察者的时候出发相关方法&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;context 是一个指针当&lt;code&gt;observeValueForKeyPath:ofObject:change:context:&lt;/code&gt;方法执行时context会提供给观察者。context可以是C指针或者一个对象引用，既可以当作一个唯一的标识来分辨被观察的变更，也可以向观察者提供数据。&lt;/p&gt;
-&lt;h4 id=&quot;当观察者接受到消息的时&quot;&gt;&lt;a href=&quot;#当观察者接受到消息的时&quot; class=&quot;headerlink&quot; title=&quot;当观察者接受到消息的时&quot;&gt;&lt;/a&gt;当观察者接受到消息的时&lt;/h4&gt;&lt;p&gt;当被观察的属性变更时，观察者会接到&lt;code&gt;observeValueForKeyPath:ofObject:change:context:&lt;/code&gt;消息，所有的观察者都必须实现这个方法。&lt;br&gt;观察者会被提供触发通知的对象和keyPath，一个包含变更详细信息的字典，还有一个注册观察者时提供的context指针。&lt;/p&gt;
-&lt;p&gt;关于change字典，总共包含以下五个键值&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;NSString *const NSKeyValueChangeKindKey;  
-NSString *const NSKeyValueChangeNewKey;  
-NSString *const NSKeyValueChangeOldKey;  
-NSString *const NSKeyValueChangeIndexesKey;  
-NSString *const NSKeyValueChangeNotificationIsPriorKey;
-&lt;/code&gt;&lt;/pre&gt;&lt;ol&gt;
-&lt;li&gt;NSKeyValueChangeKindKey&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;指明了变更的类型，值为“NSKeyValueChange”枚举中的某一个，类型为NSNumber。&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;enum {
-   NSKeyValueChangeSetting = 1,
-   NSKeyValueChangeInsertion = 2,
-   NSKeyValueChangeRemoval = 3,
-   NSKeyValueChangeReplacement = 4
-};
-typedef NSUInteger NSKeyValueChange;
-&lt;/code&gt;&lt;/pre&gt;&lt;ol&gt;
-&lt;li&gt;NSKeyValueChangeNewKey&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;如果 &lt;code&gt;NSKeyValueChangeKindKey&lt;/code&gt;的值为 &lt;code&gt;NSKeyValueChangeSetting&lt;/code&gt;，并且 &lt;code&gt;NSKeyValueObservingOptionNew&lt;/code&gt;选项在注册观察者时也指定了，那么这个键的值就是属性变更后的新值。&lt;br&gt;对于 &lt;code&gt;NSKeyValueChangeInsertion&lt;/code&gt;或者&lt;code&gt;NSKeyValueChangeReplacement&lt;/code&gt;，如果 &lt;code&gt;NSKeyValueObservingOptionNew&lt;/code&gt;选项在注册观察者时也指定了，这个键的值是一个数组，其包含了插入或替换的对象&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;NSKeyValueChangeOldKey&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2 id=&quot;移除观察者&quot;&gt;&lt;a href=&quot;#移除观察者&quot; class=&quot;headerlink&quot; title=&quot;移除观察者&quot;&gt;&lt;/a&gt;移除观察者&lt;/h2&gt;&lt;p&gt;你可以通过发送removeObserver:forKeyPath:消息来移除观察者，你需要指明观察对象和路径&lt;/p&gt;
-&lt;p&gt;注意，在移除观察者之前，如果context是一个对象的引用，那么必须保持对它的强引用直到观察者被移除。&lt;/p&gt;
-&lt;h2 id=&quot;注册依赖键&quot;&gt;&lt;a href=&quot;#注册依赖键&quot; class=&quot;headerlink&quot; title=&quot;注册依赖键&quot;&gt;&lt;/a&gt;注册依赖键&lt;/h2&gt;&lt;p&gt;有时候，有些属性的值取决于一个或者多个属性的值，一旦某个依赖的属性的值改变了，依赖它的属性的值需要被通知进行改变。&lt;/p&gt;
-&lt;h3 id=&quot;To-One&quot;&gt;&lt;a href=&quot;#To-One&quot; class=&quot;headerlink&quot; title=&quot;To - One&quot;&gt;&lt;/a&gt;To - One&lt;/h3&gt;&lt;p&gt;要触发to - one 关系，有两种方法&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;定义名称为 &lt;code&gt;keyPathForValueAffecting&amp;lt;key&amp;gt;&lt;/code&gt;方法&lt;/li&gt;
-&lt;li&gt;重写 &lt;code&gt;keyPathForValueAffectingForKey:&lt;/code&gt; 方法&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h3 id=&quot;To-Many&quot;&gt;&lt;a href=&quot;#To-Many&quot; class=&quot;headerlink&quot; title=&quot;To - Many&quot;&gt;&lt;/a&gt;To - Many&lt;/h3&gt;&lt;p&gt;由于&lt;code&gt;keyPathForValueAffectingForKey&lt;/code&gt;不支持包含to-many关系的keypath。如果一个类的属性对另一个类的多个属性有依赖关系的时候，必须通过其他方法来实现KVO。&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;将parent类作为所有children类的相关属性的观察者。此时必须注意如果将将child类添加或者删除的时候必须对parent类对child类的观察者添加或者删除。此时通过&lt;code&gt;observeValueForKeyPath:ofObject:change:context:&lt;/code&gt;可以通过对被依赖属性的变化来更新依赖属性的值。&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Core Data中有另外一种实现观察者模式的方法，由于我还没有使用过Core Data,暂且不谈&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2 id=&quot;调试KVO&quot;&gt;&lt;a href=&quot;#调试KVO&quot; class=&quot;headerlink&quot; title=&quot;调试KVO&quot;&gt;&lt;/a&gt;调试KVO&lt;/h2&gt;&lt;p&gt;在LLDB中，我们可以通过&lt;code&gt;po [object observationInfo]&lt;/code&gt;来获取观察者信息&lt;/p&gt;
-&lt;p&gt;#KVC&lt;/p&gt;
-&lt;h2 id=&quot;KVC简单使用&quot;&gt;&lt;a href=&quot;#KVC简单使用&quot; class=&quot;headerlink&quot; title=&quot;KVC简单使用&quot;&gt;&lt;/a&gt;KVC简单使用&lt;/h2&gt;&lt;p&gt;KVC即是键值编码。以字符串的形式向对象发送消息，这个字符串是我们关注的焦点。&lt;/p&gt;
-&lt;p&gt;基本调用是&lt;code&gt;-valueForKey&lt;/code&gt; 和 &lt;code&gt;-setValue:forKey&lt;/code&gt;&lt;/p&gt;
-&lt;p&gt;对于KVC，Cocoa自动放入和取出标量值（int，float和struct）放入NSNumber和NSValue中，当使用&lt;code&gt;-setValue:forKey&lt;/code&gt;的使用，他自动将标量值从这些对象中取出。&lt;/p&gt;
-&lt;p&gt;使用KVC访问属性的代价比直接使用存取方法要大，所以只有在需要的时候才使用。&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;从学习Objective-C以来，有两个地方一直搞不明白。一个是KVO和KVC的应用和与Delegate的应用场景的区别，一个是Block的应用场景。总结起来就死对Objective-C的数据传送的应用不理解。乘着放假几天对这个知识点进行了一些学习和总结，学习了一个小dem
-    
-    </summary>
     
     
   </entry>
