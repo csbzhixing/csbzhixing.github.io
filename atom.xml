@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2016-08-14T16:07:37.000Z</updated>
+  <updated>2016-08-19T15:17:07.000Z</updated>
   <id>http://csbzhixing.github.io/</id>
   
   <author>
@@ -14,6 +14,503 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Method Swizzle 与 AOP</title>
+    <link href="http://csbzhixing.github.io/2016/08/19/Method%20Swizzle%20%E4%B8%8E%20AOP/"/>
+    <id>http://csbzhixing.github.io/2016/08/19/Method Swizzle 与 AOP/</id>
+    <published>2016-08-19T15:03:29.000Z</published>
+    <updated>2016-08-19T15:17:07.000Z</updated>
+    
+    <content type="html">&lt;h2 id=&quot;Method-Swizzle&quot;&gt;&lt;a href=&quot;#Method-Swizzle&quot; class=&quot;headerlink&quot; title=&quot;Method Swizzle&quot;&gt;&lt;/a&gt;Method Swizzle&lt;/h2&gt;&lt;p&gt;&lt;code&gt;Method Swizzle&lt;/code&gt;是基于runtime实现“黑魔法”。&lt;/p&gt;
+&lt;p&gt;写这篇主要是源于上周一次项目bug fix。&lt;/p&gt;
+&lt;p&gt;项目基于React Native 0.20版本开发，在调用相机拍照后，由于照片自身带有了旋转信息，因此照片在客户看来不是“正的”。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)imagePickerController:(UIImagePickerController *)picker
+didFinishPickingMediaWithInfo:(NSDictionary&amp;lt;NSString *, id&amp;gt; *)info
+{
+  NSString *mediaType = info[UIImagePickerControllerMediaType];
+  BOOL isMovie = [mediaType isEqualToString:(NSString *)kUTTypeMovie];
+  NSString *key = isMovie ? UIImagePickerControllerMediaURL : UIImagePickerControllerReferenceURL;
+  NSURL *imageURL = info[key];
+  if (imageURL) {
+    [self _dismissPicker:picker args:@[imageURL.absoluteString]];
+    return;
+  }
+
+  // This is a newly taken image, and doesn&amp;#39;t have a URL yet.
+  // We need to save it to the image store first.
+  UIImage *originalImage = info[UIImagePickerControllerOriginalImage];
+
+  // WARNING: Using ImageStoreManager may cause a memory leak because the
+  // image isn&amp;#39;t automatically removed from store once we&amp;#39;re done using it.
+  [_bridge.imageStoreManager storeImage:originalImage withBlock:^(NSString *tempImageTag) {
+    [self _dismissPicker:picker args:tempImageTag ? @[tempImageTag] : nil];
+  }];
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;可以看到其实就是需要对&lt;code&gt;originalImage&lt;/code&gt;进行方向修正。&lt;/p&gt;
+&lt;p&gt;然后跟踪了RN的实现，发现他是存在应用的临时变量里面，可是用的是CGImage。意味着我们即使取出来了这个Image，也无法获知这个Image的方向信息。当时第一反应是。。我自己来实现一个选择器。。。不过这个工作量略大，而且可能会造成很多不知原因的坑。晚上洗澡的时候，突然想到可以可以通过Method swizzle的方式去实现。&lt;/p&gt;
+&lt;p&gt;新建了一个category，在&lt;code&gt;+(void)load&lt;/code&gt;方法的替换了&lt;code&gt;imagePickerController&lt;/code&gt;方法，测试一下，OK。&lt;/p&gt;
+&lt;h3 id=&quot;什么时候用&quot;&gt;&lt;a href=&quot;#什么时候用&quot; class=&quot;headerlink&quot; title=&quot;什么时候用&quot;&gt;&lt;/a&gt;什么时候用&lt;/h3&gt;&lt;p&gt;&lt;code&gt;Method Swizzle&lt;/code&gt;是把锋利的刀，用的好，削铁如泥；用的不好，害人害己。&lt;/p&gt;
+&lt;p&gt;一般而言，如果能有好的方法解决，不推荐使用&lt;code&gt;Method Swizzle&lt;/code&gt;。原因就是难以跟踪问题。如A实现一个方法&lt;code&gt;run&lt;/code&gt;。一个开发在&lt;code&gt;A(B)&lt;/code&gt;这个category里面替换成了&lt;code&gt;runFast&lt;/code&gt;，而另一个开发在&lt;code&gt;A(C)&lt;/code&gt;里面替换成了&lt;code&gt;runSlow&lt;/code&gt;。那我们调用&lt;code&gt;run&lt;/code&gt;方法的时候到底是什么结果？&lt;/p&gt;
+&lt;h3 id=&quot;该怎么用&quot;&gt;&lt;a href=&quot;#该怎么用&quot; class=&quot;headerlink&quot; title=&quot;该怎么用&quot;&gt;&lt;/a&gt;该怎么用&lt;/h3&gt;&lt;p&gt;替换方法应该是在运行时确定唯一的，如果存在多次不确定的&lt;code&gt;Method Swizzle&lt;/code&gt;，我们就无法知道最后获取的IMP来源于来个方法。因此在哪里替换，怎么替换，对于不同类型的方法都不一样。&lt;/p&gt;
+&lt;h4 id=&quot;普通实例方法&quot;&gt;&lt;a href=&quot;#普通实例方法&quot; class=&quot;headerlink&quot; title=&quot;普通实例方法&quot;&gt;&lt;/a&gt;普通实例方法&lt;/h4&gt;&lt;p&gt;替换普通实例方法比较简单，创建了一个对应类的分类，在分类中实现&lt;code&gt;+(void)load&lt;/code&gt;方法，在&lt;code&gt;+(void)load&lt;/code&gt;方法中进行替换。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;+ (void)load {
+    Class originalClass = NSClassFromString(@&amp;quot;Car&amp;quot;);
+    Class swizzledClass = [self class];
+    SEL originalSelector = NSSelectorFromString(@&amp;quot;run:&amp;quot;);
+    SEL swizzledSelector = @selector(xxx_run:);
+    Method originalMethod = class_getInstanceMethod(originalClass, originalSelector);
+    Method swizzledMethod = class_getInstanceMethod(swizzledClass, swizzledSelector);
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    class_replaceMethod(originalClass,swizzledSelector,originalIMP,originalType);
+    class_replaceMethod(originalClass,originalSelector,swizzledIMP,swizzledType);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;首先要知道为何在&lt;code&gt;+(void)load&lt;/code&gt;中实现替换。&lt;code&gt;+(void)load&lt;/code&gt;这个方法首先是在运行时执行，切只执行一次，因此就符合了我们在&lt;code&gt;在程序运行期只执行一次替换&lt;/code&gt;的想法。其次，&lt;code&gt;+(void)load&lt;/code&gt;的执行顺序是&lt;code&gt;父类-&amp;gt;子类-&amp;gt;分类&lt;/code&gt;的顺序，且不覆盖。因此，分类的&lt;code&gt;+(void)load&lt;/code&gt;不会影响类的&lt;code&gt;+(void)load&lt;/code&gt;也是我们正需要的。&lt;/p&gt;
+&lt;h4 id=&quot;类方法&quot;&gt;&lt;a href=&quot;#类方法&quot; class=&quot;headerlink&quot; title=&quot;类方法&quot;&gt;&lt;/a&gt;类方法&lt;/h4&gt;&lt;p&gt;实现类方法的实现思路也是一样的，不同的是我们不从实例方法列表中去获取相关方法实现&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;+ (void)load {
+    Class cls = [self class];
+    SEL originalSelector = @selector(dictionary);
+    SEL swizzledSelector = @selector(xxx_dictionary);
+
+    // 使用class_getClassMethod来获取类方法的Method
+    Method originalMethod = class_getClassMethod(cls, originalSelector);
+    Method swizzledMethod = class_getClassMethod(cls, swizzledSelector);
+    if (!originalMethod || !swizzledMethod) {
+        return;
+    }
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    // 类方法添加,需要将方法添加到MetaClass中
+    Class metaClass = objc_getMetaClass(class_getName(cls));
+    class_replaceMethod(metaClass,originalSelector,swizzledIMP,swizzledType);
+    class_replaceMethod(metaClass,swizzledSelector,originalIMP,originalType);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;区别有2点&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;class_getClassMethod(Class cls, SEL name)&lt;/code&gt;替换掉&lt;code&gt;class_getInstanceMethod(Class cls, SEL name)&lt;/code&gt;。看得出方法的差异。&lt;/li&gt;
+&lt;li&gt;实例方法的内容是记录在class的method list上的，而类方法是记录在meta-class 上的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&quot;修改类簇&quot;&gt;&lt;a href=&quot;#修改类簇&quot; class=&quot;headerlink&quot; title=&quot;修改类簇&quot;&gt;&lt;/a&gt;修改类簇&lt;/h4&gt;&lt;pre&gt;&lt;code&gt;+ (void)load {
+    Class originalClass = NSClassFromString(@&amp;quot;__NSDictionaryM&amp;quot;);
+    Class swizzledClass = [self class];
+    SEL originalSelector = @selector(setObject:forKey:);
+    SEL swizzledSelector = @selector(safe_setObject:forKey:);
+    Method originalMethod = class_getInstanceMethod(originalClass, originalSelector);
+    Method swizzledMethod = class_getInstanceMethod(swizzledClass, swizzledSelector);
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    class_replaceMethod(originalClass,swizzledSelector,originalIMP,originalType);
+    class_replaceMethod(originalClass,originalSelector,swizzledIMP,swizzledType);
+}
+
+- (void)safe_setObject:(id)anObject forKey:(id&amp;lt;NSCopying&amp;gt;)aKey {
+    if (anObject &amp;amp;&amp;amp; aKey) {
+        [self safe_setObject:anObject forKey:aKey];
+    }
+    else if (aKey) {
+        [(NSMutableDictionary *)self removeObjectForKey:aKey];
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;a href=&quot;https://developer.apple.com/library/ios/documentation/General/Conceptual/DevPedia-CocoaCore/ClassCluster.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;官方文档&lt;/a&gt;&lt;br&gt;中详细讲解了什么是类簇。这里我们替换的是&lt;code&gt;__NSDictionaryM&lt;/code&gt;中对应的&lt;code&gt;setObject:forKey:&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&quot;AOP-和-Method-Swizzle&quot;&gt;&lt;a href=&quot;#AOP-和-Method-Swizzle&quot; class=&quot;headerlink&quot; title=&quot;AOP 和 Method Swizzle&quot;&gt;&lt;/a&gt;AOP 和 Method Swizzle&lt;/h2&gt;&lt;p&gt;有一定开发经验的人一定听说过AOP。用一句个人觉得比较经典的话来概括&lt;code&gt;这种在运行时，动态地将代码切入到类的指定方法、指定位置上的编程思想就是面向切面的编程&lt;/code&gt;。这里来看，通过Method Swizzle正好来实现AOP。在这方面，github上有一个实现非常好的开源库&lt;a href=&quot;https://github.com/steipete/Aspects&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Aspects&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;这里的话，会用它来做一下分析，怎么去实现AOP。&lt;/p&gt;
+&lt;h3 id=&quot;功能分析&quot;&gt;&lt;a href=&quot;#功能分析&quot; class=&quot;headerlink&quot; title=&quot;功能分析&quot;&gt;&lt;/a&gt;功能分析&lt;/h3&gt;&lt;p&gt;&lt;code&gt;Aspects&lt;/code&gt;这个库实现了AOP,那么实现到什么地步，能做到什么样的功能，可以从头文件定义中略知一二&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;typedef NS_OPTIONS(NSUInteger, AspectOptions) {
+    AspectPositionAfter   = 0,            /// Called after the original implementation (default)
+    AspectPositionInstead = 1,            /// Will replace the original implementation.
+    AspectPositionBefore  = 2,            /// Called before the original implementation.
+
+    AspectOptionAutomaticRemoval = 1 &amp;lt;&amp;lt; 3 /// Will remove the hook after the first execution.
+};
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;定义了&lt;code&gt;AspectOptions&lt;/code&gt;，从名字看出，分别可以做到将新方法插入到老方法之前/之后，替换原有的方法，仅在第一次替换原来的方法。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@protocol AspectToken &amp;lt;NSObject&amp;gt;
+
+/// Deregisters an aspect.
+/// @return YES if deregistration is successful, otherwise NO.
+- (BOOL)remove;
+
+@end
+
+/// The AspectInfo protocol is the first parameter of our block syntax.
+@protocol AspectInfo &amp;lt;NSObject&amp;gt;
+
+/// The instance that is currently hooked.
+- (id)instance;
+
+/// The original invocation of the hooked method.
+- (NSInvocation *)originalInvocation;
+
+/// All method arguments, boxed. This is lazily evaluated.
+- (NSArray *)arguments;
+
+@end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;两个协议，实现后可以实现撤销插入/ 获得插入的实例信息，原有方法内容和参数列表。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@interface NSObject (Aspects)
+
+/// Adds a block of code before/instead/after the current `selector` for a specific class.
+///
+/// @param block Aspects replicates the type signature of the method being hooked.
+/// The first parameter will be `id&amp;lt;AspectInfo&amp;gt;`, followed by all parameters of the method.
+/// These parameters are optional and will be filled to match the block signature.
+/// You can even use an empty block, or one that simple gets `id&amp;lt;AspectInfo&amp;gt;`.
+///
+/// @note Hooking static methods is not supported.
+/// @return A token which allows to later deregister the aspect.
++ (id&amp;lt;AspectToken&amp;gt;)aspect_hookSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
+/// Adds a block of code before/instead/after the current `selector` for a specific instance.
+- (id&amp;lt;AspectToken&amp;gt;)aspect_hookSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
+@end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;对NSObject定义了一个分类，只要两个方法，分别是对类方法和实例方法的操作。&lt;/p&gt;
+&lt;p&gt;可以看到，Aspect的实现功能还是很强大的。在提供基本Method swizzle的基础上还实现了对不同插入位置的功能，提供可撤回的替换。&lt;/p&gt;
+&lt;h3 id=&quot;实现细节&quot;&gt;&lt;a href=&quot;#实现细节&quot; class=&quot;headerlink&quot; title=&quot;实现细节&quot;&gt;&lt;/a&gt;实现细节&lt;/h3&gt;&lt;p&gt;在自己实现&lt;code&gt;Method Swizzle&lt;/code&gt;的时候，我们也会考虑到，如果我需要恢复被替换的方法怎么做？如果我仅仅想在某个方法执行前或执行后执行一个方法呢？比如我需要在所有的&lt;code&gt;viewDidLoad&lt;/code&gt;中插入一个log语句，这时候用&lt;code&gt;Method Swizzle&lt;/code&gt;显然是不合适，而&lt;code&gt;Aspect&lt;/code&gt;能做到的，也是让我们好奇的，来看看具体的实现方法。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;+ (id&amp;lt;AspectToken&amp;gt;)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(id)block
+                            error:(NSError **)error {
+    return aspect_add((id)self, selector, options, block, error);
+}
+
+/// @return A token which allows to later deregister the aspect.
+- (id&amp;lt;AspectToken&amp;gt;)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(id)block
+                            error:(NSError **)error {
+    return aspect_add(self, selector, options, block, error);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;两个公开API进来后都是调用&lt;code&gt;static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSError **error)&lt;/code&gt;这个静态方法，区别就是对类方法中替换要在self前用id修饰。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSError **error) {
+    NSCParameterAssert(self);
+    NSCParameterAssert(selector);
+    NSCParameterAssert(block);
+
+    __block AspectIdentifier *identifier = nil;
+    aspect_performLocked(^{
+        if (aspect_isSelectorAllowedAndTrack(self, selector, options, error)) {
+            AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
+            identifier = [AspectIdentifier identifierWithSelector:selector object:self options:options block:block error:error];
+            if (identifier) {
+                [aspectContainer addAspect:identifier withOptions:options];
+
+                // Modify the class to allow message interception.
+                aspect_prepareClassAndHookSelector(self, selector, error);
+            }
+        }
+    });
+    return identifier;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;方法中首先定义了一个&lt;code&gt;AspectIdentifier&lt;/code&gt;类型的实例变量：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@interface AspectIdentifier : NSObject
++ (instancetype)identifierWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block error:(NSError **)error;
+- (BOOL)invokeWithInfo:(id&amp;lt;AspectInfo&amp;gt;)info;
+@property (nonatomic, assign) SEL selector;
+@property (nonatomic, strong) id block;
+@property (nonatomic, strong) NSMethodSignature *blockSignature;
+@property (nonatomic, weak) id object;
+@property (nonatomic, assign) AspectOptions options;
+@end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;可以看到这个类的定义就是对Aspect定义的。&lt;/p&gt;
+&lt;p&gt;随后执行&lt;code&gt;aspect_performLocked&lt;/code&gt;：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;    static void aspect_performLocked(dispatch_block_t block) {
+    static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
+    OSSpinLockLock(&amp;amp;aspect_lock);
+    block();
+    OSSpinLockUnlock(&amp;amp;aspect_lock);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;方法中创建了一个&lt;code&gt;OSSpinLockLock&lt;/code&gt;自旋锁，对block执行进行保护。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;自旋锁是在多处理器系统(SMP)上为保护一段关键代码的执行或者关键数据的一种保护机制，是实现synchronization的一种手段。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;传入的block中，首先先执行&lt;code&gt;aspect_isSelectorAllowedAndTrack&lt;/code&gt;方法&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;aspect_isSelectorAllowedAndTrack&lt;/code&gt;比较长，从字面含义上来讲就是是否允许插入和追踪。&lt;/p&gt;
+&lt;p&gt;代码就不贴了。。简单说下思路。&lt;/p&gt;
+&lt;p&gt;我们知道有些方法是无法被替换的，有些hook的方法对插入的位置很敏感(好像很污的感觉)。这个方法就是对这些黑名单进行判断&lt;/p&gt;
+&lt;p&gt;首先是不能替换的，有&lt;code&gt;release&lt;/code&gt;,&lt;code&gt;retain&lt;/code&gt;,&lt;code&gt;autorelease&lt;/code&gt;,&lt;code&gt;forwardInvocation&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;只能在添加block到hook方法前的：&lt;code&gt;dealloc&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;被hook的类响应SEL的。。。喂你再去检查下好吧&lt;/p&gt;
+&lt;p&gt;接下来被hook的是不是元类，如果不是的话就可以愉快的返回YES啦。&lt;/p&gt;
+&lt;p&gt;如果是元类。。稍微麻烦点。梳理一下逻辑如下&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;swizzledClassesDict&lt;/code&gt;是一个dictionary，里面存放的已经是以当前类为key，以&lt;code&gt;AspectTracker&lt;/code&gt;为value的键值对。&lt;code&gt;AspectTracker&lt;/code&gt;定义如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@interface AspectTracker : NSObject
+- (id)initWithTrackedClass:(Class)trackedClass;
+@property (nonatomic, strong) Class trackedClass;
+@property (nonatomic, readonly) NSString *trackedClassName;
+@property (nonatomic, strong) NSMutableSet *selectorNames;
+@property (nonatomic, strong) NSMutableDictionary *selectorNamesToSubclassTrackers;
+- (void)addSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (BOOL)subclassHasHookedSelectorName:(NSString *)selectorName;
+- (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName;
+@end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;意义如名字一样，实现的是一个跟踪对象。这个对象里面存放了跟踪的类，类的名字，选择器的名称已经子类跟踪对象的选择器。&lt;/p&gt;
+&lt;p&gt;获得&lt;code&gt;tracker&lt;/code&gt;后，判断是否已经hook了子类的相同选择器方法，注意只能在继承链上hook一次相同选择器的方法。&lt;/p&gt;
+&lt;p&gt;随后递归父类，查看是否在继承链上已经hook过了。&lt;/p&gt;
+&lt;p&gt;如果上述过程都能顺利进行下来的话，说明可以hook啦，这时候递归父类，将selector添加到tracker里面。&lt;/p&gt;
+&lt;p&gt;回到上面的&lt;code&gt;aspect_performLocked&lt;/code&gt;中，这时候我们得知是能hook啦，这时候根据传进来的&lt;code&gt;self&lt;/code&gt;和&lt;code&gt;selector&lt;/code&gt;创建一个&lt;code&gt;AspectsContainer&lt;/code&gt;。&lt;code&gt;AspectsContainer&lt;/code&gt;的定义如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@interface AspectsContainer : NSObject
+- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)injectPosition;
+- (BOOL)removeAspect:(id)aspect;
+- (BOOL)hasAspects;
+@property (atomic, copy) NSArray *beforeAspects;
+@property (atomic, copy) NSArray *insteadAspects;
+@property (atomic, copy) NSArray *afterAspects;
+@end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这里有三个属性，都是array类型，从名字不难看到，存的是hook前，被hook的，hook后的。&lt;/p&gt;
+&lt;p&gt;创建&lt;code&gt;AspectsContainer&lt;/code&gt;之后，对&lt;code&gt;identifier&lt;/code&gt;初始化，如果成功初始化，向&lt;code&gt;AspectsContainer&lt;/code&gt;添加&lt;code&gt;identifier&lt;/code&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)options {
+    NSParameterAssert(aspect);
+    NSUInteger position = options&amp;amp;AspectPositionFilter;
+    switch (position) {
+        case AspectPositionBefore:  self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionInstead: self.insteadAspects = [(self.insteadAspects?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionAfter:   self.afterAspects   = [(self.afterAspects  ?:@[]) arrayByAddingObject:aspect]; break;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;判断option，将&lt;code&gt;AspectIdentifier&lt;/code&gt;添加到对应的array&lt;/p&gt;
+&lt;p&gt;最后，执行&lt;code&gt;aspect_prepareClassAndHookSelector&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;aspect_prepareClassAndHookSelector&lt;/code&gt;是整个&lt;code&gt;Aspect&lt;/code&gt;里面最核心的部分了，前面的行为都是判断是否能hook和做相应的缓存操作，在这里才是真正的执行hook的地方。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
+    NSCParameterAssert(selector);
+    Class klass = aspect_hookClass(self, error);
+    Method targetMethod = class_getInstanceMethod(klass, selector);
+    IMP targetMethodIMP = method_getImplementation(targetMethod);
+    if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
+        // Make a method alias for the existing method implementation, it not already copied.
+        const char *typeEncoding = method_getTypeEncoding(targetMethod);
+        SEL aliasSelector = aspect_aliasForSelector(selector);
+        if (![klass instancesRespondToSelector:aliasSelector]) {
+            __unused BOOL addedAlias = class_addMethod(klass, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
+            NSCAssert(addedAlias, @&amp;quot;Original implementation for %@ is already copied to %@ on %@&amp;quot;, NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+        }
+
+        // We use forwardInvocation to hook in.
+        class_replaceMethod(klass, selector, aspect_getMsgForwardIMP(self, selector), typeEncoding);
+        AspectLog(@&amp;quot;Aspects: Installed hook for -[%@ %@].&amp;quot;, klass, NSStringFromSelector(selector));
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;思路和我们自己动手实现&lt;code&gt;Method Swizzle&lt;/code&gt;是差不多的，过程也是获取到被hook的class，然后通过&lt;code&gt;selector&lt;/code&gt;获取到指定函数指针&lt;code&gt;IMP&lt;/code&gt;。然后将传入的方法(block)替换掉&lt;code&gt;IMP&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;首先执行的是一个&lt;code&gt;aspect_hookClass&lt;/code&gt;方法，返回一个Class对象。&lt;/p&gt;
+&lt;p&gt;整体的思路如下&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Class statedClass = self.class;
+    Class baseClass = object_getClass(self);
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;如果对runtime不熟悉的人可能不知道这两者的有什么不同。简单的说，&lt;code&gt;self.class&lt;/code&gt;返回的是这个Object&lt;br&gt;所属的类，而&lt;code&gt;object_getClass&lt;/code&gt;返回的是这个Object的元类，也就是类对象的类（很绕口）。接下来，就来判断元类是否被修改过（元类的类名被添加了特有的后缀），如果没有修改过，将对象的类进行hook：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static void _aspect_modifySwizzledClasses(void (^block)(NSMutableSet *swizzledClasses)) {
+    static NSMutableSet *swizzledClasses;
+    static dispatch_once_t pred;
+    dispatch_once(&amp;amp;pred, ^{
+        swizzledClasses = [NSMutableSet new];
+    });
+    @synchronized(swizzledClasses) {
+        block(swizzledClasses);
+    }
+}
+
+static Class aspect_swizzleClassInPlace(Class klass) {
+    NSCParameterAssert(klass);
+    NSString *className = NSStringFromClass(klass);
+
+    _aspect_modifySwizzledClasses(^(NSMutableSet *swizzledClasses) {
+        if (![swizzledClasses containsObject:className]) {
+            aspect_swizzleForwardInvocation(klass);
+            [swizzledClasses addObject:className];
+        }
+    });
+    return klass;
+}
+
+static NSString *const AspectsForwardInvocationSelectorName = @&amp;quot;__aspects_forwardInvocation:&amp;quot;;
+static void aspect_swizzleForwardInvocation(Class klass) {
+    NSCParameterAssert(klass);
+    // If there is no method, replace will act like class_addMethod.
+    IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, &amp;quot;v@:@&amp;quot;);
+    if (originalImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, &amp;quot;v@:@&amp;quot;);
+    }
+    AspectLog(@&amp;quot;Aspects: %@ is now aspect aware.&amp;quot;, NSStringFromClass(klass));
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;理解起来不困难，用一个mutableSet存储类名，如果&lt;code&gt;swizzledClasses&lt;/code&gt;不在set里面的话，执行&lt;code&gt;aspect_swizzleForwardInvocation&lt;/code&gt;。这个方法就是替换&lt;code&gt;forwardInvocation&lt;/code&gt;这方法，目的是替换掉&lt;code&gt;forwardInvocation&lt;/code&gt;方法转发，采用自定以的&lt;code&gt;__aspects_forwardInvocation&lt;/code&gt;&lt;br&gt;核心就是下面两句：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, &amp;quot;v@:@&amp;quot;);
+    if (originalImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, &amp;quot;v@:@&amp;quot;);
+    }
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;__ASPECTS_ARE_BEING_CALLED__&lt;/code&gt;是最关键的方法，这个方法就是决定我们要替换的方法如何执行的地方。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL selector, NSInvocation *invocation) {
+    NSCParameterAssert(self);
+    NSCParameterAssert(invocation);
+    SEL originalSelector = invocation.selector;
+    SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
+    invocation.selector = aliasSelector;
+    AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
+    AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
+    AspectInfo *info = [[AspectInfo alloc] initWithInstance:self invocation:invocation];
+    NSArray *aspectsToRemove = nil;
+
+    // Before hooks.
+    aspect_invoke(classContainer.beforeAspects, info);
+    aspect_invoke(objectContainer.beforeAspects, info);
+
+    // Instead hooks.
+    BOOL respondsToAlias = YES;
+    if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
+        aspect_invoke(classContainer.insteadAspects, info);
+        aspect_invoke(objectContainer.insteadAspects, info);
+    }else {
+        Class klass = object_getClass(invocation.target);
+        do {
+            if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
+                [invocation invoke];
+                break;
+            }
+        }while (!respondsToAlias &amp;amp;&amp;amp; (klass = class_getSuperclass(klass)));
+    }
+
+    // After hooks.
+    aspect_invoke(classContainer.afterAspects, info);
+    aspect_invoke(objectContainer.afterAspects, info);
+
+    // If no hooks are installed, call original implementation (usually to throw an exception)
+    if (!respondsToAlias) {
+        invocation.selector = originalSelector;
+        SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+        if ([self respondsToSelector:originalForwardInvocationSEL]) {
+            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+        }else {
+            [self doesNotRecognizeSelector:invocation.selector];
+        }
+    }
+
+    // Remove any hooks that are queued for deregistration.
+    [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这个方法里，实际上替换的就是&lt;code&gt;forwardInvocation:&lt;/code&gt;这个runtime方法，自造了一个调用方法。&lt;br&gt;目的就是从原有方法和hook方法去做处理。&lt;/p&gt;
+&lt;p&gt;过程就是先用临时变量获取&lt;code&gt;invocation&lt;/code&gt;的seletor，将&lt;code&gt;invocation&lt;/code&gt;的selecor替换成aliasSelector。通过传入的参数构造&lt;code&gt;AspectInfo&lt;/code&gt;。取得&lt;code&gt;objectContainer&lt;/code&gt;和&lt;code&gt;classContainer&lt;/code&gt;（都是&lt;code&gt;AspectsContainer&lt;/code&gt;）类型的。调用&lt;code&gt;aspect_invoke&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;aspect_invoke&lt;/code&gt;是一个宏方法（其实这里也不用写成宏）。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;#define aspect_invoke(aspects, info) \
+for (AspectIdentifier *aspect in aspects) {\
+    [aspect invokeWithInfo:info];\
+    if (aspect.options &amp;amp; AspectOptionAutomaticRemoval) { \
+        aspectsToRemove = [aspectsToRemove?:@[] arrayByAddingObject:aspect]; \
+    } \
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;调用了&lt;code&gt;invokeWithInfo&lt;/code&gt;判断aspect的option，如果需要一出，就讲他从对应的container中移除。&lt;br&gt;&lt;code&gt;invokeWithInfo&lt;/code&gt;的方法如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- (BOOL)invokeWithInfo:(id&amp;lt;AspectInfo&amp;gt;)info {
+    NSInvocation *blockInvocation = [NSInvocation invocationWithMethodSignature:self.blockSignature];
+    NSInvocation *originalInvocation = info.originalInvocation;
+    NSUInteger numberOfArguments = self.blockSignature.numberOfArguments;
+
+    // Be extra paranoid. We already check that on hook registration.
+    if (numberOfArguments &amp;gt; originalInvocation.methodSignature.numberOfArguments) {
+        AspectLogError(@&amp;quot;Block has too many arguments. Not calling %@&amp;quot;, info);
+        return NO;
+    }
+
+    // The `self` of the block will be the AspectInfo. Optional.
+    if (numberOfArguments &amp;gt; 1) {
+        [blockInvocation setArgument:&amp;amp;info atIndex:1];
+    }
+
+    void *argBuf = NULL;
+    for (NSUInteger idx = 2; idx &amp;lt; numberOfArguments; idx++) {
+        const char *type = [originalInvocation.methodSignature getArgumentTypeAtIndex:idx];
+        NSUInteger argSize;
+        NSGetSizeAndAlignment(type, &amp;amp;argSize, NULL);
+
+        if (!(argBuf = reallocf(argBuf, argSize))) {
+            AspectLogError(@&amp;quot;Failed to allocate memory for block invocation.&amp;quot;);
+            return NO;
+        }
+
+        [originalInvocation getArgument:argBuf atIndex:idx];
+        [blockInvocation setArgument:argBuf atIndex:idx];
+    }
+
+    [blockInvocation invokeWithTarget:self.block];
+
+    if (argBuf != NULL) {
+        free(argBuf);
+    }
+    return YES;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这个部分就是从原有方法中取出参数列表赋给block，在这过程总检查是否block不符合原来方法。将&lt;code&gt;self.block&lt;/code&gt;设为&lt;code&gt;blockInvocation&lt;/code&gt;的target。&lt;/p&gt;
+&lt;p&gt;回到&lt;code&gt;aspect_hookClass&lt;/code&gt;，在上面特殊情况处理之后，就是一般情况，这时候创建动态子类，类名以&lt;code&gt;AspectsSubclassSuffix&lt;/code&gt;为指定后缀。&lt;code&gt;aspect_hookedGetClass&lt;/code&gt;中替换掉&lt;code&gt;Class&lt;/code&gt;方法，使其返回的是&lt;code&gt;statedClass(被hook的类)&lt;/code&gt;，这里将动态生成的子类的&lt;code&gt;Class&lt;/code&gt;和&lt;code&gt;Meta Class&lt;/code&gt;都替换成&lt;code&gt;statedClass&lt;/code&gt;，最后将&lt;code&gt;subclass&lt;/code&gt;注册进去，最后将&lt;code&gt;subclass&lt;/code&gt;设置成&lt;code&gt;self&lt;/code&gt;的类。这样就完成了hook的过程，&lt;code&gt;self&lt;/code&gt;执行的方法和信息都被我们hook到了。&lt;/p&gt;
+&lt;p&gt;回到&lt;code&gt;aspect_prepareClassAndHookSelector&lt;/code&gt;（感觉从很深的子树回来真的很不容易），接下来我们获得了我们要hook的&lt;code&gt;Method&lt;/code&gt;和&lt;code&gt;IMP&lt;/code&gt;,我们要判断是否有对应的IMP&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static BOOL aspect_isMsgForwardIMP(IMP impl) {
+    return impl == _objc_msgForward
+#if !defined(__arm64__)
+    || impl == (IMP)_objc_msgForward_stret
+#endif
+    ;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;_objc_msgForward_stret&lt;/code&gt;和&lt;code&gt;_objc_msgForward&lt;/code&gt;的区别在&lt;a href=&quot;http://sealiesoftware.com/blog/archive/2008/10/30/objc_explain_objc_msgSend_stret.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;这篇文章&lt;/a&gt;里面有讲解，简单的引用JSPatch作者的解释&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;大多数CPU在执行C函数时会把前几个参数放进寄存器里，对 obj_msgSend 来说前两个参数固定是 self / _cmd，它们会放在寄存器上，在最后执行完后返回值也会保存在寄存器上，取这个寄存器的值就是返回值。普通的返回值(int/pointer)很小，放在寄存器上没问题，但有些 struct 是很大的，寄存器放不下，所以要用另一种方式，在一开始申请一段内存，把指针保存在寄存器上，返回值往这个指针指向的内存写数据，所以寄存器要腾出一个位置放这个指针，self / _cmd 在寄存器的位置就变了。objc_msgSend 不知道 self / _cmd 的位置变了，所以要用另一个方法 objc_msgSend_stret 代替。原理大概就是这样。在 NSMethodSignature 的 debugDescription 上打出了是否 special struct，只能通过这字符串判断。所以最终的处理是，在非 arm64 下，是 special struct 就走 _objc_msgForward_stret，否则走 _objc_msgForward。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;这里如果IMP == _objc_msgForward，说明找不到 class / selector 对应的 IMP，如果能找到的话，我们就可以进行下一步了。&lt;/p&gt;
+&lt;p&gt;首先要创建一个&lt;code&gt;aliasSelector&lt;/code&gt;选择器，用这个选择器去添加&lt;code&gt;targetMethod&lt;/code&gt;对应的&lt;code&gt;IMP&lt;/code&gt;。这个目的么，自然是保存下来将要被替换方法的实现。&lt;/p&gt;
+&lt;p&gt;接下来，&lt;code&gt;class_replaceMethod&lt;/code&gt;替换掉我们需要hook的方法，使用了&lt;code&gt;aspect_getMsgForwardIMP&lt;/code&gt;如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
+    IMP msgForwardIMP = _objc_msgForward;
+#if !defined(__arm64__)
+    // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
+    // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
+    // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
+    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
+    Method method = class_getInstanceMethod(self.class, selector);
+    const char *encoding = method_getTypeEncoding(method);
+    BOOL methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
+    if (methodReturnsStructValue) {
+        @try {
+            NSUInteger valueSize = 0;
+            NSGetSizeAndAlignment(encoding, &amp;amp;valueSize, NULL);
+
+            if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
+                methodReturnsStructValue = NO;
+            }
+        } @catch (__unused NSException *e) {}
+    }
+    if (methodReturnsStructValue) {
+        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    }
+#endif
+    return msgForwardIMP;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这里对arm64做了特殊处理，原因就是上文提到实现问题，对返回的struct做特殊的处理。&lt;/p&gt;
+&lt;p&gt;至此，整个hook的过程就结束了，我们已经将需要hook的方法替换成了我们需要的实现。&lt;/p&gt;
+&lt;h3 id=&quot;回顾&quot;&gt;&lt;a href=&quot;#回顾&quot; class=&quot;headerlink&quot; title=&quot;回顾&quot;&gt;&lt;/a&gt;回顾&lt;/h3&gt;&lt;p&gt;写完后才发现整个思路虽然很清晰，但是跨越很大，如果去处理这个hook的类和方法需要做许多判断，然后将原有的类和方法的信息保存下来，以便于恢复，最后通过&lt;code&gt;class_replaceMethod&lt;/code&gt;的方法替换掉了&lt;code&gt;forwardInvocation:&lt;/code&gt;。这样通过实现了最后消息转发过程中hook，执行我们注入的方法了。&lt;/p&gt;
+&lt;p&gt;至于恢复被hook的方法，思路也很简单了，从cache中获取origin method，替换掉hook方法就行了。&lt;/p&gt;
+&lt;h2 id=&quot;总结&quot;&gt;&lt;a href=&quot;#总结&quot; class=&quot;headerlink&quot; title=&quot;总结&quot;&gt;&lt;/a&gt;总结&lt;/h2&gt;&lt;p&gt;&lt;code&gt;Aspect&lt;/code&gt;的实现是基于对runtime强大的理解，通过hook&lt;code&gt;forwardInvocation&lt;/code&gt;方法，做到了对消息转发的改变，任何对象不能处理的方法最后都会到&lt;code&gt;forwardInvovation&lt;/code&gt;中，在这里我们能执行hook的方法和选择执行的时间，也达到了&lt;code&gt;AOP&lt;/code&gt;的思想。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Method Swizzle&lt;/code&gt;也好，&lt;code&gt;Aspect&lt;/code&gt;也好，都是依赖对runtime的认识理解，尤其是&lt;code&gt;Aspect&lt;/code&gt;，在学习代码的过程也增长了自己对语言的认知和理解。&lt;/p&gt;
+&lt;p&gt;在此，项目中也用上了&lt;code&gt;JSPatch&lt;/code&gt;，试想如果结合&lt;code&gt;Aspect&lt;/code&gt;，通过runtime强大的功能，我们几乎能做到任何时间(坏坏的事情不要想哦)。未来如果有很好的用例，也会分享出来。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;Method-Swizzle&quot;&gt;&lt;a href=&quot;#Method-Swizzle&quot; class=&quot;headerlink&quot; title=&quot;Method Swizzle&quot;&gt;&lt;/a&gt;Method Swizzle&lt;/h2&gt;&lt;p&gt;&lt;code&gt;Method Swizzle&lt;/
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>用GCD来实现个Timer</title>
@@ -2227,250 +2724,6 @@ int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags,
     </summary>
     
       <category term="Objective-C" scheme="http://csbzhixing.github.io/categories/Objective-C/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>HTTP学习</title>
-    <link href="http://csbzhixing.github.io/2015/09/10/http/"/>
-    <id>http://csbzhixing.github.io/2015/09/10/http/</id>
-    <published>2015-09-10T15:46:08.000Z</published>
-    <updated>2015-09-24T09:05:52.000Z</updated>
-    
-    <content type="html">&lt;p&gt;#HTTP学习&lt;/p&gt;
-&lt;p&gt;HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去总结了一下，做一个备忘。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
-&lt;p&gt;##HTTP简单分析&lt;/p&gt;
-&lt;p&gt;HTTP是一个基于请求/响应模式的、无状态的协议。即，浏览器与服务端连接之后，浏览器向服务器发送一个请求，服务器返回响应信息之后，双方的链接就被关闭。&lt;/p&gt;
-&lt;p&gt;HTTP1.0是典型的请求/响应模式。&lt;/p&gt;
-&lt;p&gt;HTTP1.1在1.0的基础上进行了改进，加入了“持续连接”的机制。通过这种机制，客户端发送请求得到响应后，连接不会马上关闭，可以继续发送请求，还可以流水线发送多个请求、而不用等待每一个响应的到来。&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;URI和URL&lt;ul&gt;
-&lt;li&gt;URL我们应该是很熟悉的了，全名是统一资源定位符，包含了需要查找的信息的资源。&lt;/li&gt;
-&lt;li&gt;而URI是URL的父集，纯粹是一个WEB的资源符号&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id=&quot;HTTP请求&quot;&gt;&lt;a href=&quot;#HTTP请求&quot; class=&quot;headerlink&quot; title=&quot;HTTP请求&quot;&gt;&lt;/a&gt;HTTP请求&lt;/h2&gt;&lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/2c834f74cd465d7e.png&quot; alt=&quot;HTTP Request&quot;&gt;&lt;/p&gt;
-&lt;p&gt;简单的来说 HTTP请求可以分为三部分&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;请求行&lt;/li&gt;
-&lt;/ol&gt;
-&lt;ol&gt;
-&lt;li&gt;消息报头&lt;/li&gt;
-&lt;/ol&gt;
-&lt;ol&gt;
-&lt;li&gt;请求正文&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;###请求行&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;请求行主要的内容是是请求方法和请求的位置（URL）&lt;/p&gt;
-&lt;p&gt;请求方法主要有以下几种方法（注意方法都是全部字母大写）&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/05fa7108f6959f91.png&quot; alt=&quot;HTTP Request method&quot;&gt;&lt;/p&gt;
-&lt;p&gt;在APP中，最多用的到的就是POST 和 GET 两种方法。许多地方都要求区别两者的区别，所以在这里做一下重点笔记对比两者方法的不同&lt;/p&gt;
-&lt;p&gt;（在这里小小的吐槽，在学校计算机网络的学习中，POST和GET的区别基本就是一句话：POST比GET更好更安全。其实在查阅了许多资料后，发现并没有那么简单）&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;####POST&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;根据HTTP规范，POST表示可能修改服务器上的资源的请求，比如提交表格，注册等等都是常用POST&lt;/li&gt;
-&lt;/ul&gt;
-&lt;ul&gt;
-&lt;li&gt;POST将请求的正文包在HTTP包体中&lt;/li&gt;
-&lt;/ul&gt;
-&lt;ul&gt;
-&lt;li&gt;POST没有大小限制&lt;/li&gt;
-&lt;/ul&gt;
-&lt;hr&gt;
-&lt;p&gt;####GET&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;GET操作，根据HTTP规范，仅仅用于信息获取，而且是应该是安全的幂等。&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;GET操作会将请求的数据附在URL后面，参数之间以&amp;amp;相连（这就是为什么很多人认为GET不安全了）&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;ul&gt;
-&lt;li&gt;GET的数据限制，由于浏览器或者服务器可能会对URL存在长度限制，所以有可能会产生影响&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;通过对比，我们发现常见的误区有两个&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;POST比GET更安全。通过上面对比，我们发现，虽然POST没有将参数直接放在URL中，但是通过抓包的手段，我们依然可以获得HTTP包体中的参数。由此看来，想依靠POST就简单保证安全是不可能的。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;ol&gt;
-&lt;li&gt;POST能比GET传输更多。通过上面的叙述也可以得知，其实HTTP协议本身没有进行限制，POST和GET都没有大小限制，而是第三方的浏览器和服务器造成了差别&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;什么时候用POST，什么时候用GET，我们要依据不同的使用场景来区分。如果有缓存的需求，那自然就不能用POST方法。如果必须要用表格，GET也不行了。&lt;/p&gt;
-&lt;h2 id=&quot;HTTP响应&quot;&gt;&lt;a href=&quot;#HTTP响应&quot; class=&quot;headerlink&quot; title=&quot;HTTP响应&quot;&gt;&lt;/a&gt;HTTP响应&lt;/h2&gt;&lt;p&gt;请求响应类似与请求。如图所示&lt;/p&gt;
-&lt;p&gt;可以看到，HTTP响应的第一行叫状态行，包含了HTTP版本，状态码，状态描述信息。&lt;/p&gt;
-&lt;p&gt;状态码是判断请求状态的重要标志，由三位数字组成，有五种定义：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;1XX —- 请示信息，表示请求已经接受，可以继续处理&lt;/li&gt;
-&lt;li&gt;2XX —- 成功状态，表示请求被服务器接受&lt;/li&gt;
-&lt;li&gt;3XX —- 重定向，要完成请求的话需要更进一步的操作&lt;/li&gt;
-&lt;li&gt;4XX —- 客户端错误，请求错误或者请求无法被实现&lt;/li&gt;
-&lt;li&gt;5XX —- 服务器端错误，服务器未能完成合法的请求&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;全部取值如下：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;pre&gt;&lt;code&gt;    100——客户必须继续发出请求
-   101——客户要求服务器根据请求转换HTTP协议版本
-
-
-     200——交易成功
-    201——提示知道新文件的URL
-    202——接受和处理、但处理未完成
-    203——返回信息不确定或不完整
-    204——请求收到，但返回信息为空
-    205——服务器完成了请求，用户代理必须复位当前已经浏览过的文件
-    206——服务器已经完成了部分用户的GET请求
-
-      300——请求的资源可在多处得到
-    301——删除请求数据
-    302——在其他地址发现了请求数据
-    303——建议客户访问其他URL或访问方式
-    304——客户端已经执行了GET，但文件未变化
-    305——请求的资源必须从服务器指定的地址得到
-    306——前一版本HTTP中使用的代码，现行版本中不再使用
-    307——申明请求的资源临时性删除
-
-     400——错误请求，如语法错误
-    401——请求授权失败
-    402——保留有效ChargeTo头响应
-    403——请求不允许
-    404——没有发现文件、查询或URl
-    405——用户在Request-Line字段定义的方法不允许
-    406——根据用户发送的Accept拖，请求资源不可访问
-    407——类似401，用户必须首先在代理服务器上得到授权
-    408——客户端没有在用户指定的饿时间内完成请求
-    409——对当前资源状态，请求不能完成
-    410——服务器上不再有此资源且无进一步的参考地址
-    411——服务器拒绝用户定义的Content-Length属性请求
-    412——一个或多个请求头字段在当前请求中错误
-    413——请求的资源大于服务器允许的大小
-    414——请求的资源URL长于服务器允许的长度
-    415——请求资源不支持请求项目格式
-    416——请求中包含Range请求头字段，在当前请求资源范围内没有range指示值，请求也不包含If-Range请求头字段
-    417——服务器不满足请求Expect头字段指定的期望值，如果是代理服务器，可能是下一级服务器不能满足请求
-
-       500——服务器产生内部错误
-    501——服务器不支持请求的函数
-    502——服务器暂时不可用，有时是为了防止发生系统过载
-    503——服务器过载或暂停维修
-    504——关口过载，服务器使用另一个关口或服务来响应用户，等待时间设定值较长
-    505——服务器不支持或拒绝支请求头中指定的HTTP版本
-
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;/blockquote&gt;
-&lt;p&gt;常见的错误主要有400 404 403 500 503等等&lt;/p&gt;
-&lt;p&gt;相应正文，包含了请求获得的资源，有HTML文件，JSON格式数据，文件的URL等等&lt;/p&gt;
-&lt;h3 id=&quot;消息报头&quot;&gt;&lt;a href=&quot;#消息报头&quot; class=&quot;headerlink&quot; title=&quot;消息报头&quot;&gt;&lt;/a&gt;消息报头&lt;/h3&gt;&lt;hr&gt;
-&lt;p&gt;HTTP请求和HTTP响应都有消息报头。而消息报头是由众多报头域组成。每一个报头域都由名字＋“：”＋空格组成，消息报头域的名字是大小写无关的。&lt;/p&gt;
-&lt;p&gt;HTTP消息报头包括普通报头、请求报头、响应报头和实体报头。&lt;/p&gt;
-&lt;hr&gt;
-&lt;h4 id=&quot;普通报头：&quot;&gt;&lt;a href=&quot;#普通报头：&quot; class=&quot;headerlink&quot; title=&quot;普通报头：&quot;&gt;&lt;/a&gt;普通报头：&lt;/h4&gt;&lt;p&gt;在普通报头中，有少数报头域用于所有的请求和响应消息，但并不用于被传输的实体，只用于传输的消息。&lt;/p&gt;
-&lt;p&gt;常见的普通报头：&lt;/p&gt;
-&lt;p&gt;1）Cache-Control&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Cache-Control用于指定缓存指令，缓存指令是单向的（响应中出现的缓存指令在请求中未必会出现），且是独立的（一个消息的缓存指令不会影响另一个消息处理的缓存机制），HTTP1.0使用的类似的报头域为Pragma。
-
-请求时的缓存指令包括：no-cache（用于指示请求或响应消息不能缓存）、no-store、max-age、max-stale、min-fresh、only-if-cached;
-响应时的缓存指令包括：public、private、no-cache、no-store、no-transform、must-revalidate、proxy-revalidate、max-age、s-maxage.
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2）Date&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Date普通报头域表示消息产生的日期和时间
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;3）Connection&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Connection普通报头域允许发送指定连接的选项。例如指定连接是连续，或者指定“close”选项，通知服务器，在响应完成后，关闭连接
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
-&lt;h4 id=&quot;请求报头&quot;&gt;&lt;a href=&quot;#请求报头&quot; class=&quot;headerlink&quot; title=&quot;请求报头&quot;&gt;&lt;/a&gt;请求报头&lt;/h4&gt;&lt;p&gt;请求报头允许客户端向服务器端传递请求的附加信息以及客户端自身的信息。&lt;br&gt;（在APP中，一些身份验证的信息可能需要在header中添加）&lt;/p&gt;
-&lt;p&gt;常见的请求报头：&lt;/p&gt;
-&lt;p&gt;1)Accept&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Accept请求报头域用于指定客户端接受哪些类型的信息。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2)Accept-Charset&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Accept-Charset请求报头域用于指定客户端接受的字符集。如果在请求消息中没有设置这个域，缺省是任何字符集都可以接受。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;3）Accept-Encoding&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Accept-Encoding请求报头域类似于Accept，但是它是用于指定可接受的内容编码。如果请求消息中没有设置这个域服务器假定客户端对各种内容编码都可以接受。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;4）Accept-Language&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Accept-Language请求报头域类似于Accept，但是它是用于指定一种自然语言如果请求消息中没有设置这个报头域，服务器假定客户端对各种语言都可以接受。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;5）Authorization&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Authorization请求报头域主要用于证明客户端有权查看某个资源。当浏览器访问一个页面时，如果收到服务器的响应代码为401（未授权），可以发送一个包含Authorization请求报头域的请求，要求服务器对其进行验证。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;6）Host&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;发送请求时，该报头域是必需的。Host请求报头域主要用于指定被请求资源的Internet主机和端口号，它通常从HTTP URL中提取出来的。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;7）User-Agent&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;User-Agent请求报头域允许客户端将它的操作系统、浏览器和其它属性告诉服务器。不过，这个报头域不是必需的，如果我们自己编写一个浏览器，不使用User-Agent请求报头域，那么服务器端就无法得知我们的信息了。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
-&lt;h4 id=&quot;响应报头&quot;&gt;&lt;a href=&quot;#响应报头&quot; class=&quot;headerlink&quot; title=&quot;响应报头&quot;&gt;&lt;/a&gt;响应报头&lt;/h4&gt;&lt;p&gt;响应报头允许服务器传递不能放在状态行中的附加响应信息，以及关于服务器的信息和对Request-URI所标识的资源进行下一步访问的信息。&lt;/p&gt;
-&lt;p&gt;常见的实体报头：&lt;/p&gt;
-&lt;p&gt;1）Location&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Location响应报头域用于重定向接受者到一个新的位置。Location响应报头域常用在更换域名的时候。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2）Server&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Server响应报头域包含了服务器用来处理请求的软件信息。与User-Agent请求报头域是相对应的。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;3）WWW-Authenticate&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;WWW-Authenticate响应报头域必须被包含在401（未授权的）响应消息中，客户端收到401响应消息时候，并发送Authorization报头域请求服务器对其进行验证时，服务端响应报头就包含该报头域。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
-&lt;h4 id=&quot;实体报头&quot;&gt;&lt;a href=&quot;#实体报头&quot; class=&quot;headerlink&quot; title=&quot;实体报头&quot;&gt;&lt;/a&gt;实体报头&lt;/h4&gt;&lt;p&gt;请求和响应消息都可以传送一个实体。一个实体由实体报头域和实体正文组成，但并不是说实体报头域和实体正文要在一起发送，可以只发送实体报头域。实体报头定义了关于实体正文（eg：有无实体正文）和请求所标识的资源的元信息。&lt;/p&gt;
-&lt;p&gt;实体报头包括：&lt;/p&gt;
-&lt;p&gt;常见的实体报头：&lt;/p&gt;
-&lt;p&gt;1）Content-Encoding&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Content-Encoding实体报头域被用作媒体类型的修饰符，它的值指示了已经被应用到实体正文的附加内容的编码，因而要获得Content-Type报头域中所引用的媒体类型，必须采用相应的解码机制。Content-Encoding主要用于记录文档的压缩方法。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;2）Content-Language&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Content-Language实体报头域描述了资源所用的自然语言。没有设置该域则认为实体内容将提供给所有的语言
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;阅读者。&lt;/p&gt;
-&lt;p&gt;3）Content-Length&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Content-Length实体报头域用于指明实体正文的长度，以字节方式存储的十进制数字来表示。即一个数字字符占一个字节，用其对应的ASCII码来存储传输。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;4）Content-Type&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Content-Type实体报头域用语指明发送给接收者的实体正文的媒体类型。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;5）Expires&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Expires实体报头域给出响应过期的日期和时间。为了让代理服务器或浏览器在一段时间以后更新缓存中(再次访问曾访问过的页面时，直接从缓存中加载，缩短响应时间和降低服务器负载)的页面，我们可以使用Expires实体报头域指定页面过期的时间。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;6）Last-Modified&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Last-Modified实体报头域用于指示资源的最后修改日期和时间。
-
-
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;##总结&lt;/p&gt;
-&lt;p&gt;HTTP协议的内容不是多，常用的内容就几个，但是需要非常熟悉，因为HTTP协议是网络交互重要的协议之一。&lt;/p&gt;
-&lt;p&gt;接下来花一些时间去回顾TCP/IP协议，内容多就会有几篇文章来记录学习的一些笔记心得。&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;#HTTP学习&lt;/p&gt;
-&lt;p&gt;HTTP协议是网络中最广泛的协议之一，对HTTP协议的了解应该是每一个和网络打交道的程序员必须具备的技能。很多公司面试都要求对网络知识有一定的了解，一个是TCP/IP协议，一个就是HTTP协议，HTTP协议应用层的协议，内容比较少，这周花时间去
-    
-    </summary>
-    
-      <category term="Network" scheme="http://csbzhixing.github.io/categories/Network/"/>
     
     
   </entry>

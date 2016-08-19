@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+  <title>Method Swizzle 与 AOP | 学海无涯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Method SwizzleMethod Swizzle是基于runtime实现“黑魔法”。
+写这篇主要是源于上周一次项目bug fix。
+项目基于React Native 0.20版本开发，在调用相机拍照后，由于照片自身带有了旋转信息，因此照片在客户看来不是“正的”。
+- (void)imagePickerController:(UIImagePickerController *)picker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Method Swizzle 与 AOP">
+<meta property="og:url" content="http://csbzhixing.github.io/2016/08/19/Method Swizzle 与 AOP/index.html">
+<meta property="og:site_name" content="学海无涯">
+<meta property="og:description" content="Method SwizzleMethod Swizzle是基于runtime实现“黑魔法”。
+写这篇主要是源于上周一次项目bug fix。
+项目基于React Native 0.20版本开发，在调用相机拍照后，由于照片自身带有了旋转信息，因此照片在客户看来不是“正的”。
+- (void)imagePickerController:(UIImagePickerController *)picker">
+<meta property="og:updated_time" content="2016-08-19T15:17:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Method Swizzle 与 AOP">
+<meta name="twitter:description" content="Method SwizzleMethod Swizzle是基于runtime实现“黑魔法”。
+写这篇主要是源于上周一次项目bug fix。
+项目基于React Native 0.20版本开发，在调用相机拍照后，由于照片自身带有了旋转信息，因此照片在客户看来不是“正的”。
+- (void)imagePickerController:(UIImagePickerController *)picker">
+  
+    <link rel="alternative" href="/atom.xml" title="学海无涯" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+	<header id="header" class="inner">
+		<a href="/" class="profilepic">
+			
+			<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+		</a>
+
+		<hgroup>
+		  <h1 class="header-author"><a href="/">之行</a></h1>
+		</hgroup>
+
+		
+
+		
+			<div class="switch-btn">
+				<div class="icon">
+					<div class="icon-ctn">
+						<div class="icon-wrap icon-house" data-idx="0">
+							<div class="birdhouse"></div>
+							<div class="birdhouse_holes"></div>
+						</div>
+						<div class="icon-wrap icon-ribbon hide" data-idx="1">
+							<div class="ribbon"></div>
+						</div>
+						
+						<div class="icon-wrap icon-link hide" data-idx="2">
+							<div class="loopback_l"></div>
+							<div class="loopback_r"></div>
+						</div>
+						
+						
+						<div class="icon-wrap icon-me hide" data-idx="3">
+							<div class="user"></div>
+							<div class="shoulder"></div>
+						</div>
+						
+					</div>
+					
+				</div>
+				<div class="tips-box hide">
+					<div class="tips-arrow"></div>
+					<ul class="tips-inner">
+						<li>Menu</li>
+						<li>Tags</li>
+						
+						<li>Links</li>
+						
+						
+						<li>About</li>
+						
+					</ul>
+				</div>
+			</div>
+		
+
+		<div class="switch-area">
+			<div class="switch-wrap">
+				<section class="switch-part switch-part1">
+					<nav class="header-menu">
+						<ul>
+						
+							<li><a href="/">主页</a></li>
+				        
+							<li><a href="/archives">所有文章</a></li>
+				        
+						</ul>
+					</nav>
+					<nav class="header-nav">
+						<div class="social">
+							
+								<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+					        
+								<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+					        
+								<a class="rss" target="_blank" href="#" title="rss">rss</a>
+					        
+								<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+					        
+						</div>
+					</nav>
+				</section>
+				
+				
+				<section class="switch-part switch-part2">
+					<div class="widget tagcloud" id="js-tagcloud">
+						<a href="/tags/心得/" style="font-size: 10px;">心得</a>
+					</div>
+				</section>
+				
+				
+				
+				<section class="switch-part switch-part3">
+					<div id="js-friends">
+					
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">奥巴马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">卡卡的美丽传说</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">本泽马的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">吉格斯的博客</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">习大大大不同</a>
+			        
+			          <a target="_blank" class="main-nav-link switch-friends-link" href="http://localhost:4000/">托蒂的博客</a>
+			        
+			        </div>
+				</section>
+				
+
+				
+				
+				<section class="switch-part switch-part4">
+				
+					<div id="js-aboutme">我是谁，我从哪里来，我到哪里去？我就是我，是颜色不一样的吃货…</div>
+				</section>
+				
+			</div>
+		</div>
+	</header>				
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+  	<div class="overlay">
+  		<div class="slider-trigger"></div>
+  		<h1 class="header-author js-mobile-header hide">之行</h1>
+  	</div>
+	<div class="intrude-less">
+		<header id="header" class="inner">
+			<div class="profilepic">
+			
+				<img src="http://forum.guildlaunch.net/2/6/2/8/438262/forums/sleepy_by_marutar0-d6rlepj.jpg" class="js-avatar" style="width: 100%;height: 100%;opacity: 1;">
+			
+			</div>
+			<hgroup>
+			  <h1 class="header-author">之行</h1>
+			</hgroup>
+			
+			<nav class="header-menu">
+				<ul>
+				
+					<li><a href="/">主页</a></li>
+		        
+					<li><a href="/archives">所有文章</a></li>
+		        
+		        <div class="clearfix"></div>
+				</ul>
+			</nav>
+			<nav class="header-nav">
+				<div class="social">
+					
+						<a class="github" target="_blank" href="https://github.com/csbzhixing" title="github">github</a>
+			        
+						<a class="weibo" target="_blank" href="#" title="weibo">weibo</a>
+			        
+						<a class="rss" target="_blank" href="#" title="rss">rss</a>
+			        
+						<a class="zhihu" target="_blank" href="#" title="zhihu">zhihu</a>
+			        
+				</div>
+			</nav>
+		</header>				
+	</div>
+</nav>
+
+      <div class="body-wrap"><article id="post-Method Swizzle 与 AOP" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/08/19/Method Swizzle 与 AOP/" class="article-date">
+  	<time datetime="2016-08-19T15:03:29.000Z" itemprop="datePublished">2016-08-19</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Method Swizzle 与 AOP
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+        
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Method-Swizzle"><a href="#Method-Swizzle" class="headerlink" title="Method Swizzle"></a>Method Swizzle</h2><p><code>Method Swizzle</code>是基于runtime实现“黑魔法”。</p>
+<p>写这篇主要是源于上周一次项目bug fix。</p>
+<p>项目基于React Native 0.20版本开发，在调用相机拍照后，由于照片自身带有了旋转信息，因此照片在客户看来不是“正的”。</p>
+<pre><code>- (void)imagePickerController:(UIImagePickerController *)picker
+didFinishPickingMediaWithInfo:(NSDictionary&lt;NSString *, id&gt; *)info
+{
+  NSString *mediaType = info[UIImagePickerControllerMediaType];
+  BOOL isMovie = [mediaType isEqualToString:(NSString *)kUTTypeMovie];
+  NSString *key = isMovie ? UIImagePickerControllerMediaURL : UIImagePickerControllerReferenceURL;
+  NSURL *imageURL = info[key];
+  if (imageURL) {
+    [self _dismissPicker:picker args:@[imageURL.absoluteString]];
+    return;
+  }
+
+  // This is a newly taken image, and doesn&#39;t have a URL yet.
+  // We need to save it to the image store first.
+  UIImage *originalImage = info[UIImagePickerControllerOriginalImage];
+
+  // WARNING: Using ImageStoreManager may cause a memory leak because the
+  // image isn&#39;t automatically removed from store once we&#39;re done using it.
+  [_bridge.imageStoreManager storeImage:originalImage withBlock:^(NSString *tempImageTag) {
+    [self _dismissPicker:picker args:tempImageTag ? @[tempImageTag] : nil];
+  }];
+}
+</code></pre><p>可以看到其实就是需要对<code>originalImage</code>进行方向修正。</p>
+<p>然后跟踪了RN的实现，发现他是存在应用的临时变量里面，可是用的是CGImage。意味着我们即使取出来了这个Image，也无法获知这个Image的方向信息。当时第一反应是。。我自己来实现一个选择器。。。不过这个工作量略大，而且可能会造成很多不知原因的坑。晚上洗澡的时候，突然想到可以可以通过Method swizzle的方式去实现。</p>
+<p>新建了一个category，在<code>+(void)load</code>方法的替换了<code>imagePickerController</code>方法，测试一下，OK。</p>
+<h3 id="什么时候用"><a href="#什么时候用" class="headerlink" title="什么时候用"></a>什么时候用</h3><p><code>Method Swizzle</code>是把锋利的刀，用的好，削铁如泥；用的不好，害人害己。</p>
+<p>一般而言，如果能有好的方法解决，不推荐使用<code>Method Swizzle</code>。原因就是难以跟踪问题。如A实现一个方法<code>run</code>。一个开发在<code>A(B)</code>这个category里面替换成了<code>runFast</code>，而另一个开发在<code>A(C)</code>里面替换成了<code>runSlow</code>。那我们调用<code>run</code>方法的时候到底是什么结果？</p>
+<h3 id="该怎么用"><a href="#该怎么用" class="headerlink" title="该怎么用"></a>该怎么用</h3><p>替换方法应该是在运行时确定唯一的，如果存在多次不确定的<code>Method Swizzle</code>，我们就无法知道最后获取的IMP来源于来个方法。因此在哪里替换，怎么替换，对于不同类型的方法都不一样。</p>
+<h4 id="普通实例方法"><a href="#普通实例方法" class="headerlink" title="普通实例方法"></a>普通实例方法</h4><p>替换普通实例方法比较简单，创建了一个对应类的分类，在分类中实现<code>+(void)load</code>方法，在<code>+(void)load</code>方法中进行替换。</p>
+<pre><code>+ (void)load {
+    Class originalClass = NSClassFromString(@&quot;Car&quot;);
+    Class swizzledClass = [self class];
+    SEL originalSelector = NSSelectorFromString(@&quot;run:&quot;);
+    SEL swizzledSelector = @selector(xxx_run:);
+    Method originalMethod = class_getInstanceMethod(originalClass, originalSelector);
+    Method swizzledMethod = class_getInstanceMethod(swizzledClass, swizzledSelector);
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    class_replaceMethod(originalClass,swizzledSelector,originalIMP,originalType);
+    class_replaceMethod(originalClass,originalSelector,swizzledIMP,swizzledType);
+}
+</code></pre><p>首先要知道为何在<code>+(void)load</code>中实现替换。<code>+(void)load</code>这个方法首先是在运行时执行，切只执行一次，因此就符合了我们在<code>在程序运行期只执行一次替换</code>的想法。其次，<code>+(void)load</code>的执行顺序是<code>父类-&gt;子类-&gt;分类</code>的顺序，且不覆盖。因此，分类的<code>+(void)load</code>不会影响类的<code>+(void)load</code>也是我们正需要的。</p>
+<h4 id="类方法"><a href="#类方法" class="headerlink" title="类方法"></a>类方法</h4><p>实现类方法的实现思路也是一样的，不同的是我们不从实例方法列表中去获取相关方法实现</p>
+<pre><code>+ (void)load {
+    Class cls = [self class];
+    SEL originalSelector = @selector(dictionary);
+    SEL swizzledSelector = @selector(xxx_dictionary);
+
+    // 使用class_getClassMethod来获取类方法的Method
+    Method originalMethod = class_getClassMethod(cls, originalSelector);
+    Method swizzledMethod = class_getClassMethod(cls, swizzledSelector);
+    if (!originalMethod || !swizzledMethod) {
+        return;
+    }
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    // 类方法添加,需要将方法添加到MetaClass中
+    Class metaClass = objc_getMetaClass(class_getName(cls));
+    class_replaceMethod(metaClass,originalSelector,swizzledIMP,swizzledType);
+    class_replaceMethod(metaClass,swizzledSelector,originalIMP,originalType);
+}
+</code></pre><p>区别有2点</p>
+<ol>
+<li><code>class_getClassMethod(Class cls, SEL name)</code>替换掉<code>class_getInstanceMethod(Class cls, SEL name)</code>。看得出方法的差异。</li>
+<li>实例方法的内容是记录在class的method list上的，而类方法是记录在meta-class 上的。</li>
+</ol>
+<h4 id="修改类簇"><a href="#修改类簇" class="headerlink" title="修改类簇"></a>修改类簇</h4><pre><code>+ (void)load {
+    Class originalClass = NSClassFromString(@&quot;__NSDictionaryM&quot;);
+    Class swizzledClass = [self class];
+    SEL originalSelector = @selector(setObject:forKey:);
+    SEL swizzledSelector = @selector(safe_setObject:forKey:);
+    Method originalMethod = class_getInstanceMethod(originalClass, originalSelector);
+    Method swizzledMethod = class_getInstanceMethod(swizzledClass, swizzledSelector);
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    class_replaceMethod(originalClass,swizzledSelector,originalIMP,originalType);
+    class_replaceMethod(originalClass,originalSelector,swizzledIMP,swizzledType);
+}
+
+- (void)safe_setObject:(id)anObject forKey:(id&lt;NSCopying&gt;)aKey {
+    if (anObject &amp;&amp; aKey) {
+        [self safe_setObject:anObject forKey:aKey];
+    }
+    else if (aKey) {
+        [(NSMutableDictionary *)self removeObjectForKey:aKey];
+    }
+}
+</code></pre><p><a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/DevPedia-CocoaCore/ClassCluster.html" target="_blank" rel="external">官方文档</a><br>中详细讲解了什么是类簇。这里我们替换的是<code>__NSDictionaryM</code>中对应的<code>setObject:forKey:</code></p>
+<h2 id="AOP-和-Method-Swizzle"><a href="#AOP-和-Method-Swizzle" class="headerlink" title="AOP 和 Method Swizzle"></a>AOP 和 Method Swizzle</h2><p>有一定开发经验的人一定听说过AOP。用一句个人觉得比较经典的话来概括<code>这种在运行时，动态地将代码切入到类的指定方法、指定位置上的编程思想就是面向切面的编程</code>。这里来看，通过Method Swizzle正好来实现AOP。在这方面，github上有一个实现非常好的开源库<a href="https://github.com/steipete/Aspects" target="_blank" rel="external">Aspects</a></p>
+<p>这里的话，会用它来做一下分析，怎么去实现AOP。</p>
+<h3 id="功能分析"><a href="#功能分析" class="headerlink" title="功能分析"></a>功能分析</h3><p><code>Aspects</code>这个库实现了AOP,那么实现到什么地步，能做到什么样的功能，可以从头文件定义中略知一二</p>
+<pre><code>typedef NS_OPTIONS(NSUInteger, AspectOptions) {
+    AspectPositionAfter   = 0,            /// Called after the original implementation (default)
+    AspectPositionInstead = 1,            /// Will replace the original implementation.
+    AspectPositionBefore  = 2,            /// Called before the original implementation.
+
+    AspectOptionAutomaticRemoval = 1 &lt;&lt; 3 /// Will remove the hook after the first execution.
+};
+</code></pre><p>定义了<code>AspectOptions</code>，从名字看出，分别可以做到将新方法插入到老方法之前/之后，替换原有的方法，仅在第一次替换原来的方法。</p>
+<pre><code>@protocol AspectToken &lt;NSObject&gt;
+
+/// Deregisters an aspect.
+/// @return YES if deregistration is successful, otherwise NO.
+- (BOOL)remove;
+
+@end
+
+/// The AspectInfo protocol is the first parameter of our block syntax.
+@protocol AspectInfo &lt;NSObject&gt;
+
+/// The instance that is currently hooked.
+- (id)instance;
+
+/// The original invocation of the hooked method.
+- (NSInvocation *)originalInvocation;
+
+/// All method arguments, boxed. This is lazily evaluated.
+- (NSArray *)arguments;
+
+@end
+</code></pre><p>两个协议，实现后可以实现撤销插入/ 获得插入的实例信息，原有方法内容和参数列表。</p>
+<pre><code>@interface NSObject (Aspects)
+
+/// Adds a block of code before/instead/after the current `selector` for a specific class.
+///
+/// @param block Aspects replicates the type signature of the method being hooked.
+/// The first parameter will be `id&lt;AspectInfo&gt;`, followed by all parameters of the method.
+/// These parameters are optional and will be filled to match the block signature.
+/// You can even use an empty block, or one that simple gets `id&lt;AspectInfo&gt;`.
+///
+/// @note Hooking static methods is not supported.
+/// @return A token which allows to later deregister the aspect.
++ (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
+/// Adds a block of code before/instead/after the current `selector` for a specific instance.
+- (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
+@end
+</code></pre><p>对NSObject定义了一个分类，只要两个方法，分别是对类方法和实例方法的操作。</p>
+<p>可以看到，Aspect的实现功能还是很强大的。在提供基本Method swizzle的基础上还实现了对不同插入位置的功能，提供可撤回的替换。</p>
+<h3 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h3><p>在自己实现<code>Method Swizzle</code>的时候，我们也会考虑到，如果我需要恢复被替换的方法怎么做？如果我仅仅想在某个方法执行前或执行后执行一个方法呢？比如我需要在所有的<code>viewDidLoad</code>中插入一个log语句，这时候用<code>Method Swizzle</code>显然是不合适，而<code>Aspect</code>能做到的，也是让我们好奇的，来看看具体的实现方法。</p>
+<pre><code>+ (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(id)block
+                            error:(NSError **)error {
+    return aspect_add((id)self, selector, options, block, error);
+}
+
+/// @return A token which allows to later deregister the aspect.
+- (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(id)block
+                            error:(NSError **)error {
+    return aspect_add(self, selector, options, block, error);
+}
+</code></pre><p>两个公开API进来后都是调用<code>static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSError **error)</code>这个静态方法，区别就是对类方法中替换要在self前用id修饰。</p>
+<pre><code>static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSError **error) {
+    NSCParameterAssert(self);
+    NSCParameterAssert(selector);
+    NSCParameterAssert(block);
+
+    __block AspectIdentifier *identifier = nil;
+    aspect_performLocked(^{
+        if (aspect_isSelectorAllowedAndTrack(self, selector, options, error)) {
+            AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
+            identifier = [AspectIdentifier identifierWithSelector:selector object:self options:options block:block error:error];
+            if (identifier) {
+                [aspectContainer addAspect:identifier withOptions:options];
+
+                // Modify the class to allow message interception.
+                aspect_prepareClassAndHookSelector(self, selector, error);
+            }
+        }
+    });
+    return identifier;
+}
+</code></pre><p>方法中首先定义了一个<code>AspectIdentifier</code>类型的实例变量：</p>
+<pre><code>@interface AspectIdentifier : NSObject
++ (instancetype)identifierWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block error:(NSError **)error;
+- (BOOL)invokeWithInfo:(id&lt;AspectInfo&gt;)info;
+@property (nonatomic, assign) SEL selector;
+@property (nonatomic, strong) id block;
+@property (nonatomic, strong) NSMethodSignature *blockSignature;
+@property (nonatomic, weak) id object;
+@property (nonatomic, assign) AspectOptions options;
+@end
+</code></pre><p>可以看到这个类的定义就是对Aspect定义的。</p>
+<p>随后执行<code>aspect_performLocked</code>：</p>
+<pre><code>    static void aspect_performLocked(dispatch_block_t block) {
+    static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
+    OSSpinLockLock(&amp;aspect_lock);
+    block();
+    OSSpinLockUnlock(&amp;aspect_lock);
+}
+</code></pre><p>方法中创建了一个<code>OSSpinLockLock</code>自旋锁，对block执行进行保护。</p>
+<blockquote>
+<p>自旋锁是在多处理器系统(SMP)上为保护一段关键代码的执行或者关键数据的一种保护机制，是实现synchronization的一种手段。</p>
+</blockquote>
+<p>传入的block中，首先先执行<code>aspect_isSelectorAllowedAndTrack</code>方法</p>
+<p><code>aspect_isSelectorAllowedAndTrack</code>比较长，从字面含义上来讲就是是否允许插入和追踪。</p>
+<p>代码就不贴了。。简单说下思路。</p>
+<p>我们知道有些方法是无法被替换的，有些hook的方法对插入的位置很敏感(好像很污的感觉)。这个方法就是对这些黑名单进行判断</p>
+<p>首先是不能替换的，有<code>release</code>,<code>retain</code>,<code>autorelease</code>,<code>forwardInvocation</code></p>
+<p>只能在添加block到hook方法前的：<code>dealloc</code></p>
+<p>被hook的类响应SEL的。。。喂你再去检查下好吧</p>
+<p>接下来被hook的是不是元类，如果不是的话就可以愉快的返回YES啦。</p>
+<p>如果是元类。。稍微麻烦点。梳理一下逻辑如下</p>
+<p><code>swizzledClassesDict</code>是一个dictionary，里面存放的已经是以当前类为key，以<code>AspectTracker</code>为value的键值对。<code>AspectTracker</code>定义如下：</p>
+<pre><code>@interface AspectTracker : NSObject
+- (id)initWithTrackedClass:(Class)trackedClass;
+@property (nonatomic, strong) Class trackedClass;
+@property (nonatomic, readonly) NSString *trackedClassName;
+@property (nonatomic, strong) NSMutableSet *selectorNames;
+@property (nonatomic, strong) NSMutableDictionary *selectorNamesToSubclassTrackers;
+- (void)addSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (BOOL)subclassHasHookedSelectorName:(NSString *)selectorName;
+- (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName;
+@end
+</code></pre><p>意义如名字一样，实现的是一个跟踪对象。这个对象里面存放了跟踪的类，类的名字，选择器的名称已经子类跟踪对象的选择器。</p>
+<p>获得<code>tracker</code>后，判断是否已经hook了子类的相同选择器方法，注意只能在继承链上hook一次相同选择器的方法。</p>
+<p>随后递归父类，查看是否在继承链上已经hook过了。</p>
+<p>如果上述过程都能顺利进行下来的话，说明可以hook啦，这时候递归父类，将selector添加到tracker里面。</p>
+<p>回到上面的<code>aspect_performLocked</code>中，这时候我们得知是能hook啦，这时候根据传进来的<code>self</code>和<code>selector</code>创建一个<code>AspectsContainer</code>。<code>AspectsContainer</code>的定义如下：</p>
+<pre><code>@interface AspectsContainer : NSObject
+- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)injectPosition;
+- (BOOL)removeAspect:(id)aspect;
+- (BOOL)hasAspects;
+@property (atomic, copy) NSArray *beforeAspects;
+@property (atomic, copy) NSArray *insteadAspects;
+@property (atomic, copy) NSArray *afterAspects;
+@end
+</code></pre><p>这里有三个属性，都是array类型，从名字不难看到，存的是hook前，被hook的，hook后的。</p>
+<p>创建<code>AspectsContainer</code>之后，对<code>identifier</code>初始化，如果成功初始化，向<code>AspectsContainer</code>添加<code>identifier</code>。</p>
+<pre><code>- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)options {
+    NSParameterAssert(aspect);
+    NSUInteger position = options&amp;AspectPositionFilter;
+    switch (position) {
+        case AspectPositionBefore:  self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionInstead: self.insteadAspects = [(self.insteadAspects?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionAfter:   self.afterAspects   = [(self.afterAspects  ?:@[]) arrayByAddingObject:aspect]; break;
+    }
+}
+</code></pre><p>判断option，将<code>AspectIdentifier</code>添加到对应的array</p>
+<p>最后，执行<code>aspect_prepareClassAndHookSelector</code></p>
+<p><code>aspect_prepareClassAndHookSelector</code>是整个<code>Aspect</code>里面最核心的部分了，前面的行为都是判断是否能hook和做相应的缓存操作，在这里才是真正的执行hook的地方。</p>
+<pre><code>static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
+    NSCParameterAssert(selector);
+    Class klass = aspect_hookClass(self, error);
+    Method targetMethod = class_getInstanceMethod(klass, selector);
+    IMP targetMethodIMP = method_getImplementation(targetMethod);
+    if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
+        // Make a method alias for the existing method implementation, it not already copied.
+        const char *typeEncoding = method_getTypeEncoding(targetMethod);
+        SEL aliasSelector = aspect_aliasForSelector(selector);
+        if (![klass instancesRespondToSelector:aliasSelector]) {
+            __unused BOOL addedAlias = class_addMethod(klass, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
+            NSCAssert(addedAlias, @&quot;Original implementation for %@ is already copied to %@ on %@&quot;, NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+        }
+
+        // We use forwardInvocation to hook in.
+        class_replaceMethod(klass, selector, aspect_getMsgForwardIMP(self, selector), typeEncoding);
+        AspectLog(@&quot;Aspects: Installed hook for -[%@ %@].&quot;, klass, NSStringFromSelector(selector));
+    }
+}
+</code></pre><p>思路和我们自己动手实现<code>Method Swizzle</code>是差不多的，过程也是获取到被hook的class，然后通过<code>selector</code>获取到指定函数指针<code>IMP</code>。然后将传入的方法(block)替换掉<code>IMP</code>。</p>
+<p>首先执行的是一个<code>aspect_hookClass</code>方法，返回一个Class对象。</p>
+<p>整体的思路如下</p>
+<pre><code>Class statedClass = self.class;
+    Class baseClass = object_getClass(self);
+</code></pre><p>如果对runtime不熟悉的人可能不知道这两者的有什么不同。简单的说，<code>self.class</code>返回的是这个Object<br>所属的类，而<code>object_getClass</code>返回的是这个Object的元类，也就是类对象的类（很绕口）。接下来，就来判断元类是否被修改过（元类的类名被添加了特有的后缀），如果没有修改过，将对象的类进行hook：</p>
+<pre><code>static void _aspect_modifySwizzledClasses(void (^block)(NSMutableSet *swizzledClasses)) {
+    static NSMutableSet *swizzledClasses;
+    static dispatch_once_t pred;
+    dispatch_once(&amp;pred, ^{
+        swizzledClasses = [NSMutableSet new];
+    });
+    @synchronized(swizzledClasses) {
+        block(swizzledClasses);
+    }
+}
+
+static Class aspect_swizzleClassInPlace(Class klass) {
+    NSCParameterAssert(klass);
+    NSString *className = NSStringFromClass(klass);
+
+    _aspect_modifySwizzledClasses(^(NSMutableSet *swizzledClasses) {
+        if (![swizzledClasses containsObject:className]) {
+            aspect_swizzleForwardInvocation(klass);
+            [swizzledClasses addObject:className];
+        }
+    });
+    return klass;
+}
+
+static NSString *const AspectsForwardInvocationSelectorName = @&quot;__aspects_forwardInvocation:&quot;;
+static void aspect_swizzleForwardInvocation(Class klass) {
+    NSCParameterAssert(klass);
+    // If there is no method, replace will act like class_addMethod.
+    IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, &quot;v@:@&quot;);
+    if (originalImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, &quot;v@:@&quot;);
+    }
+    AspectLog(@&quot;Aspects: %@ is now aspect aware.&quot;, NSStringFromClass(klass));
+}
+</code></pre><p>理解起来不困难，用一个mutableSet存储类名，如果<code>swizzledClasses</code>不在set里面的话，执行<code>aspect_swizzleForwardInvocation</code>。这个方法就是替换<code>forwardInvocation</code>这方法，目的是替换掉<code>forwardInvocation</code>方法转发，采用自定以的<code>__aspects_forwardInvocation</code><br>核心就是下面两句：</p>
+<pre><code>IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, &quot;v@:@&quot;);
+    if (originalImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, &quot;v@:@&quot;);
+    }
+</code></pre><p><code>__ASPECTS_ARE_BEING_CALLED__</code>是最关键的方法，这个方法就是决定我们要替换的方法如何执行的地方。</p>
+<pre><code>static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL selector, NSInvocation *invocation) {
+    NSCParameterAssert(self);
+    NSCParameterAssert(invocation);
+    SEL originalSelector = invocation.selector;
+    SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
+    invocation.selector = aliasSelector;
+    AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
+    AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
+    AspectInfo *info = [[AspectInfo alloc] initWithInstance:self invocation:invocation];
+    NSArray *aspectsToRemove = nil;
+
+    // Before hooks.
+    aspect_invoke(classContainer.beforeAspects, info);
+    aspect_invoke(objectContainer.beforeAspects, info);
+
+    // Instead hooks.
+    BOOL respondsToAlias = YES;
+    if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
+        aspect_invoke(classContainer.insteadAspects, info);
+        aspect_invoke(objectContainer.insteadAspects, info);
+    }else {
+        Class klass = object_getClass(invocation.target);
+        do {
+            if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
+                [invocation invoke];
+                break;
+            }
+        }while (!respondsToAlias &amp;&amp; (klass = class_getSuperclass(klass)));
+    }
+
+    // After hooks.
+    aspect_invoke(classContainer.afterAspects, info);
+    aspect_invoke(objectContainer.afterAspects, info);
+
+    // If no hooks are installed, call original implementation (usually to throw an exception)
+    if (!respondsToAlias) {
+        invocation.selector = originalSelector;
+        SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+        if ([self respondsToSelector:originalForwardInvocationSEL]) {
+            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+        }else {
+            [self doesNotRecognizeSelector:invocation.selector];
+        }
+    }
+
+    // Remove any hooks that are queued for deregistration.
+    [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
+}
+</code></pre><p>这个方法里，实际上替换的就是<code>forwardInvocation:</code>这个runtime方法，自造了一个调用方法。<br>目的就是从原有方法和hook方法去做处理。</p>
+<p>过程就是先用临时变量获取<code>invocation</code>的seletor，将<code>invocation</code>的selecor替换成aliasSelector。通过传入的参数构造<code>AspectInfo</code>。取得<code>objectContainer</code>和<code>classContainer</code>（都是<code>AspectsContainer</code>）类型的。调用<code>aspect_invoke</code></p>
+<p><code>aspect_invoke</code>是一个宏方法（其实这里也不用写成宏）。</p>
+<pre><code>#define aspect_invoke(aspects, info) \
+for (AspectIdentifier *aspect in aspects) {\
+    [aspect invokeWithInfo:info];\
+    if (aspect.options &amp; AspectOptionAutomaticRemoval) { \
+        aspectsToRemove = [aspectsToRemove?:@[] arrayByAddingObject:aspect]; \
+    } \
+}
+</code></pre><p>调用了<code>invokeWithInfo</code>判断aspect的option，如果需要一出，就讲他从对应的container中移除。<br><code>invokeWithInfo</code>的方法如下：</p>
+<pre><code>- (BOOL)invokeWithInfo:(id&lt;AspectInfo&gt;)info {
+    NSInvocation *blockInvocation = [NSInvocation invocationWithMethodSignature:self.blockSignature];
+    NSInvocation *originalInvocation = info.originalInvocation;
+    NSUInteger numberOfArguments = self.blockSignature.numberOfArguments;
+
+    // Be extra paranoid. We already check that on hook registration.
+    if (numberOfArguments &gt; originalInvocation.methodSignature.numberOfArguments) {
+        AspectLogError(@&quot;Block has too many arguments. Not calling %@&quot;, info);
+        return NO;
+    }
+
+    // The `self` of the block will be the AspectInfo. Optional.
+    if (numberOfArguments &gt; 1) {
+        [blockInvocation setArgument:&amp;info atIndex:1];
+    }
+
+    void *argBuf = NULL;
+    for (NSUInteger idx = 2; idx &lt; numberOfArguments; idx++) {
+        const char *type = [originalInvocation.methodSignature getArgumentTypeAtIndex:idx];
+        NSUInteger argSize;
+        NSGetSizeAndAlignment(type, &amp;argSize, NULL);
+
+        if (!(argBuf = reallocf(argBuf, argSize))) {
+            AspectLogError(@&quot;Failed to allocate memory for block invocation.&quot;);
+            return NO;
+        }
+
+        [originalInvocation getArgument:argBuf atIndex:idx];
+        [blockInvocation setArgument:argBuf atIndex:idx];
+    }
+
+    [blockInvocation invokeWithTarget:self.block];
+
+    if (argBuf != NULL) {
+        free(argBuf);
+    }
+    return YES;
+}
+</code></pre><p>这个部分就是从原有方法中取出参数列表赋给block，在这过程总检查是否block不符合原来方法。将<code>self.block</code>设为<code>blockInvocation</code>的target。</p>
+<p>回到<code>aspect_hookClass</code>，在上面特殊情况处理之后，就是一般情况，这时候创建动态子类，类名以<code>AspectsSubclassSuffix</code>为指定后缀。<code>aspect_hookedGetClass</code>中替换掉<code>Class</code>方法，使其返回的是<code>statedClass(被hook的类)</code>，这里将动态生成的子类的<code>Class</code>和<code>Meta Class</code>都替换成<code>statedClass</code>，最后将<code>subclass</code>注册进去，最后将<code>subclass</code>设置成<code>self</code>的类。这样就完成了hook的过程，<code>self</code>执行的方法和信息都被我们hook到了。</p>
+<p>回到<code>aspect_prepareClassAndHookSelector</code>（感觉从很深的子树回来真的很不容易），接下来我们获得了我们要hook的<code>Method</code>和<code>IMP</code>,我们要判断是否有对应的IMP</p>
+<pre><code>static BOOL aspect_isMsgForwardIMP(IMP impl) {
+    return impl == _objc_msgForward
+#if !defined(__arm64__)
+    || impl == (IMP)_objc_msgForward_stret
+#endif
+    ;
+}
+</code></pre><p><code>_objc_msgForward_stret</code>和<code>_objc_msgForward</code>的区别在<a href="http://sealiesoftware.com/blog/archive/2008/10/30/objc_explain_objc_msgSend_stret.html" target="_blank" rel="external">这篇文章</a>里面有讲解，简单的引用JSPatch作者的解释</p>
+<blockquote>
+<p>大多数CPU在执行C函数时会把前几个参数放进寄存器里，对 obj_msgSend 来说前两个参数固定是 self / _cmd，它们会放在寄存器上，在最后执行完后返回值也会保存在寄存器上，取这个寄存器的值就是返回值。普通的返回值(int/pointer)很小，放在寄存器上没问题，但有些 struct 是很大的，寄存器放不下，所以要用另一种方式，在一开始申请一段内存，把指针保存在寄存器上，返回值往这个指针指向的内存写数据，所以寄存器要腾出一个位置放这个指针，self / _cmd 在寄存器的位置就变了。objc_msgSend 不知道 self / _cmd 的位置变了，所以要用另一个方法 objc_msgSend_stret 代替。原理大概就是这样。在 NSMethodSignature 的 debugDescription 上打出了是否 special struct，只能通过这字符串判断。所以最终的处理是，在非 arm64 下，是 special struct 就走 _objc_msgForward_stret，否则走 _objc_msgForward。</p>
+</blockquote>
+<p>这里如果IMP == _objc_msgForward，说明找不到 class / selector 对应的 IMP，如果能找到的话，我们就可以进行下一步了。</p>
+<p>首先要创建一个<code>aliasSelector</code>选择器，用这个选择器去添加<code>targetMethod</code>对应的<code>IMP</code>。这个目的么，自然是保存下来将要被替换方法的实现。</p>
+<p>接下来，<code>class_replaceMethod</code>替换掉我们需要hook的方法，使用了<code>aspect_getMsgForwardIMP</code>如下：</p>
+<pre><code>static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
+    IMP msgForwardIMP = _objc_msgForward;
+#if !defined(__arm64__)
+    // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
+    // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
+    // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
+    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
+    Method method = class_getInstanceMethod(self.class, selector);
+    const char *encoding = method_getTypeEncoding(method);
+    BOOL methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
+    if (methodReturnsStructValue) {
+        @try {
+            NSUInteger valueSize = 0;
+            NSGetSizeAndAlignment(encoding, &amp;valueSize, NULL);
+
+            if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
+                methodReturnsStructValue = NO;
+            }
+        } @catch (__unused NSException *e) {}
+    }
+    if (methodReturnsStructValue) {
+        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    }
+#endif
+    return msgForwardIMP;
+}
+</code></pre><p>这里对arm64做了特殊处理，原因就是上文提到实现问题，对返回的struct做特殊的处理。</p>
+<p>至此，整个hook的过程就结束了，我们已经将需要hook的方法替换成了我们需要的实现。</p>
+<h3 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h3><p>写完后才发现整个思路虽然很清晰，但是跨越很大，如果去处理这个hook的类和方法需要做许多判断，然后将原有的类和方法的信息保存下来，以便于恢复，最后通过<code>class_replaceMethod</code>的方法替换掉了<code>forwardInvocation:</code>。这样通过实现了最后消息转发过程中hook，执行我们注入的方法了。</p>
+<p>至于恢复被hook的方法，思路也很简单了，从cache中获取origin method，替换掉hook方法就行了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>Aspect</code>的实现是基于对runtime强大的理解，通过hook<code>forwardInvocation</code>方法，做到了对消息转发的改变，任何对象不能处理的方法最后都会到<code>forwardInvovation</code>中，在这里我们能执行hook的方法和选择执行的时间，也达到了<code>AOP</code>的思想。</p>
+<p><code>Method Swizzle</code>也好，<code>Aspect</code>也好，都是依赖对runtime的认识理解，尤其是<code>Aspect</code>，在学习代码的过程也增长了自己对语言的认知和理解。</p>
+<p>在此，项目中也用上了<code>JSPatch</code>，试想如果结合<code>Aspect</code>，通过runtime强大的功能，我们几乎能做到任何时间(坏坏的事情不要想哦)。未来如果有很好的用例，也会分享出来。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/08/15/用GCD来实现个Timer/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">用GCD来实现个Timer</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+
+
+
+<div class="duoshuo">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="Method Swizzle 与 AOP" data-title="Method Swizzle 与 AOP" data-url="http://csbzhixing.github.io/2016/08/19/Method Swizzle 与 AOP/"></div>
+	<!-- 多说评论框 end -->
+	<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+	<script type="text/javascript">
+	var duoshuoQuery = {short_name:"true"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+	<!-- 多说公共JS代码 end -->
+</div>
+
+
+
+
+</div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info">
+    	<div class="footer-left">
+    		&copy; 2016 之行
+    	</div>
+      	<div class="footer-right">
+      		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
+      	</div>
+    </div>
+  </div>
+</footer>
+    </div>
+    
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+
+<script>
+	var yiliaConfig = {
+		fancybox: true,
+		mathjax: true,
+		animate: undefined,
+		isHome: false,
+		isPost: true,
+		isArchive: false,
+		isTag: false,
+		isCategory: false,
+		open_in_new: undefined
+	}
+</script>
+<script src="http://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  </div>
+</body>
+</html>
