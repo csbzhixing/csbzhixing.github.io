@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2016-08-19T15:17:07.000Z</updated>
+  <updated>2016-08-23T15:20:46.000Z</updated>
   <id>http://csbzhixing.github.io/</id>
   
   <author>
@@ -14,6 +14,289 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Weex, React Native, JSPatch</title>
+    <link href="http://csbzhixing.github.io/2016/08/23/%20RN--WEEX--JSPATCH/"/>
+    <id>http://csbzhixing.github.io/2016/08/23/ RN--WEEX--JSPATCH/</id>
+    <published>2016-08-23T15:16:32.000Z</published>
+    <updated>2016-08-23T15:20:46.000Z</updated>
+    
+    <content type="html">&lt;p&gt;本文是做内部分享的时候整理的知识内容，整理了出来。&lt;/p&gt;
+&lt;h2 id=&quot;技术介绍&quot;&gt;&lt;a href=&quot;#技术介绍&quot; class=&quot;headerlink&quot; title=&quot;技术介绍&quot;&gt;&lt;/a&gt;技术介绍&lt;/h2&gt;&lt;h3 id=&quot;Weex&quot;&gt;&lt;a href=&quot;#Weex&quot; class=&quot;headerlink&quot; title=&quot;Weex&quot;&gt;&lt;/a&gt;Weex&lt;/h3&gt;&lt;p&gt;Weex是阿里手淘开源的一套跨平台开发。核心语法借鉴了vue.js。&lt;/p&gt;
+&lt;p&gt;Weex是跨平台，可扩展的动态化技术. 你能通过在Weex源码中写&lt;code&gt;&amp;lt;template&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;style&amp;gt;&lt;/code&gt; 和 &lt;code&gt;&amp;lt;script&amp;gt;&lt;/code&gt;标签，然后把这些标签转换为JS Bundle用于部署, 在服务端以这些JS Bundle响应请求. 当客户端接收到JS Bundle时，它能用被客户端中的JS引擎用于管理Native渲染;API调用和用户交互.&lt;/p&gt;
+&lt;h4 id=&quot;基本语法&quot;&gt;&lt;a href=&quot;#基本语法&quot; class=&quot;headerlink&quot; title=&quot;基本语法&quot;&gt;&lt;/a&gt;基本语法&lt;/h4&gt;&lt;p&gt; &lt;code&gt;&amp;lt;template&amp;gt;&lt;/code&gt;是必须的，使用类HTML的形式，内容由多个标签组成，不同标签代表不同的组件。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;&amp;lt;style&amp;gt;&lt;/code&gt;，可选，使用类CSS语法。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;&amp;lt;script&amp;gt;&lt;/code&gt; 可选，使用js描述页面中逻辑和数据，数据定义也在这个部分&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;&amp;lt;template&amp;gt;&lt;/code&gt; 中有三种不同的根节点形式&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;container&amp;gt;&lt;/code&gt;，普通根节点&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;scroller&amp;gt;&lt;/code&gt;，滚动根节点，适用于全页面滚动&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;list&amp;gt;&lt;/code&gt;，列表根节点，适用于复用元素的列表场景。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;code&gt;&amp;lt;style&amp;gt;&lt;/code&gt; &lt;/p&gt;
+&lt;p&gt;类似CSS的形式，和标准CSS有一些细微的差别&lt;/p&gt;
+&lt;p&gt;第一种使用内联的方式，通过style属性直接添加样式。第二种通过&lt;code&gt;class&lt;/code&gt;属性与&lt;code&gt;style&lt;/code&gt;属性建立对应关系&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;template&amp;gt;
+  &amp;lt;container&amp;gt;
+    &amp;lt;text style=&amp;quot;font-size: 64;&amp;quot;&amp;gt;Alibaba&amp;lt;/text&amp;gt;
+    &amp;lt;text class=&amp;quot;large&amp;quot;&amp;gt;Weex Team&amp;lt;/text&amp;gt;
+  &amp;lt;/container&amp;gt;
+&amp;lt;/template&amp;gt;
+
+&amp;lt;style&amp;gt;
+  .large {font-size: 64;}
+&amp;lt;/style&amp;gt;``
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;&amp;lt;script&amp;gt;&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;&amp;lt;script&amp;gt;&lt;/code&gt;中代码遵循&lt;code&gt;ES5&lt;/code&gt;语法标准&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;template&amp;gt;
+  &amp;lt;image onclick=&amp;quot;handler&amp;quot; ...&amp;gt;&amp;lt;/image&amp;gt;
+&amp;lt;/template&amp;gt;
+
+&amp;lt;script&amp;gt;
+  module.exports = {
+    methods: {
+      handler: function (e) {
+        // TODO
+      }
+    }
+  }
+&amp;lt;/script&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;当一个事件函数被调用，它会收到的第一个参数就是事件对象。每个事件对象包含一下属性。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;type&lt;/code&gt;,事件名称，如&lt;code&gt;click&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;target&lt;/code&gt;，目标元素&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;timestamp&lt;/code&gt;,事件触发的时间戳。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&quot;渲染流程&quot;&gt;&lt;a href=&quot;#渲染流程&quot; class=&quot;headerlink&quot; title=&quot;渲染流程&quot;&gt;&lt;/a&gt;渲染流程&lt;/h4&gt;&lt;pre&gt;&lt;code&gt;
+Weex we 文件 ---------------前端(we源码)
+↓ (转换) -------------------前端(构建过程)
+JS Bundle -----------------前端(JS Bundle代码)
+↓ (部署) -------------------服务器
+在服务器上的JS bundle  ------服务器
+↓ (编译) ------------------ 客户端(JS引擎)
+虚拟 DOM 树 --------------- 客户端(Weex JS Framework)
+↓ (渲染) ------------------ 客户端(渲染引擎)
+Native视图 ---------------  客户端(渲染引擎)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;渲染流程&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;虚拟DOM.&lt;/li&gt;
+&lt;li&gt;构造树结构. 分析虚拟DOM JSON数据以构造渲染树(RT).&lt;/li&gt;
+&lt;li&gt;添加样式. 为渲染树的各个节点添加样式.&lt;/li&gt;
+&lt;li&gt;创建视图. 为渲染树各个节点创建Native视图.&lt;/li&gt;
+&lt;li&gt;绑定事件. 为Native视图绑定事件.&lt;/li&gt;
+&lt;li&gt;CSS布局. 使用 css-layout 来计算各个视图的布局.&lt;/li&gt;
+&lt;li&gt;更新视窗(Frame). 采用上一步的计算结果来更新视窗中各个视图的最终布局位置.&lt;/li&gt;
+&lt;li&gt;最终页面呈现.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&quot;存在的问题&quot;&gt;&lt;a href=&quot;#存在的问题&quot; class=&quot;headerlink&quot; title=&quot;存在的问题&quot;&gt;&lt;/a&gt;存在的问题&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;刚刚开源，社区活跃度不高，以阿里团队为主&lt;/li&gt;
+&lt;li&gt;支持的控件比较少（比如button就没有），checkbox，radio也没有&lt;/li&gt;
+&lt;li&gt;焦点问题&lt;/li&gt;
+&lt;li&gt;CSS不支持父级继承&lt;/li&gt;
+&lt;li&gt;文档不完善&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&quot;和React-Native-对比&quot;&gt;&lt;a href=&quot;#和React-Native-对比&quot; class=&quot;headerlink&quot; title=&quot;和React Native 对比&quot;&gt;&lt;/a&gt;和React Native 对比&lt;/h4&gt;&lt;h5 id=&quot;JS引擎：&quot;&gt;&lt;a href=&quot;#JS引擎：&quot; class=&quot;headerlink&quot; title=&quot;JS引擎：&quot;&gt;&lt;/a&gt;JS引擎：&lt;/h5&gt;&lt;p&gt;安卓上 weex使用V8， ReactNative使用JSCore&lt;/p&gt;
+&lt;p&gt;iOS上，都使用了JSCore&lt;/p&gt;
+&lt;p&gt;原因是，RN为了使用JSCore，将整个JSCore打包进了app的webkit库，所以安卓的包体容量有比较明显的增大。而iOS则自带&lt;/p&gt;
+&lt;p&gt;weex考虑到在安卓上都需要自己打包，那么就选择了更新的V8引擎，而iOS则继续使用系统自带的JSCore&lt;/p&gt;
+&lt;h5 id=&quot;JS开发框架：&quot;&gt;&lt;a href=&quot;#JS开发框架：&quot; class=&quot;headerlink&quot; title=&quot;JS开发框架：&quot;&gt;&lt;/a&gt;JS开发框架：&lt;/h5&gt;&lt;p&gt;weex基于vue.js(2W+ star)。小巧轻量的前端开发框架，组件化，数据绑定，2.0引入virtual dom。&lt;/p&gt;
+&lt;p&gt;ReactNative使用React(4W+ star)。革命性的前端开发框架，组件化，数据绑定，virtual dom。&lt;/p&gt;
+&lt;p&gt;这两者，vue更符合web开发的习惯，JSX改变比较大，但是总体而言，熟悉web开发都不是大问题，对于只有移动端开发经验的人可能RN的学习成本稍高。&lt;/p&gt;
+&lt;h5 id=&quot;布局&quot;&gt;&lt;a href=&quot;#布局&quot; class=&quot;headerlink&quot; title=&quot;布局&quot;&gt;&lt;/a&gt;布局&lt;/h5&gt;&lt;p&gt;布局两者都是基于facebook的代码解析，实现了flexBox的子集&lt;/p&gt;
+&lt;p&gt;这个代码解析，写起来是爽，但是，对于复杂的页面，会产生比较严重的性能问题.&lt;/p&gt;
+&lt;p&gt;这里本来分享用了内部项目的图，这里没有放出来。大家可以自己用三套框架去实现同一个页面，用reveal去看下就明白了。&lt;/p&gt;
+&lt;p&gt;能不能解决这个问题，网上有人提出了改变思路的方式，即不适用前端布局的思维用js去驱动Native绘图，而是用native的思路去用js驱动。不过这样的话，就加大了前端人员的学习成本&lt;/p&gt;
+&lt;h5 id=&quot;Moudle方法调用线程：&quot;&gt;&lt;a href=&quot;#Moudle方法调用线程：&quot; class=&quot;headerlink&quot; title=&quot;Moudle方法调用线程：&quot;&gt;&lt;/a&gt;Moudle方法调用线程：&lt;/h5&gt;&lt;p&gt;weex 可以通过注解标注是否在UI线程执行&lt;/p&gt;
+&lt;p&gt;ReactNative在安卓上是在&lt;code&gt;native_modules&lt;/code&gt;线程执行。iOS里面，每一个&lt;code&gt;native_modules&lt;/code&gt;可以支持标记，需要重写module的&lt;code&gt;methodQueue&lt;/code&gt;方法，就可以获得在&lt;code&gt;main_queue&lt;/code&gt;中执行。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;//RCTClipboard类的源码
+- (dispatch_queue_t)methodQueue
+{
+  return dispatch_get_main_queue();
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&quot;扩展性&quot;&gt;&lt;a href=&quot;#扩展性&quot; class=&quot;headerlink&quot; title=&quot;扩展性&quot;&gt;&lt;/a&gt;扩展性&lt;/h5&gt;&lt;p&gt;组件的扩展上，weex和ReactNative具有一样的能力&lt;/p&gt;
+&lt;p&gt;三方库的接入上，weex对网络，图片，统计等常见的用户可能想自己定制的功能，提供了相应的适配接口，可以由用户方便的定制，ReactNative需要自己修改源码&lt;/p&gt;
+&lt;p&gt;两者在功能上并无绝对的优劣。在开发催收的过程中，我们发现很多常见的功能RN没有支持，但是我们通过一点点摸索都能自己扩展出来。RN在底层的native代码都是一个个module，可以根据开发需要灵活扩展插拔。基本上能想的出来的都可以自己实现，当然，有些实现起来比较麻烦，因此，对于RN，目前还不太适合做重量级的产品。&lt;/p&gt;
+&lt;h4 id=&quot;weex-or-ReactNative&quot;&gt;&lt;a href=&quot;#weex-or-ReactNative&quot; class=&quot;headerlink&quot; title=&quot;weex or ReactNative&quot;&gt;&lt;/a&gt;weex or ReactNative&lt;/h4&gt;&lt;p&gt;weex的诞生据说是为了解决ReactNative的一些问题。目前阿里在推动&lt;code&gt;write once run anywhere&lt;/code&gt;的方面上是走的最前的。两者对&lt;code&gt;write once run anywhere&lt;/code&gt;思考，我认为，是出发重点，终点不同。RN的目的是革命Native端，而weex则是想改变H5在移动端的效果，因此做到了web,iOS,android三平台统一（RN做不到web端）。因此，在开发商，weex甚至可以抛开native的palyground，直接在web上做开发，等到调试差不多了，再到native上做细致的检查。&lt;/p&gt;
+&lt;p&gt;weex的出生决定了他站在了巨人的肩膀上。一个&lt;code&gt;devTools&lt;/code&gt;就足以看到weex团队想做出的改变。&lt;/p&gt;
+&lt;p&gt;网上有人类比两者是windows和Linux的关系，而我认为应该是mac OS和Linux的关系。&lt;/p&gt;
+&lt;h2 id=&quot;JSPatch&quot;&gt;&lt;a href=&quot;#JSPatch&quot; class=&quot;headerlink&quot; title=&quot;JSPatch&quot;&gt;&lt;/a&gt;JSPatch&lt;/h2&gt;&lt;h3 id=&quot;平台介绍&quot;&gt;&lt;a href=&quot;#平台介绍&quot; class=&quot;headerlink&quot; title=&quot;平台介绍&quot;&gt;&lt;/a&gt;平台介绍&lt;/h3&gt;&lt;p&gt;基于OC的runtime机制，使用iOS内置的JavaScriptCore.framework作为JS引擎，从JS传递要调用的类名函数名到Objective-C，再使用NSInvocation动态调用对应的OC方法。&lt;/p&gt;
+&lt;p&gt;优势：&lt;/p&gt;
+&lt;p&gt;使用JS语言，比之前的使用Lua的&lt;code&gt;WXPatch&lt;/code&gt;适用更广泛。&lt;/p&gt;
+&lt;p&gt;符合Apple规则&lt;/p&gt;
+&lt;p&gt;引擎小，除去扩展内容，核心只有三个文件&lt;/p&gt;
+&lt;p&gt;支持block。&lt;/p&gt;
+&lt;h3 id=&quot;实现原理&quot;&gt;&lt;a href=&quot;#实现原理&quot; class=&quot;headerlink&quot; title=&quot;实现原理&quot;&gt;&lt;/a&gt;实现原理&lt;/h3&gt;&lt;p&gt;JSPatch之所以能够做到通过JS来调用和修改OC方法的根本原因是OC是动态语言，OC所有的类和方法都的生成和调用都可以通过runtime在运行时进行，因此可以通过类名/方法名反射得到相应的类和方法。&lt;/p&gt;
+&lt;h4 id=&quot;引用&quot;&gt;&lt;a href=&quot;#引用&quot; class=&quot;headerlink&quot; title=&quot;引用&quot;&gt;&lt;/a&gt;引用&lt;/h4&gt;&lt;p&gt;调用&lt;code&gt;requir&lt;/code&gt;后，就可以直接使用类了，过程就是在JS全局作用域上创建一个同名变量，变量指向一个对象，&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;var _require = function(clsName) {
+  if (!global[clsName]) {
+    global[clsName] = {
+      __clsName: clsName
+    }
+  }
+  return global[clsName]
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&quot;封装JS对象&quot;&gt;&lt;a href=&quot;#封装JS对象&quot; class=&quot;headerlink&quot; title=&quot;封装JS对象&quot;&gt;&lt;/a&gt;封装JS对象&lt;/h4&gt;&lt;p&gt;由于JS调用没定义的属性或者放发的时候不会转发，而是直接抛出异常。作者最先开始考虑的是在&lt;code&gt;require&lt;/code&gt;的时候将类名传入OC，通过runtime将整个类的方法和属性返回给JS，JS对每个方法名都生成一个函数，这个函数的内容就是将通过方法名去调用OC的方法实现。&lt;/p&gt;
+&lt;p&gt;然而这种方法实现会造成巨大性能问题，因为除了要遍历当前类的方法，还要遍历父类一直到根类所有继承链上的方法，所以在引入几个类以后就造成内存暴涨。作者为了解决这个问题，想出在 OC 执行 JS 脚本前，通过正则把所有方法调用都改成调用 __c() 函数，再执行这个 JS 脚本，做到了类似 OC/Lua/Ruby 等的消息转发机制：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UIView.alloc().init()
+-&amp;gt;
+UIView.__c(&amp;#39;alloc&amp;#39;)().__c(&amp;#39;init&amp;#39;)()
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;给 JS 对象基类 Object 加上 &lt;strong&gt;c 成员，这样所有对象都可以调用到 &lt;/strong&gt;c，根据当前对象类型判断进行不同操作：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Object.defineProperty(Object.prototype, &amp;#39;__c&amp;#39;, {value: function(methodName) {
+  if (!this.__obj &amp;amp;&amp;amp; !this.__clsName) return this[methodName].bind(this);
+  var self = this
+  return function(){
+    var args = Array.prototype.slice.call(arguments)
+    return _methodFunc(self.__obj, self.__clsName, methodName, args, self.__isSuper)
+  }
+}})
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&quot;消息传递&quot;&gt;&lt;a href=&quot;#消息传递&quot; class=&quot;headerlink&quot; title=&quot;消息传递&quot;&gt;&lt;/a&gt;消息传递&lt;/h4&gt;&lt;p&gt;是用了JSCore的接口，在启动JSPatch的时候会创建一个&lt;code&gt;JSContext&lt;/code&gt;实例，&lt;code&gt;JSContext&lt;/code&gt;是JS的执行环境，可以给&lt;code&gt;JSContext&lt;/code&gt;添加方法，JS可以直接调用。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;JSContext *context = [[JSContext alloc] init];
+context[@&amp;quot;hello&amp;quot;] = ^(NSString *msg) {
+    NSLog(@&amp;quot;hello %@&amp;quot;, msg);
+};
+[_context evaluateScript:@&amp;quot;hello(&amp;#39;word&amp;#39;)&amp;quot;];     //output hello word
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;JS 通过调用 JSContext 定义的方法把数据传给 OC，OC 通过返回值传会给 JS。调用这种方法，它的参数/返回值 JavaScriptCore 都会自动转换，OC 里的 NSArray, NSDictionary, NSString, NSNumber, NSBlock 会分别转为JS端的数组/对象/字符串/数字/函数类型。&lt;/p&gt;
+&lt;h4 id=&quot;对象持有转换&quot;&gt;&lt;a href=&quot;#对象持有转换&quot; class=&quot;headerlink&quot; title=&quot;对象持有转换&quot;&gt;&lt;/a&gt;对象持有转换&lt;/h4&gt;&lt;p&gt;对于一个自定义id对象，JavaScriptCore 会把这个自定义对象的指针传给 JS，这个对象在 JS 无法使用，但在回传给 OC 时 OC 可以找到这个对象。对于这个对象生命周期的管理，按我的理解如果JS有变量引用时，这个 OC 对象引用计数就加1 ，JS 变量的引用释放了就减1，如果 OC 上没别的持有者，这个OC对象的生命周期就跟着 JS 走了，会在 JS 进行垃圾回收时释放。&lt;/p&gt;
+&lt;p&gt;传给 JS 的变量是这个 OC 对象的指针，这个指针也可以重新传回 OC，要在 JS 调用这个对象的某个实例方法，只需要在函数里把这个对象指针以及它要调用的方法名传回给 OC 就行了。&lt;/p&gt;
+&lt;p&gt;目前没找到方法判断一个 JS 对象是否表示 OC 指针，这里的解决方法是在 OC 把对象返回给 JS 之前，先把它包装成一个 NSDictionary：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static NSDictionary *_wrapObj(id obj) {
+    return @{@&amp;quot;__obj&amp;quot;: obj};
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这样在JS对象里就可以变成这样&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;{__obj: [OC Object 对象指针]}
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&quot;方法替换&quot;&gt;&lt;a href=&quot;#方法替换&quot; class=&quot;headerlink&quot; title=&quot;方法替换&quot;&gt;&lt;/a&gt;方法替换&lt;/h4&gt;&lt;p&gt;运用runtime的原理，不展开讲。&lt;/p&gt;
+&lt;h4 id=&quot;死锁问题&quot;&gt;&lt;a href=&quot;#死锁问题&quot; class=&quot;headerlink&quot; title=&quot;死锁问题&quot;&gt;&lt;/a&gt;死锁问题&lt;/h4&gt;&lt;p&gt;javaScript 语言是单线程的，在 OC 使用 JavaScriptCore 引擎执行 JS 代码时，会对 JS 代码块加锁，保证同个 JSContext 下的 JS 代码都是顺序执行。所以调用 JSPatch 替换的方法，以及在 JSPatch 里调用 OC 方法，都会在这个锁里执行，这导致三个问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;JSPatch替换的方法无法并行执行，如果如果主线程和子线程同时运行了 JSPatch 替换的方法，这些方法的执行都会顺序排队，主线程会等待子线程的方法执行完后再执行，如果子线程方法耗时长，主线程会等很久，卡住主线程。&lt;/li&gt;
+&lt;li&gt;某种情况下，JavaScriptCore 的锁与 OC 代码上的锁混合时，会产生死锁。&lt;/li&gt;
+&lt;li&gt;UIWebView 的初始化会与 JavaScriptCore 冲突。若在 JavaScriptCore 的锁里(第一次)初始化 UIWebView 会导致 webview 无法解析页面。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;死锁的例子&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;
+// oc
+
+@implementation AppDelegate
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions 
+{
+    ClassA* obj = [[ClassA alloc] init];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        //A线程
+        @synchronized(obj) {    //X锁
+            sleep(3);
+            [obj methodA];   //methodA被JS替换，调用会进JS，请求JSCore的锁
+        }
+    });
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        //B线程
+        [obj methodA];  //methodA被JS替换，调用会进JS，请求JSCore的锁
+    });
+}
+@end
+
+
+@implementation ClassA
+- (void)methodA
+{
+}
+- (void)methodB
+{
+    @synchronized(self) {   //X锁
+        int a = 0;
+    }
+}
+@end
+
+
+// js
+
+defineClass(&amp;#39;ClassA&amp;#39;, {
+    methodA: function() {
+        self.methodB()   //调用到OC，
+    },
+})
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;为了解决死锁的问题，JSPatch设计了&lt;code&gt;performSelectorInOC&lt;/code&gt;方法。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;{
+    __isPerformInOC:1,
+    obj:self.__obj,
+    clsName:self.__clsName,
+    sel: args[0],
+    args: args[1],
+    cb: args[2]
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;返回obj后，JS调用就结束了。在 OC 可以拿到 JS 函数的返回值，也就拿到了这个对象，然后判断它是否 &lt;code&gt;__isPerformInOC=1&lt;/code&gt; 对象，若是就根据对象里的 selector / 参数等信息调用对应的 OC 方法，这时这个 OC 方法的调用是在 &lt;code&gt;JavaScriptCore&lt;/code&gt; 的锁之外调用的，我们的目的就达到了。&lt;br&gt;执行 OC 方法后，会去调 {obj} 里的的 cb 函数，把 OC 方法的返回值传给 cb 函数，重新回到 JS 去执行代码。这里会循环判断这些回调函数是否还返回 &lt;code&gt;__isPerformInOC=1&lt;/code&gt; 的对象，若是则重复上述流程执行，不是则结束。&lt;/p&gt;
+&lt;h3 id=&quot;安全问题&quot;&gt;&lt;a href=&quot;#安全问题&quot; class=&quot;headerlink&quot; title=&quot;安全问题&quot;&gt;&lt;/a&gt;安全问题&lt;/h3&gt;&lt;h4 id=&quot;传输安全&quot;&gt;&lt;a href=&quot;#传输安全&quot; class=&quot;headerlink&quot; title=&quot;传输安全&quot;&gt;&lt;/a&gt;传输安全&lt;/h4&gt;&lt;p&gt;JS 脚本可以调用任意 OC 方法，权限非常大，若被中间人攻击替换代码，会造成较大的危害。&lt;/p&gt;
+&lt;p&gt;解决方案 对称加密，HTTPS，RSA校验&lt;/p&gt;
+&lt;p&gt;有能力上HTTPS，简单安全用RSA，不推荐对称加密。&lt;/p&gt;
+&lt;h4 id=&quot;执行安全&quot;&gt;&lt;a href=&quot;#执行安全&quot; class=&quot;headerlink&quot; title=&quot;执行安全&quot;&gt;&lt;/a&gt;执行安全&lt;/h4&gt;&lt;p&gt;下发的 JS 脚本灵活度大，相当于一次小型更新，若未进行充分测试，可能会出现 crash 等情况对 APP 稳定性造成影响。&lt;/p&gt;
+&lt;p&gt;解决方案：灰度，监控，回退&lt;/p&gt;
+&lt;p&gt;回退是推荐所有APP都接入，灰度和监控室中大型APP要考虑的&lt;/p&gt;
+&lt;h4 id=&quot;对比RN-weex的优势&quot;&gt;&lt;a href=&quot;#对比RN-weex的优势&quot; class=&quot;headerlink&quot; title=&quot;对比RN/weex的优势&quot;&gt;&lt;/a&gt;对比RN/weex的优势&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;小巧。只需引入 JPEngine.h JPEngine.m JSPatch.js 三个小文件，体积小巧，也无需搭建环境。&lt;/li&gt;
+&lt;li&gt;学习成本低。可以继续沿用原来 OC 的思维写程序，无需学习新一套规则，即刻上手。&lt;/li&gt;
+&lt;li&gt;限制少。可以说完全没有限制，OC / JS 上玩出花的各种模式都可以照搬使用，不会被某一框架思维和写法限定。所有 OC / JS 库直接使用，无需适配。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;##个人观点&lt;/p&gt;
+&lt;h3 id=&quot;RN-vs-weex&quot;&gt;&lt;a href=&quot;#RN-vs-weex&quot; class=&quot;headerlink&quot; title=&quot;RN vs weex&quot;&gt;&lt;/a&gt;RN vs weex&lt;/h3&gt;&lt;h4 id=&quot;开发APP&quot;&gt;&lt;a href=&quot;#开发APP&quot; class=&quot;headerlink&quot; title=&quot;开发APP&quot;&gt;&lt;/a&gt;开发APP&lt;/h4&gt;&lt;p&gt;RN的优势无疑是国际大厂facebook的鼎力支持和开源社区极高的热情。RN的出生的目的已经决定了他未来的方向：替代Native开发。RN的基础架构设计让RN具有无线的可能，能用Native做到的，RN都能做到。然而，大而全也意味着前进困难，目前RN仍然未发布1.0版本，facebook自身也仅仅在几个用户量较小的APP上使用。Native端兼容问题和性能问题都还没能很好的解决。因此，使用RN开发，目前仅仅适合量级小，功能简单的APP，同时还需要一定量有Web,native段经验的工程师一同踩坑。&lt;/p&gt;
+&lt;p&gt;weex是国内大厂阿里的作品，从历史上来看，阿里开源了很多也弃坑了很多，对于weex这个刚开源出来的框架，多数人还是抱着谨慎乐观的态度。从一些公开技术分享上来看，阿里在weex上投入了很多人力，也是因为移动端和web的业务发展导致的。目前weex支持的组件和功能都是非常基础单一的，甚至很多必要的功能都没有实现，社区活跃度不高也导致很多坑可能需要自己慢慢看源码去踩。不过，weex站在RN巨人的肩膀上，丰富的开发工具链，提供了更便捷的调试工具和playGround。目前来看，如果阿里愿意投入更多力量，号召开源社区做贡献，未必不能与RN一较高下。目前来看，weex仅适合用于做非常简单的demo（比如一些套壳H5），还不适合做完整功能的APP。&lt;/p&gt;
+&lt;h4 id=&quot;hot-fix&quot;&gt;&lt;a href=&quot;#hot-fix&quot; class=&quot;headerlink&quot; title=&quot;hot fix&quot;&gt;&lt;/a&gt;hot fix&lt;/h4&gt;&lt;p&gt;两个框架都适合做热更新，从这方面看，两者没有优劣区别。两者都只能改变已经实现的部分，不能添加或者修改已经存在的方法。&lt;/p&gt;
+&lt;h3 id=&quot;JSPatch-vs-RN-amp-weex&quot;&gt;&lt;a href=&quot;#JSPatch-vs-RN-amp-weex&quot; class=&quot;headerlink&quot; title=&quot;JSPatch vs RN&amp;amp;weex&quot;&gt;&lt;/a&gt;JSPatch vs RN&amp;amp;weex&lt;/h3&gt;&lt;h4 id=&quot;开发APP-1&quot;&gt;&lt;a href=&quot;#开发APP-1&quot; class=&quot;headerlink&quot; title=&quot;开发APP&quot;&gt;&lt;/a&gt;开发APP&lt;/h4&gt;&lt;p&gt;用JSPatch去开发一个APP有没有，有，但是目前我看到的，只有两个开源的小项目。从作者的观点来看，JSPatch可以用来开发一个单独的模块，但是不适合开发一整个APP。毕竟，JSPatch的思路依然是由native的思维用JS来开发，既然如此，不如直接用OC开发更加直接。但由于OC强大无比的runtime，JSPatch可以用于开发一个全新的页面去替代原本使用Native编写的页面，这一点是RN和weex做不到的。&lt;/p&gt;
+&lt;h4 id=&quot;hot-patch&quot;&gt;&lt;a href=&quot;#hot-patch&quot; class=&quot;headerlink&quot; title=&quot;hot patch&quot;&gt;&lt;/a&gt;hot patch&lt;/h4&gt;&lt;p&gt;JSPatch的出生就是为了解决iOS发版困难的问题，基于OC的runtime和js的灵活使JSPatch在热修复上比RN/weex强上了一个量级。举两个例子&lt;/p&gt;
+&lt;p&gt;一：实现一个没有实现的功能。&lt;/p&gt;
+&lt;p&gt;RN/weex都需要实现一个jsBride，就是在native实现好，用js去调用。这样的方式就无法动态的添加方法，比如我们现在七贷做了个微信分享，砍掉了一个拷贝链接的按钮。用JSPatch就可以很快的加回去，不需要发版本，而如果是用RN开发的，Native原本就没有实现这段代码，那就无能为力了。&lt;/p&gt;
+&lt;p&gt;二：替换原生的页面&lt;/p&gt;
+&lt;p&gt;很多项目本身已经使用Native开发一段时间了，接入RN/weex后也只是局部新页面使用。RN可以开发一整个新功能界面，动态更新到app上，但是这个新功能界面怎么打开呢？办法有一个，app内有一套URLRoute的路由机制，并且辅助以云端可控的路由配置表，那么确实可以改变某些位置原本的界面跳转，从而跳转打开全新的RN界面，实现了新RN界面的动态更新，但是JSPatch就不需要URLRoute这套全局跳转的辅助机制帮忙，JSPatch完全有能力更改任何已经由OC写好的代码，随意的改变跳转到新界面，随意的增加新按钮，不改变旧界面就把新界面打开！&lt;/p&gt;
+&lt;h4 id=&quot;内存控制差异&quot;&gt;&lt;a href=&quot;#内存控制差异&quot; class=&quot;headerlink&quot; title=&quot;内存控制差异&quot;&gt;&lt;/a&gt;内存控制差异&lt;/h4&gt;&lt;p&gt;JSPatch在OC和JC交互的时候，将OC对象，界面，Model直接传给JS的上下文，同时OC对象的引用计数会+1，并随着JS的垃圾回收而对这个OC对象进行额外的控制。JS中无法访问这个OC对象，但可以将OC对象的方法发回给OC环境去操作。&lt;/p&gt;
+&lt;p&gt;RN在OC与JS交互的时候，是完全不支持传递任何OC对象的，所有能在JS与OC中间传递的，一定是可以被json化，字符化的内容，数字，字典，数组，字符串，所以RN专门有个RCTConvert类去专门处理，json的序列化model化，反序列化反model化。那么RN是如何通过JS去控制一个纯OC的界面View呢?是通过viewTag，JS控制的每一个界面效果，都是传过来一个tag，让native创建，让native修改，native会储存住这些tag到一个hashmap里，这样JS才能够不直接传递OC对象，而是传递一个数字，从而控制OC对象&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;二者的实现差异，是会造成一些底层运行差异的，OC与JS对象只传递JSON其实就保证了，JS上下文的内存与OC上下文的内存完全没有互通，各自的内从各自控制，JS是一套垃圾回收机制，而OC是一套引用计数机制。&lt;/p&gt;
+&lt;p&gt;JSPatch将二者进行了互通，这些互通的对象内存管理则是一套，又有引用计数控制，又有JS的垃圾回收，当JS的垃圾回收，并且iOS的引用计数归0，才会销毁。&lt;/p&gt;
+&lt;p&gt;这里没有优劣之分，JSPatch在双内存控制机制下，也是可以正常work没有问题的，RN&amp;amp;Weex的这套机制，内存上简单清晰，不过这都是底层实现的问题，上层使用，都是没问题的&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;##总结&lt;/p&gt;
+&lt;p&gt;这里借用JSPatch 作者给出的一个比较。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;框架&lt;/th&gt;
+&lt;th&gt;学习成本&lt;/th&gt;
+&lt;th&gt;接入成本&lt;/th&gt;
+&lt;th&gt;开发效率&lt;/th&gt;
+&lt;th&gt;性能体验&lt;/th&gt;
+&lt;th&gt;热更新能力&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;RN&amp;amp;Weex&lt;/td&gt;
+&lt;td&gt;高&lt;/td&gt;
+&lt;td&gt;高&lt;/td&gt;
+&lt;td&gt;高，跨平台&lt;/td&gt;
+&lt;td&gt;高&lt;/td&gt;
+&lt;td&gt;中&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;JSPatch&lt;/td&gt;
+&lt;td&gt;低&lt;/td&gt;
+&lt;td&gt;低&lt;/td&gt;
+&lt;td&gt;中，单一iOS&lt;/td&gt;
+&lt;td&gt;高&lt;/td&gt;
+&lt;td&gt;很强&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;本文是做内部分享的时候整理的知识内容，整理了出来。&lt;/p&gt;
+&lt;h2 id=&quot;技术介绍&quot;&gt;&lt;a href=&quot;#技术介绍&quot; class=&quot;headerlink&quot; title=&quot;技术介绍&quot;&gt;&lt;/a&gt;技术介绍&lt;/h2&gt;&lt;h3 id=&quot;Weex&quot;&gt;&lt;a href=&quot;#Weex&quot; cl
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>Method Swizzle 与 AOP</title>
@@ -2650,80 +2933,6 @@ int recvfrom(int socketFileDesciptor, char *buffer, int bufferLength, int flags,
     </summary>
     
       <category term="Network" scheme="http://csbzhixing.github.io/categories/Network/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>GCD小结</title>
-    <link href="http://csbzhixing.github.io/2015/09/12/gcd/"/>
-    <id>http://csbzhixing.github.io/2015/09/12/gcd/</id>
-    <published>2015-09-12T13:16:43.000Z</published>
-    <updated>2015-09-24T09:05:48.000Z</updated>
-    
-    <content type="html">&lt;p&gt;#写在最前面&lt;/p&gt;
-&lt;p&gt;最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
-&lt;p&gt;#正文&lt;/p&gt;
-&lt;p&gt;##GCD是什么鬼&lt;/p&gt;
-&lt;p&gt;GCD，简单的来说就是苹果自己出的一套多核运算的解决方案。虽然苹果没有安卓那么多核心，但是并行化运算能够提高流程性是不可争辩的事实。GCD内部自动管理线程 的生命周期，不需要我们自己去手动管理。我们只需要调用对应的API就可以了。GCD是基于C语言开发的，不过由于使用了block，所以使用起来很方便。在了解GCD之前，我们需要了解一点多线程运行的原理。&lt;/p&gt;
-&lt;h2 id=&quot;基本概念&quot;&gt;&lt;a href=&quot;#基本概念&quot; class=&quot;headerlink&quot; title=&quot;基本概念&quot;&gt;&lt;/a&gt;基本概念&lt;/h2&gt;&lt;p&gt;GCD中有两个重要的概念：&lt;em&gt;任务&lt;/em&gt; 和 &lt;em&gt;队列&lt;/em&gt;&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;任务。我们可以理解任务就是一个动作，放在GCD中就是一个代码块（block）。执行任务有两种，分别为&lt;em&gt;同步执行&lt;/em&gt; 和 &lt;em&gt;异步执行&lt;/em&gt;。同步和异步的区别其实很好理解。&lt;code&gt;同步执行&lt;/code&gt;既是当前任务执行完前会阻塞当前进程，&lt;code&gt;而异步执行&lt;/code&gt;就不会。&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;队列。队列是用来存放任务的。我们可以理解为任务就是队列中排队等待执行。队列分为&lt;em&gt;串行队列&lt;/em&gt;和&lt;em&gt;并行队列&lt;/em&gt;。&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;串行队列，就像排队一样，严格遵守FIFO。&lt;/li&gt;
-&lt;li&gt;并行队列，同样执行FIFO。不同的是，取出来的任务会根据情况放到别的线程上。由于多个线程出队的时间间隔可能很短，所以容易认为是非FIFO的。不过即使这样，系统也会根据硬件条件来判断，并不一定会所有任务都在同时执行。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;hr&gt;
-&lt;p&gt;创建队列的操作如下图所示&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/045e13ec06064ef3.png&quot; alt=&quot;queue&quot;&gt;&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;创建任务如下如图所示&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;http://i3.tietuku.com/b2ef139ced93771f.png&quot; alt=&quot;task&quot;&gt;&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h4 id=&quot;队列组&quot;&gt;&lt;a href=&quot;#队列组&quot; class=&quot;headerlink&quot; title=&quot;队列组&quot;&gt;&lt;/a&gt;队列组&lt;/h4&gt;&lt;p&gt;  对列组就是将多个队列添加到一个组里。这样的方式使我们可以在队列里所有的任务都完成后收到一个通知方法。&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;  objective-c
-
-  // 创建队列组
-    dispatch_group_t group = dispatch_group_create();
-
-    dispatch_group_async(group, globalQueue, ^{
-      for (NSInteger i = 0; i &amp;lt; 3; i++)
-      {
-          NSLog(@&amp;quot;group - queue - %@&amp;quot;, [NSThread currentThread]);
-      }
-    });
-&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&quot;NSOperation-和-NSOperationQueue&quot;&gt;&lt;a href=&quot;#NSOperation-和-NSOperationQueue&quot; class=&quot;headerlink&quot; title=&quot;NSOperation 和 NSOperationQueue&quot;&gt;&lt;/a&gt;NSOperation 和 NSOperationQueue&lt;/h2&gt;&lt;p&gt;  NSOperation 和 NSOperationQueue是苹果对GCD的基于面向对象的完全封装，使其更容易理解。操作方式也更简单&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;将要执行的任务封装到一个&lt;code&gt;NSOperation&lt;/code&gt;对象中&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;将任务添加到一个&lt;code&gt;NSOperationQueue&lt;/code&gt;中&lt;/p&gt;
-&lt;p&gt;此后系统将自动在执行任务。&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h3 id=&quot;添加任务&quot;&gt;&lt;a href=&quot;#添加任务&quot; class=&quot;headerlink&quot; title=&quot;添加任务&quot;&gt;&lt;/a&gt;添加任务&lt;/h3&gt;&lt;p&gt; 由于NSOperation是一个抽象类，所以不能直接封装任务。但是有两个子类用于封装任务：&lt;code&gt;NSInvocationOperation&lt;/code&gt; 和 &lt;code&gt;NSBlockOperation&lt;/code&gt;。创建一个队列后，需要调动&lt;code&gt;start()&lt;/code&gt;方法来启动，&lt;em&gt;默认在当前队列同步执行&lt;/em&gt;。同时队列提供&lt;code&gt;cancel()&lt;/code&gt;方法在中途取消任务。&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;NSInvocationOperation 传入一个方法名。&lt;/li&gt;
-&lt;li&gt;NSBlockOperation 传入一个代码块。&lt;ul&gt;
-&lt;li&gt;在NSBlockOperation中，有一个方法&lt;code&gt;addExecutionBlock&lt;/code&gt;方法。这个方法使我们可以添加多个block到队列中。&lt;em&gt;这些block将会并发执行**，将在&lt;/em&gt;主线程和其他的多个线程``执行任务&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;###添加队列&lt;/p&gt;
-&lt;p&gt;   多数时候，我们不希望当前线程被占用，因为会影响到UI的流畅性（UI永远在主线程上）。因此我们需要创建新的队列。只要我们添加任务到队列上，就会自动调用任务的&lt;code&gt;start()&lt;/code&gt;方法。如果任务在其他队列上，那么他就会在其他线程上并行执行。&lt;/p&gt;
-&lt;p&gt;   我们发现，&lt;code&gt;NSOperationQueue&lt;/code&gt;并没有设置串行和并行队列的问题，那么&lt;code&gt;NSOperationQueue&lt;/code&gt;是怎么确定队列的类型的呢。苹果通过封装巧妙的使调用者不需要特意的去注意队列的性质，只需要设置&lt;code&gt;NSOperationQueue&lt;/code&gt;中的&lt;code&gt;maxConcurrentOperationCount&lt;/code&gt; – 最大并发数就可以了。&lt;/p&gt;
-&lt;p&gt;##总结&lt;/p&gt;
-&lt;p&gt;   在上篇block的文章中也谈到了block在gcd的中的应用。通过gcd，我们可以最大化的去使用硬件的性能，避免出现卡顿的现象。多线程用的好不好，也基本上代表了一个开发者的能力水平。虽然多线程编程有许多坑，但只有跨过一个个坑，才能变成大牛，不是吗？&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;#写在最前面&lt;/p&gt;
-&lt;p&gt;最近发现自己学东西的效率好像高了，难道是因为写博客做笔记的原因吗？的确通过写博客来记录自己学习的成果能够加强自己对很多问题的理解。只有能够通过自己的语言将学习到的内容讲出来才是真的理解。所以以后看来要多写写。&lt;br&gt;&amp;lt;!--more--&amp;g
-    
-    </summary>
-    
-      <category term="Objective-C" scheme="http://csbzhixing.github.io/categories/Objective-C/"/>
     
     
   </entry>
