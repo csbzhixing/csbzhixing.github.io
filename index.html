@@ -267,6 +267,234 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2017/01/08/持久化学习系列1/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="csbzhixing">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="学海无涯">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/01/08/持久化学习系列1/" itemprop="url">
+                  持久化学习系列1
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-08T16:16:57+08:00">
+                2017-01-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><code>SPTPersistentCache</code>是<strong>spotify</strong>开源的一套持久化框架。<code>SPTPersistentCache</code>主要解决<code>NSData</code>存储到文件系统的过程。</p>
+<h2 id="亮点"><a href="#亮点" class="headerlink" title="亮点"></a>亮点</h2><ul>
+<li>基于LRU</li>
+<li>线程安全</li>
+<li>可视化工具</li>
+<li>类HTTP设计</li>
+</ul>
+<h2 id="成员分析"><a href="#成员分析" class="headerlink" title="成员分析"></a>成员分析</h2><p>先从Public Api来进行分析</p>
+<p><img src="../media/14824843501540.jpg" alt=""></p>
+<p><code>SPTPersistentCache</code>是核心，同比为manager的角色。<br><code>SPTPersistentCacheOptions</code>是配置选项，<br><code>SPTPersistentCacheHeader</code>是<code>SPTPersistentCache</code>的一大设计的特色，数据表头<br><code>SPTPersistentCacheRecord</code>为数据单元。<br><code>SPTPersistentCacheResponse</code>为操纵数据的基本单位。</p>
+<p>这次分析打算从下往上，先从基本的数据单元开始</p>
+<h3 id="SPTPersistentCacheRecord"><a href="#SPTPersistentCacheRecord" class="headerlink" title="SPTPersistentCacheRecord"></a>SPTPersistentCacheRecord</h3><p><code>SPTPersistentCacheRecord</code>中除了data之外还定义三个辅助数据</p>
+<ul>
+<li>refCount 引用计数</li>
+<li>ttl 生存时间</li>
+<li>key </li>
+</ul>
+<p>可以从<code>SPTPersistentCacheRecord</code>看出<code>SPTPersistent</code>依照引用次数和时间来管理缓存对象</p>
+<h3 id="SPTPersistentCacheResponse"><a href="#SPTPersistentCacheResponse" class="headerlink" title="SPTPersistentCacheResponse"></a>SPTPersistentCacheResponse</h3><p><code>SPTPersistentCacheResponse</code>是对<code>SPTPersistentCacheRecord</code>的再一层包装。新增了对外属性</p>
+<ul>
+<li>SPTPersistentCacheResponseCode</li>
+<li>NSError</li>
+</ul>
+<p>从<code>SPTPersistentCacheResponseCode</code>可以看出这一层与读写操作相关了。</p>
+<h3 id="SPTPersistentCacheRecord-1"><a href="#SPTPersistentCacheRecord-1" class="headerlink" title="SPTPersistentCacheRecord"></a>SPTPersistentCacheRecord</h3><p><code>SPTPersistentCacheRecord</code>并不是一个类，而是一个结构体。在这里，可以将<code>SPTPersistentCacheRecord</code>与HTTP中的<code>header</code>进行类比。</p>
+<p>关键点：crc，flags</p>
+<p>crc：<strong>循环冗余校验</strong> 在数据写入前通过计算生成32位整数，拼接在数据后面。在读取的时候进行校验，确认数据是否完整。<code>SPTPersistentCache</code>使用的是<code>CRC-64-ISO</code></p>
+<p>flags: 判断数据是否在上次写入的时候没能完成。这个更多是逻辑而不是一个错误。</p>
+<h3 id="SPTPersistentCacheOptions"><a href="#SPTPersistentCacheOptions" class="headerlink" title="SPTPersistentCacheOptions"></a>SPTPersistentCacheOptions</h3><p><code>SPTPersistentCacheOptions</code>是cache的配置相关的内容。从配置中够可以看出<code>SPTPersistentCache</code>的一些特性</p>
+<p><code>identifierForQueue</code>作为唯一队列标识，可以预知每一个cache拥有唯一的队列</p>
+<p><code>cacheIdentifier</code>作为配置对应的cache唯一标识</p>
+<p>优先级设定中分别定义了并发操作数，读写删的优先级</p>
+<pre><code class="objc">@property (nonatomic) NSInteger maxConcurrentOperations;
+@property (nonatomic) NSOperationQueuePriority writePriority;
+@property (nonatomic) NSOperationQueuePriority readPriority;
+@property (nonatomic) NSOperationQueuePriority deletePriority;
+@property (nonatomic) NSQualityOfService writeQualityOfService;
+@property (nonatomic) NSQualityOfService readQualityOfService;
+@property (nonatomic) NSQualityOfService deleteQualityOfService;
+</code></pre>
+<p>GC设定中对GC的配置进行设定</p>
+<p><code>garbageCollectionInterval</code>决定了GC的间隔</p>
+<p><code>defaultExpirationPeriod</code> 决定默认过期时间</p>
+<p><code>sizeConstraintBytes</code> 设定了缓存空间的限制</p>
+<p><code>garbageCollectionPriority</code>设定GC操作的优先级</p>
+<p><code>garbageCollectionQualityOfService</code>设定GC服务的QOS</p>
+<p>从option中可以窥探出，在开发过程中可能会有多个cache，每个cache之间的配置独立，拥有独立的优先级和GC管理</p>
+<h3 id="SPTPersistentCache"><a href="#SPTPersistentCache" class="headerlink" title="SPTPersistentCache"></a>SPTPersistentCache</h3><p><code>SPTPersistentCache</code>是整个持久化库的核心类，包含了读，写，查，删，锁等操作</p>
+<p>读操作中，对外公开的两个API最后会归集到下面这个方法中</p>
+<pre><code class="objc">- (void)loadDataForKeySync:(NSString *)key
+              withCallback:(SPTPersistentCacheResponseCallback)callback
+                   onQueue:(dispatch_queue_t)queue
+</code></pre>
+<p>方法并不是很复杂，具体的流程简单描述如下</p>
+<pre><code>首先，根据key去查找是否有对应的文件，木有的话就抛错 (1)
+
+如果找到了文件，读取data，如果读取失败，认为文件损坏了，抛错(2)
+
+从文件中读出了数据，根据headerSize取出head。如果不能正确的拼装出header，即认为此文件无法继续操作，抛错(3)
+
+拼装了header后，进行校验，校验不通过，抛错(4)
+
+与本地header做比较，如果不一致，抛错(5)
+
+将读出的payload(负载数据)组装成`SPTPersistentCacheRecord`，再将`SPTPersistentCacheRecord`组装成`SPTPersistentCacheResponse`
+
+将访问数据相关写回磁盘
+
+将response通过block回调给开发者。
+</code></pre><p>可以看到，总共有5步抛错的地方，都是对数据完整性的校验。</p>
+<p>相对于读，写的难度就小了很多，不太复杂。写方法主要是在</p>
+<pre><code class="objc">- (NSError *)storeDataSync:(NSData *)data
+                    forKey:(NSString *)key
+                       ttl:(NSUInteger)ttl
+                    locked:(BOOL)isLocked
+              withCallback:(SPTPersistentCacheResponseCallback)callback
+                   onQueue:(dispatch_queue_t)queue
+</code></pre>
+<p>将Header与data拼装后组成rowData，然后写入磁盘，注意判断是否写入成功。之后通过block将response回调给开发者</p>
+<h2 id="GC和LRU实现"><a href="#GC和LRU实现" class="headerlink" title="GC和LRU实现"></a>GC和LRU实现</h2><p><strong>LRU是Least Recently Used 近期最少使用算法。</strong></p>
+<p>在最近的面试中，经常会谈到一些缓存库的实现，比如最常见的<code>SDWebImageCache</code>。对此我常会提出一个疑问，如何设计高效的缓存。几乎没人能够谈谈缓存调度算法。LRU其实就是最常用的一种缓存调度算法，目的就是尽力保证缓存中的数据是常用的。</p>
+<p>这里谈谈<code>SPTPersistentCache</code>中是如何实现GC和LRU算法的。</p>
+<p>在上文<code>SPTPersistentCacheRecord</code>的简介中，我们看到了两个关键的属性：TTL &amp;&amp; refcount。我们可以猜测到，<code>SPTPersistentCache</code>是通过实践和引用值来判断是数据的有效性的。</p>
+<p>GC的核心是👇这个方法</p>
+<pre><code class="objc">- (void)collectGarbageForceExpire:(BOOL)forceExpire forceLocked:(BOOL)forceLocked
+</code></pre>
+<p>传参分别是强制过期和强制加锁。</p>
+<p>过程不复杂，通过<code>NSDirectoryEnumerator</code>迭代器从<code>self.fileManager</code>中取出所有文件。</p>
+<p>判断是否过期是通过下面这个方法</p>
+<pre><code class="objc">- (SPTPersistentCacheResponse *)alterHeaderForFileAtPath:(NSString *)filePath
+                                               withBlock:(SPTPersistentCacheRecordHeaderGetCallbackType)modifyBlock
+                                               writeBack:(BOOL)needWriteBack
+                                                complain:(BOOL)needComplains
+</code></pre>
+<p>这个方法是唯一去访问文件header的方法。</p>
+<p>传入<code>modifyBlock</code>将改变header。</p>
+<p>回到GC的过程中，可以看到通过传入<code>modifyBlock</code>来获取header。在<code>modifyBlock</code>中，通过header中的refcount来判断是否需要移除。</p>
+<p>那么什么情况会触发<code>refcount</code>的变化呢？</p>
+<p>在<code>lockDataForKeys</code>方法中，可以看到这样一行代码</p>
+<pre><code class="objc"> // Satisfy Req.#1.2
+ if ([self isDataExpiredWithHeader:header]) {
+ expired = YES;
+ return;                                                                        }
+++header-&gt;refCount;
+// Do not update access time since file is locked
+</code></pre>
+<p>可知，当执行lock的时候，如果数据本身没过期，会使引用计数+1。</p>
+<p>同理，当unlock的时候，会使引用计数-1。</p>
+<p>可见，refcount只有1和0两个值。</p>
+<p>而<code>TTL（存活时间）</code>则是数据的的生命周期。如果没有<code>forceExpire</code>和<code>forceLocked</code>的话，则当<code>[self isDataExpiredWithHeader:header] &amp;&amp; header-&gt;refCount == 0</code>的时候删除数据。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>github上实现二进制缓存的cache库不多，<code>SPTPersistentCache</code>是其中的佼佼者。原因在于<strong>spotify</strong>本身做在线音乐服务，在二进制缓存上有比较强的需求。</p>
+<p><code>SPTPersistentCache</code>的实现我认为参考了HTTP协议，通过一个Header来为数据添加metedata，同时实现了GC。可以<code>SPTPersistentCache</code>的实现方式非常值得学习，在阅读<code>SPTPersistentCache</code>的过程中学习了不少二进制文件操作的方法，收益良多，也为这个系列开了一个好头。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2016/12/31/2016，注定不平凡/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2601,281 +2829,6 @@ pod &#39;CocoaLumberjack&#39;
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/11/10/rac/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/11/10/rac/" itemprop="url">
-                  rac
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-11-10T00:39:45+08:00">
-                2015-11-10
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Objective-C/" itemprop="url" rel="index">
-                    <span itemprop="name">Objective-C</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="RAC学习"><a href="#RAC学习" class="headerlink" title="RAC学习"></a>RAC学习</h1><p>RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;</p>
-<p>##RAC的改变</p>
-<p>RAC通过信号将不同的部分联系在了一起。</p>
-<p>RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。</p>
-<p>###KVO</p>
-<p>RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。</p>
-<pre><code class="Objective-C">[RACAble(self.username) subscribeNext:^(NSString *newName) {
-    NSLog(@&quot;%@&quot;, newName);
-}];
-</code></pre>
-<p>看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。</p>
-<pre><code class="Objective-C">// 只有当名字以&#39;j&#39;开头，才会被记录
-[[RACAble(self.username)
-   filter:^(NSString *newName) {
-       return [newName hasPrefix:@&quot;j&quot;];
-   }]
-   subscribeNext:^(NSString *newName) {
-       NSLog(@&quot;%@&quot;, newName);
-   }];
-</code></pre>
-<p>###UI Event</p>
-<p>根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。</p>
-<pre><code class="Objective-C">RAC(self.logInButton, enabled) = [RACSignal
-        combineLatest:@[
-            self.usernameTextField.rac_textSignal,
-            self.passwordTextField.rac_textSignal,
-            RACObserve(LoginManager.sharedManager, loggingIn),
-            RACObserve(self, loggedIn)
-        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
-            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
-        }];
-</code></pre>
-<p>每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。</p>
-<p>###网络异步</p>
-<p>当我们有需求的时候，可以自己创建<code>RACSubject</code>类型。我们可以认为<code>RACSubject</code>是一个具有高度自定义的信号(是RACSignal的子类)；</p>
-<p>当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。</p>
-<pre><code class="Objective-C">
-- (void)doTest
-{
-    RACSubject *subject = [self doRequest];
-
-    [subject subscribeNext:^(NSString *value){
-        NSLog(@&quot;value:%@&quot;, value);
-    }];
-}
-
-- (RACSubject *)doRequest
-{
-    RACSubject *subject = [RACSubject subject];
-    // 模拟2秒后得到请求内容
-    // 只触发1次
-    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
-    // subscribeNext就是定义了一个接收体
-    [[[[RACSignal interval:2] take:1] map:^id(id _){
-        // the value is from url request
-        NSString *value = @&quot;content fetched from web&quot;;
-        [subject sendNext:value];
-        return nil;
-    }] subscribeNext:^(id _){}];
-    return subject;
-}
-</code></pre>
-<p>##常见的概念</p>
-<p>###Signal and Subscriber</p>
-<p>在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。</p>
-<p>当信号获得了相关数据后，就会执行订阅者的<code>sendNext, sendComplete, sendError</code>方法。订阅者也有相关的方法来获取相关的数据，比如<code>[signal subscribeNext:error:completed]</code>。这个时候只要没有<code>sendError</code>和<code>sendComplete</code>传过来，就会有源源不断的数据。</p>
-<pre><code class="Objective-C">[RACObserve(self, username) subscribeNext: ^(NSString *newName){
-    NSLog(@&quot;newName:%@&quot;, newName);
-}];
-</code></pre>
-<p>RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。</p>
-<p>信号是可以被处理的，通常有以下几种处理信号的方式</p>
-<ol>
-<li>map 修改</li>
-<li>filter 过滤</li>
-<li>combine 组合</li>
-<li>chain 串联</li>
-</ol>
-<pre><code class="Objective-C">
-RAC(self.logInButton, enabled) = [RACSignal
-        combineLatest:@[
-            self.usernameTextField.rac_textSignal,
-            self.passwordTextField.rac_textSignal,
-            RACObserve(LoginManager.sharedManager, loggingIn),
-            RACObserve(self, loggedIn)
-        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
-            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
-        }];
-</code></pre>
-<p>上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。</p>
-<p>###冷信号和热信号</p>
-<p>上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。</p>
-<p>注意，如果一个信号有多个订阅者的时候，signal里面的block会被执行多次，要控制的话就要通过replay的方法去控制。</p>
-<p>###UI Category</p>
-<p>RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。</p>
-<p>我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪<code>NSArray</code>来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。</p>
-<p>还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法<code>rac_prepareForReuseSignal</code>，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题</p>
-<pre><code class="Objective-C">[[[self.cancelButton
-    rac_signalForControlEvents:UIControlEventTouchUpInside]
-    takeUntil:self.rac_prepareForReuseSignal]
-    subscribeNext:^(UIButton *x) {
-    // do other things
-}];
-</code></pre>
-<p>还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法<code>rac_command</code>。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。</p>
-<pre><code class="Objective-C">
-voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) {
-    // Assume that we&#39;re logged in at first. We&#39;ll replace this signal later if not.
-    RACSignal *authSignal = [RACSignal empty];
-
-    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) {
-        // Not logged in. Replace signal.
-        authSignal = [[RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscriber) {
-            @strongify(self);
-
-            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&quot;FRPLoginViewController&quot; bundle:nil];
-            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
-
-            [self presentViewController:navigationController animated:YES completion:^{
-                [subscriber sendCompleted];
-            }];
-
-            return nil;
-        }]];
-    }
-
-    return [authSignal then:^RACSignal *{
-        @strongify(self);
-        return [[self.viewModel.voteCommand execute:nil] ignoreValues];
-    }];
-}];
-[voteButton.rac_command.errors subscribeNext:^(id x) {
-    [x subscribeNext:^(NSError *error) {
-        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];
-    }];
-}];
-</code></pre>
-<p>上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。</p>
-<p>对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。</p>
-<p>##小结<br>由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。</p>
-<p>后面可能还是想结合网络请求来看看怎么使用RAC，毕竟多数的业务都是网络请求-&gt;数据组织-&gt;页面展示-&gt;交互的过程。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2921,7 +2874,7 @@ voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.vote
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">28</span>
+              <span class="site-state-item-count">29</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2985,7 +2938,7 @@ voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.vote
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2016</span>
+  <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

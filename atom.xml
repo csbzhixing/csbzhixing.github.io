@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2016-12-31T02:53:53.000Z</updated>
+  <updated>2017-01-08T08:19:03.000Z</updated>
   <id>http://csbzhixing.github.io/</id>
   
   <author>
@@ -14,6 +14,137 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>持久化学习系列1</title>
+    <link href="http://csbzhixing.github.io/2017/01/08/%E6%8C%81%E4%B9%85%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%971/"/>
+    <id>http://csbzhixing.github.io/2017/01/08/持久化学习系列1/</id>
+    <published>2017-01-08T08:16:57.000Z</published>
+    <updated>2017-01-08T08:19:03.000Z</updated>
+    
+    <content type="html">&lt;p&gt;&lt;code&gt;SPTPersistentCache&lt;/code&gt;是&lt;strong&gt;spotify&lt;/strong&gt;开源的一套持久化框架。&lt;code&gt;SPTPersistentCache&lt;/code&gt;主要解决&lt;code&gt;NSData&lt;/code&gt;存储到文件系统的过程。&lt;/p&gt;
+&lt;h2 id=&quot;亮点&quot;&gt;&lt;a href=&quot;#亮点&quot; class=&quot;headerlink&quot; title=&quot;亮点&quot;&gt;&lt;/a&gt;亮点&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;基于LRU&lt;/li&gt;
+&lt;li&gt;线程安全&lt;/li&gt;
+&lt;li&gt;可视化工具&lt;/li&gt;
+&lt;li&gt;类HTTP设计&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;成员分析&quot;&gt;&lt;a href=&quot;#成员分析&quot; class=&quot;headerlink&quot; title=&quot;成员分析&quot;&gt;&lt;/a&gt;成员分析&lt;/h2&gt;&lt;p&gt;先从Public Api来进行分析&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;../media/14824843501540.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;SPTPersistentCache&lt;/code&gt;是核心，同比为manager的角色。&lt;br&gt;&lt;code&gt;SPTPersistentCacheOptions&lt;/code&gt;是配置选项，&lt;br&gt;&lt;code&gt;SPTPersistentCacheHeader&lt;/code&gt;是&lt;code&gt;SPTPersistentCache&lt;/code&gt;的一大设计的特色，数据表头&lt;br&gt;&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;为数据单元。&lt;br&gt;&lt;code&gt;SPTPersistentCacheResponse&lt;/code&gt;为操纵数据的基本单位。&lt;/p&gt;
+&lt;p&gt;这次分析打算从下往上，先从基本的数据单元开始&lt;/p&gt;
+&lt;h3 id=&quot;SPTPersistentCacheRecord&quot;&gt;&lt;a href=&quot;#SPTPersistentCacheRecord&quot; class=&quot;headerlink&quot; title=&quot;SPTPersistentCacheRecord&quot;&gt;&lt;/a&gt;SPTPersistentCacheRecord&lt;/h3&gt;&lt;p&gt;&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;中除了data之外还定义三个辅助数据&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;refCount 引用计数&lt;/li&gt;
+&lt;li&gt;ttl 生存时间&lt;/li&gt;
+&lt;li&gt;key &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;可以从&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;看出&lt;code&gt;SPTPersistent&lt;/code&gt;依照引用次数和时间来管理缓存对象&lt;/p&gt;
+&lt;h3 id=&quot;SPTPersistentCacheResponse&quot;&gt;&lt;a href=&quot;#SPTPersistentCacheResponse&quot; class=&quot;headerlink&quot; title=&quot;SPTPersistentCacheResponse&quot;&gt;&lt;/a&gt;SPTPersistentCacheResponse&lt;/h3&gt;&lt;p&gt;&lt;code&gt;SPTPersistentCacheResponse&lt;/code&gt;是对&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;的再一层包装。新增了对外属性&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;SPTPersistentCacheResponseCode&lt;/li&gt;
+&lt;li&gt;NSError&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从&lt;code&gt;SPTPersistentCacheResponseCode&lt;/code&gt;可以看出这一层与读写操作相关了。&lt;/p&gt;
+&lt;h3 id=&quot;SPTPersistentCacheRecord-1&quot;&gt;&lt;a href=&quot;#SPTPersistentCacheRecord-1&quot; class=&quot;headerlink&quot; title=&quot;SPTPersistentCacheRecord&quot;&gt;&lt;/a&gt;SPTPersistentCacheRecord&lt;/h3&gt;&lt;p&gt;&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;并不是一个类，而是一个结构体。在这里，可以将&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;与HTTP中的&lt;code&gt;header&lt;/code&gt;进行类比。&lt;/p&gt;
+&lt;p&gt;关键点：crc，flags&lt;/p&gt;
+&lt;p&gt;crc：&lt;strong&gt;循环冗余校验&lt;/strong&gt; 在数据写入前通过计算生成32位整数，拼接在数据后面。在读取的时候进行校验，确认数据是否完整。&lt;code&gt;SPTPersistentCache&lt;/code&gt;使用的是&lt;code&gt;CRC-64-ISO&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;flags: 判断数据是否在上次写入的时候没能完成。这个更多是逻辑而不是一个错误。&lt;/p&gt;
+&lt;h3 id=&quot;SPTPersistentCacheOptions&quot;&gt;&lt;a href=&quot;#SPTPersistentCacheOptions&quot; class=&quot;headerlink&quot; title=&quot;SPTPersistentCacheOptions&quot;&gt;&lt;/a&gt;SPTPersistentCacheOptions&lt;/h3&gt;&lt;p&gt;&lt;code&gt;SPTPersistentCacheOptions&lt;/code&gt;是cache的配置相关的内容。从配置中够可以看出&lt;code&gt;SPTPersistentCache&lt;/code&gt;的一些特性&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;identifierForQueue&lt;/code&gt;作为唯一队列标识，可以预知每一个cache拥有唯一的队列&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;cacheIdentifier&lt;/code&gt;作为配置对应的cache唯一标识&lt;/p&gt;
+&lt;p&gt;优先级设定中分别定义了并发操作数，读写删的优先级&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;@property (nonatomic) NSInteger maxConcurrentOperations;
+@property (nonatomic) NSOperationQueuePriority writePriority;
+@property (nonatomic) NSOperationQueuePriority readPriority;
+@property (nonatomic) NSOperationQueuePriority deletePriority;
+@property (nonatomic) NSQualityOfService writeQualityOfService;
+@property (nonatomic) NSQualityOfService readQualityOfService;
+@property (nonatomic) NSQualityOfService deleteQualityOfService;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;GC设定中对GC的配置进行设定&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;garbageCollectionInterval&lt;/code&gt;决定了GC的间隔&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;defaultExpirationPeriod&lt;/code&gt; 决定默认过期时间&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;sizeConstraintBytes&lt;/code&gt; 设定了缓存空间的限制&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;garbageCollectionPriority&lt;/code&gt;设定GC操作的优先级&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;garbageCollectionQualityOfService&lt;/code&gt;设定GC服务的QOS&lt;/p&gt;
+&lt;p&gt;从option中可以窥探出，在开发过程中可能会有多个cache，每个cache之间的配置独立，拥有独立的优先级和GC管理&lt;/p&gt;
+&lt;h3 id=&quot;SPTPersistentCache&quot;&gt;&lt;a href=&quot;#SPTPersistentCache&quot; class=&quot;headerlink&quot; title=&quot;SPTPersistentCache&quot;&gt;&lt;/a&gt;SPTPersistentCache&lt;/h3&gt;&lt;p&gt;&lt;code&gt;SPTPersistentCache&lt;/code&gt;是整个持久化库的核心类，包含了读，写，查，删，锁等操作&lt;/p&gt;
+&lt;p&gt;读操作中，对外公开的两个API最后会归集到下面这个方法中&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (void)loadDataForKeySync:(NSString *)key
+              withCallback:(SPTPersistentCacheResponseCallback)callback
+                   onQueue:(dispatch_queue_t)queue
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;方法并不是很复杂，具体的流程简单描述如下&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;首先，根据key去查找是否有对应的文件，木有的话就抛错 (1)
+
+如果找到了文件，读取data，如果读取失败，认为文件损坏了，抛错(2)
+
+从文件中读出了数据，根据headerSize取出head。如果不能正确的拼装出header，即认为此文件无法继续操作，抛错(3)
+
+拼装了header后，进行校验，校验不通过，抛错(4)
+
+与本地header做比较，如果不一致，抛错(5)
+
+将读出的payload(负载数据)组装成`SPTPersistentCacheRecord`，再将`SPTPersistentCacheRecord`组装成`SPTPersistentCacheResponse`
+
+将访问数据相关写回磁盘
+
+将response通过block回调给开发者。
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;可以看到，总共有5步抛错的地方，都是对数据完整性的校验。&lt;/p&gt;
+&lt;p&gt;相对于读，写的难度就小了很多，不太复杂。写方法主要是在&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (NSError *)storeDataSync:(NSData *)data
+                    forKey:(NSString *)key
+                       ttl:(NSUInteger)ttl
+                    locked:(BOOL)isLocked
+              withCallback:(SPTPersistentCacheResponseCallback)callback
+                   onQueue:(dispatch_queue_t)queue
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;将Header与data拼装后组成rowData，然后写入磁盘，注意判断是否写入成功。之后通过block将response回调给开发者&lt;/p&gt;
+&lt;h2 id=&quot;GC和LRU实现&quot;&gt;&lt;a href=&quot;#GC和LRU实现&quot; class=&quot;headerlink&quot; title=&quot;GC和LRU实现&quot;&gt;&lt;/a&gt;GC和LRU实现&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;LRU是Least Recently Used 近期最少使用算法。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;在最近的面试中，经常会谈到一些缓存库的实现，比如最常见的&lt;code&gt;SDWebImageCache&lt;/code&gt;。对此我常会提出一个疑问，如何设计高效的缓存。几乎没人能够谈谈缓存调度算法。LRU其实就是最常用的一种缓存调度算法，目的就是尽力保证缓存中的数据是常用的。&lt;/p&gt;
+&lt;p&gt;这里谈谈&lt;code&gt;SPTPersistentCache&lt;/code&gt;中是如何实现GC和LRU算法的。&lt;/p&gt;
+&lt;p&gt;在上文&lt;code&gt;SPTPersistentCacheRecord&lt;/code&gt;的简介中，我们看到了两个关键的属性：TTL &amp;amp;&amp;amp; refcount。我们可以猜测到，&lt;code&gt;SPTPersistentCache&lt;/code&gt;是通过实践和引用值来判断是数据的有效性的。&lt;/p&gt;
+&lt;p&gt;GC的核心是👇这个方法&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (void)collectGarbageForceExpire:(BOOL)forceExpire forceLocked:(BOOL)forceLocked
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;传参分别是强制过期和强制加锁。&lt;/p&gt;
+&lt;p&gt;过程不复杂，通过&lt;code&gt;NSDirectoryEnumerator&lt;/code&gt;迭代器从&lt;code&gt;self.fileManager&lt;/code&gt;中取出所有文件。&lt;/p&gt;
+&lt;p&gt;判断是否过期是通过下面这个方法&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (SPTPersistentCacheResponse *)alterHeaderForFileAtPath:(NSString *)filePath
+                                               withBlock:(SPTPersistentCacheRecordHeaderGetCallbackType)modifyBlock
+                                               writeBack:(BOOL)needWriteBack
+                                                complain:(BOOL)needComplains
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这个方法是唯一去访问文件header的方法。&lt;/p&gt;
+&lt;p&gt;传入&lt;code&gt;modifyBlock&lt;/code&gt;将改变header。&lt;/p&gt;
+&lt;p&gt;回到GC的过程中，可以看到通过传入&lt;code&gt;modifyBlock&lt;/code&gt;来获取header。在&lt;code&gt;modifyBlock&lt;/code&gt;中，通过header中的refcount来判断是否需要移除。&lt;/p&gt;
+&lt;p&gt;那么什么情况会触发&lt;code&gt;refcount&lt;/code&gt;的变化呢？&lt;/p&gt;
+&lt;p&gt;在&lt;code&gt;lockDataForKeys&lt;/code&gt;方法中，可以看到这样一行代码&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt; // Satisfy Req.#1.2
+ if ([self isDataExpiredWithHeader:header]) {
+ expired = YES;
+ return;                                                                        }
+++header-&amp;gt;refCount;
+// Do not update access time since file is locked
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可知，当执行lock的时候，如果数据本身没过期，会使引用计数+1。&lt;/p&gt;
+&lt;p&gt;同理，当unlock的时候，会使引用计数-1。&lt;/p&gt;
+&lt;p&gt;可见，refcount只有1和0两个值。&lt;/p&gt;
+&lt;p&gt;而&lt;code&gt;TTL（存活时间）&lt;/code&gt;则是数据的的生命周期。如果没有&lt;code&gt;forceExpire&lt;/code&gt;和&lt;code&gt;forceLocked&lt;/code&gt;的话，则当&lt;code&gt;[self isDataExpiredWithHeader:header] &amp;amp;&amp;amp; header-&amp;gt;refCount == 0&lt;/code&gt;的时候删除数据。&lt;/p&gt;
+&lt;h2 id=&quot;总结&quot;&gt;&lt;a href=&quot;#总结&quot; class=&quot;headerlink&quot; title=&quot;总结&quot;&gt;&lt;/a&gt;总结&lt;/h2&gt;&lt;p&gt;github上实现二进制缓存的cache库不多，&lt;code&gt;SPTPersistentCache&lt;/code&gt;是其中的佼佼者。原因在于&lt;strong&gt;spotify&lt;/strong&gt;本身做在线音乐服务，在二进制缓存上有比较强的需求。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;SPTPersistentCache&lt;/code&gt;的实现我认为参考了HTTP协议，通过一个Header来为数据添加metedata，同时实现了GC。可以&lt;code&gt;SPTPersistentCache&lt;/code&gt;的实现方式非常值得学习，在阅读&lt;code&gt;SPTPersistentCache&lt;/code&gt;的过程中学习了不少二进制文件操作的方法，收益良多，也为这个系列开了一个好头。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;code&gt;SPTPersistentCache&lt;/code&gt;是&lt;strong&gt;spotify&lt;/strong&gt;开源的一套持久化框架。&lt;code&gt;SPTPersistentCache&lt;/code&gt;主要解决&lt;code&gt;NSData&lt;/code&gt;存储到文件系统的过程。&lt;/p&gt;
+
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>2016，注定不平凡</title>
@@ -2757,145 +2888,6 @@ XML中的所有空格和换行，都会当做具体内容处理
     </summary>
     
       <category term="Objective-C" scheme="http://csbzhixing.github.io/categories/Objective-C/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>IP TCP HTTPs 随便谈</title>
-    <link href="http://csbzhixing.github.io/2015/09/18/title/"/>
-    <id>http://csbzhixing.github.io/2015/09/18/title/</id>
-    <published>2015-09-18T08:48:55.000Z</published>
-    <updated>2015-09-24T09:04:35.000Z</updated>
-    
-    <content type="html">&lt;h1 id=&quot;IP-TCP-HTTPs-随便谈&quot;&gt;&lt;a href=&quot;#IP-TCP-HTTPs-随便谈&quot; class=&quot;headerlink&quot; title=&quot;IP TCP HTTPs 随便谈&quot;&gt;&lt;/a&gt;IP TCP HTTPs 随便谈&lt;/h1&gt;&lt;p&gt;在总结自己的技能书的缺点后，决定优先补充自己在计算机网络上知识的漏洞。现在互联网企业，离开了互联网什么都不是。对互联网，普通人可能停留在概念和使用上，而开发人员应该去深入的了解运行进制，进而去优化自己开发的产品。这篇文章，主要是记录自己最近看的一些资料的笔记。&lt;br&gt;&amp;lt;!--more--&amp;gt;  &lt;/p&gt;
-&lt;p&gt;##IP 协议&lt;/p&gt;
-&lt;p&gt;IP协议，是网络协议（Internet Protocol）的缩写。IP协议是互联网众多协议的基础。&lt;/p&gt;
-&lt;p&gt;IP协议实现了解&lt;code&gt;*分组交换网络*&lt;/code&gt;。在协议下，每个机器被称为&lt;code&gt;*主机*&lt;/code&gt;，IP协议明确了主机之间数据包的传输方式。&lt;/p&gt;
-&lt;p&gt;数据包，也就是一段二进制数据，包含了传输源的主机的信息。IP协议的特点是&lt;code&gt;*尽力服务*&lt;/code&gt;（best effort），提供有效的服务并尽可能的传输。这说明，在传输过程中，可能会丢失数据包，也可能传输了多个相同的数据包。&lt;/p&gt;
-&lt;p&gt;IP 网络中的主机都配有自己的地址，被称为&lt;code&gt;*IP 地址*&lt;/code&gt;。每个数据包中都包含了源主机和目标主机的 IP 地址。IP 协议负责路径计算，即 IP 数据包在网络中的传输传输时，数据包所经过的每一个主机节点都会读取数据包中的目标主机地址信息，以便选择朝什么地方传送数据包。&lt;/p&gt;
-&lt;p&gt;##蛋疼的IPv4&lt;/p&gt;
-&lt;p&gt;如今，多数数据包任然使用的是IPv4（版本4），每一个IP地址都是32位的。比如192.168.1.1就是一个IPV4地址。我们可以算下，IPv4有多少个地址。。嗯，好像很多有43亿吗。。但是呢，到了10年的时候，就已经不到8%的了。。&lt;/p&gt;
-&lt;p&gt;人们发现IPV4不够用啊，快用完了啊，用完了就不能加主机了啊！！！那怎么办，启用新的协议版本啊，所以除了个IPv6，将地址扩充到128位了。比如&lt;code&gt;2001:0db8:85a3:0042:1000:8a2e:0370:7334&lt;/code&gt;&lt;br&gt;就是一个IPv6的地址了。&lt;/p&gt;
-&lt;p&gt;128位就是2的128次方个，据说够地球上每个沙子配一个IP了。但是呢，这个协议转换的很慢，目前基本国内的都是还是使用IPv4协议。。看来也不是很着急么。。&lt;/p&gt;
-&lt;p&gt;##IP数据包的结构&lt;br&gt;一个IP数据包通常包括一个数据头部（header）和有效数据（payload）。有效数据自然是数据包中要传送的数据。而数据头部就是包含了一些传输数据相关的数据。&lt;/p&gt;
-&lt;p&gt;####我们先来看个IPv4的头部&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/Screen%20Shot%202015-09-20%20at%2020.15.59.png&quot; alt=&quot;Screen Shot 2015-09-20 at 20.15.59&quot;&gt;&lt;/p&gt;
-&lt;p&gt;可以看到，头部信息包含了当前版本的信息，payload采用的协议。Total Length 表明是有效数据加上头部信息长度的总长度。&lt;/p&gt;
-&lt;p&gt;####在来看看一个IPv6的报头信息&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/14427519874258.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
-&lt;p&gt;IPv6的头部长度固定到了40.同时IPv6可以链接下一个头部信息（Next Header）。&lt;/p&gt;
-&lt;p&gt;##数据传输&lt;/p&gt;
-&lt;p&gt;我们知道，在数据链路层对对所传输的数据帧数有限制，&lt;code&gt;*（MTU，最大传输单元）*&lt;/code&gt;。在IPv4的上，使用&lt;code&gt;*分片*&lt;/code&gt;来对数据包进行处理。具体来说，我们可以认为如果数据超过了最大传输单元，那么就会将数据切成几片。当数据到达目标主机后，可以根据分片的信息进行重组。当然，发送源可以选择不进行对数据进行&lt;code&gt;*分片*&lt;/code&gt;。如果超过了链路层最大传输单元又不进行&lt;code&gt;*分片*&lt;/code&gt;的话，发送源就会收到ICMP（Internet Control Message Protocol，Internet报文控制协议）的数据帧超长报告信息。&lt;/p&gt;
-&lt;p&gt;在IPv6中，如果数据包超过了长度限制，路由会直接丢弃数据包（好狠）并且向ICMP6报告数据帧过长。然后数据源和目标源会根据这个特性来进行&lt;code&gt;路由发现&lt;/code&gt;，就是寻找两端之间最大传输单元的路由。找到最大传输单元的路由后，仅当此时数据包任然超过最大传输单元的时候，IPv6才会进行分片。`对于IPv6下的TCP来说，不会造成什么影响。&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;到此，IP协议就到了一个段落了。IP协议是TCP协议的基础，因此了解是必须的。&lt;/p&gt;
-&lt;p&gt;##TCP协议&lt;/p&gt;
-&lt;p&gt;TCP协议是重头戏。TCP协议是重头戏。TCP协议是重头戏。重要的事情要说三遍。&lt;/p&gt;
-&lt;p&gt;上面说了，IP协议是基于&lt;code&gt;尽可能服务&lt;/code&gt;的，那么TCP协议就是要基于IP协议，解决IP协议采用的不可靠传输引起的复杂的问题。因此，下面的重点就是来谈谈TCP连接的三个部分：建立连接，传输数据，断开连接的详细过程&lt;/p&gt;
-&lt;p&gt;####TCP建立连接&lt;/p&gt;
-&lt;p&gt;首先，我们要知道TCP连接是全双工的,是建立在两个主机之间的。每个连接都存在两种角色：&lt;code&gt;服务器端，监听连接&lt;/code&gt;，&lt;code&gt;客户端，主动连接服务器端&lt;/code&gt;。客户端主动连接服务器端被称为&lt;code&gt;active open(主动打开)&lt;/code&gt;。而服务器端这种监听连接的行为被称为&lt;code&gt;passive open(被动打开)&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;三次握手&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;TCP建立连接是一个确认和反复确认的过程，我们习惯统称为三次握手。这个地方也是几乎所有面试会问的地方，需要注意了。&lt;/p&gt;
-&lt;p&gt;三次连接，具体的过程有语言描述为以下的过程。&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;ol&gt;
-&lt;li&gt;客服端向服务器端发送SYN包和一个随机序列号X，表示本次的连接的身份。&lt;/li&gt;
-&lt;li&gt;服务器端收到客服端发送的连接的请求以后，发送一个SYN-ACK包和一个确认ack号X+1(确认序列号X的连接请求确认)。此时服务器还会发送一个随机序列号Y，表示向客户端连接的请求。&lt;/li&gt;
-&lt;li&gt;客户端收到服务器的回复后，会发送一个ACK包，一个确认号Y+1和序列号X+1给服务器。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;SYN包，为&lt;code&gt;synchronize sequence numbers (同步序列号)&lt;/code&gt;。用于确认两段传输数据的身份，确保数据包最后都达到了应该到的地方。在建立连接的时候，源和目标都需要确认&lt;code&gt;同步序列号&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;ACK包，为&lt;code&gt;acknowledgment (确认)&lt;/code&gt;。某一端接到数据后，通过回传序列号来确认收到报文。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/14428004882999.jpg&quot; alt=&quot;三次握手&quot;&gt;&lt;/p&gt;
-&lt;p&gt;####传输数据&lt;/p&gt;
-&lt;p&gt;建立连接，就是为了传输数据。发送端发出的报文都会带有一个序列号，与当前已传送的字节总数有关。接受端会根据已经接收的报文给发送端传送确认报文，确认信息同样在头部的缩写带的ACK。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/14427976037921.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
-&lt;p&gt;注意的整个过程是双向的。两端都会持续的发送数据。X端发送的数据不会等到Y端发送确认后才发送下一个报文。&lt;/p&gt;
-&lt;p&gt;TCP协议是可靠的传输协议，所以有一系列复杂的机制来进行具体的的拥塞控制。需要处理的问题如下:&lt;code&gt;丢失报文重发&lt;/code&gt;，&lt;code&gt;动态调整发送报文的频率&lt;/code&gt;&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;流量控制&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;流量控制的原则就是发送数据的一方的速度不能比接受数据一方的速度要快。接收方，也就是&lt;code&gt;接收窗口&lt;/code&gt;会告诉发送方自身&lt;code&gt;接收窗口&lt;/code&gt;数据缓冲区的大小。在tcp包，通过两个两个关键的字段可以得出接收窗口的大小:&lt;code&gt;win -- 窗口大小&lt;/code&gt;和&lt;code&gt;wscale -- 窗口发大因子&lt;/code&gt; 。如果win=65535 , wscale = 4，那么我们可以计算出接收窗口的大小是 64kB * 4 = 256kB。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;拥塞控制&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;拥塞控制相比于流量控制要复杂一些。拥塞控制就是根据当前网络情况计算出当前网络数据传输的最佳速度。首先我们要认识到，最佳速度不一定就是要最快。一方面，我们希望以更快的速度传输数据。另一方面，由于传输的速度过快，导致大量的数据传入会使处理性能受到影响。在分组交换网络中有一个特点就是&lt;code&gt;超负荷崩溃&lt;/code&gt;。当负载过大的时候，数据包之间会产生拥塞，直接导致丢包率上升。&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;拥塞控制需要充分考虑对流量的影响。RFC 5681 中对 TCP 拥塞控制有 6,000 字左右的阐述。发送方要时刻关注来自接收方的确认信息。要做到这点并不简单，有的时候还需要一定的妥协。要知道底部 IP 协议数据包是无序传输的，数据包会丢失也会重复。发送方需要评估 RTT 往返时间，然后基于 RTT 去确定是否收到了接收方的确认信息。重发数据包也有很大代价，除了连接延迟问题，网络的负载也会发生明显的波动。导致 TCP 需要不停的去适应当前网络情况。&lt;/p&gt;
-&lt;p&gt;更重要的是，TCP 连接本身是易变的。除了数据传输，连接的两端还会不时的发送一些提醒和确认信息以便可以适当的调整状态来维持连接。&lt;/p&gt;
-&lt;p&gt;基于这种一直在相互协调中的连接关系，TCP 连接往往会是短暂而低效的。在建立连接的初期，TCP 协议算法还不能完全了解当前网络状况。而在连接将要结束的时候，反馈给发送方的信息又可能不充分，这样就很难对连接状况做出实时的合理的评估。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;&lt;em&gt;四次挥手，断开连接&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;建立连接是通过&lt;code&gt;三次握手&lt;/code&gt;，而释放连接是通过&lt;code&gt;四次握手&lt;/code&gt;。在最下方有图示解释整个过程。那么为什么需要四次握手才能释放连接呢？&lt;/p&gt;
-&lt;p&gt;上文提到了，TCP是全双工的，因此每个方向上的连接需要单独关闭。这个原则就是当一方没有数据可以传送的时候，发送FIN来终止这一方的连接，但是另一方向上的数据仍然可以发送。当另一方向也发送了FIN的时候，整个连接才完全的关闭了。无论服务器端还是客户端都可以发送来FIN来主动关闭连接。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/14428004433668.jpg&quot; alt=&quot;四次挥手&quot;&gt;&lt;/p&gt;
-&lt;p&gt;##HTTPS&lt;/p&gt;
-&lt;p&gt;之前的博文谈到了HTTP（超文本传输协议）。如今苹果操作系统iOS也升级到了iOS9。在iOS9中强制所有网络传输协议使用HTTPS。看来对HTTPS的了解是势在必行的了。&lt;/p&gt;
-&lt;p&gt;HTTPS,实际上可以看作HTTP的加密版本。HTTPS将HTTP协议数据包放到SSL/TSL层加密后，在TCP/IP蹭去传输。到了目标源后，在SST/TSL将数据包解密，传递到HTTP层就是普通的HTTP数据包了。&lt;/p&gt;
-&lt;p&gt;HTTPS = HTTP + SSL/TSL&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;SSL/TSL&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;关于SSL/TSL，我们可以参考下面两篇文章：&lt;/p&gt;
-&lt;p&gt;!&lt;a href=&quot;http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;!&lt;a href=&quot;http://www.ruanyifeng.com/blog/2014/09/illustration-ssl.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.ruanyifeng.com/blog/2014/09/illustration-ssl.html&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;简单的来说，通过SSL/TSL四次握手，来解决下面三个问题。&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;数字证书：该证书包含了公钥等信息，一般是由服务器发给客户端，接收方通过验证这个证书是不是由信赖的CA签发，或者与本地的证书相对比，来判断证书是否可信；假如需要双向验证，则服务器和客户端都需要发送数字证书给对方验证；&lt;/li&gt;
-&lt;li&gt;三个随机数：这三个随机数构成了后续通信过程中用来对数据进行对称加密解密的“对话密钥”。&lt;br&gt;首先客户端先发第一个随机数N1，然后服务器回了第    二个随机数N2（这个过程同时把之前提到的证书发给    客户端），这两个随机数都是明文的；而第三个随机    数N3（这个随机数被称为Premaster secret），    客户端用数字证书的公钥进行非对称加密，发给服务    器；而服务器用只有自己知道的私钥来解密，获取第    三个随机数。这样，服务端和客户端都有了三个随机    数N1+N2+N3，然后两端就使用这三个随机数来生    成“对话密钥”，在此之后的通信都是使用这个“对话    密钥”来进行对称加密解密。因为这个过程中，服务端    的私钥只用来解密第三个随机数，从来没有在网络中    传输过，这样的话，只要私钥没有被泄露，那么数据    就是安全的。&lt;/li&gt;
-&lt;li&gt;加密通信协议：就是双方商量使用哪一种加密方式，假如两者支持的加密方式不匹配，则无法进行通信；&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;具体的可以参考上面两篇文章的内容，去了解SSL/TSL加密的过程。在这里想重点说的是在iOS中使用HTTPS。&lt;/p&gt;
-&lt;p&gt;在iOS中，常用的是&lt;code&gt;NSURLConnection&lt;/code&gt;支持HTTPS的实现。而常用的第三方库&lt;code&gt;AFNetworking&lt;/code&gt;封装了使用&lt;code&gt;NSURLConnection&lt;/code&gt;实现的逻辑代码，更加完善。在&lt;code&gt;AFNetworking&lt;/code&gt;中使用的方法如下&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Objective-C
-
-NSURL * url = [NSURL URLWithString:@&amp;quot;https://www.google.com&amp;quot;];
-AFHTTPRequestOperationManager * requestOperationManager = [[AFHTTPRequestOperationManager alloc] initWithBaseURL:url];
-dispatch_queue_t requestQueue = dispatch_create_serial_queue_for_name(&amp;quot;kRequestCompletionQueue&amp;quot;);
-requestOperationManager.completionQueue = requestQueue;
-
-AFSecurityPolicy * securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate];
-
-//allowInvalidCertificates 是否允许无效证书（也就是自建的证书），默认为NO
-//如果是需要验证自建证书，需要设置为YES
-securityPolicy.allowInvalidCertificates = YES;
-
-//validatesDomainName 是否需要验证域名，默认为YES；
-//假如证书的域名与你请求的域名不一致，需把该项设置为NO；如设成NO的话，即服务器使用其他可信任机构颁发的证书，也可以建立连接，这个非常危险，建议打开。
-//置为NO，主要用于这种情况：客户端请求的是子域名，而证书上的是另外一个域名。因为SSL证书上的域名是独立的，假如证书上注册的域名是www.google.com，那么mail.google.com是无法验证通过的；当然，有钱可以注册通配符的域名*.google.com，但这个还是比较贵的。
-//如置为NO，建议自己添加对应域名的校验逻辑。
-securityPolicy.validatesDomainName = YES;
-
-//validatesCertificateChain 是否验证整个证书链，默认为YES
-//设置为YES，会将服务器返回的Trust Object上的证书链与本地导入的证书进行对比，这就意味着，假如你的证书链是这样的：
-//GeoTrust Global CA 
-//    Google Internet Authority G2
-//        *.google.com
-//那么，除了导入*.google.com之外，还需要导入证书链上所有的CA证书（GeoTrust Global CA, Google Internet Authority G2）；
-//如是自建证书的时候，可以设置为YES，增强安全性；假如是信任的CA所签发的证书，则建议关闭该验证，因为整个证书链一一比对是完全没有必要（请查看源代码）；
-securityPolicy.validatesCertificateChain = NO;
-
-requestOperationManager.securityPolicy = securityPolicy;
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;##杂谈&lt;/p&gt;
-&lt;p&gt;关于连接。TCP连接容易在两个地方出问题：初始设置，以及通过连接传输最后一部分的内容。&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;建立连接的时候，TCP由于要进行三次握手，所以在这过程中会有一定的时间损耗。一般一个移动终端向服务发送一个数据包普遍需要250ms, 三次握手的话就是需要750ms。而在HTTPS中则更加夸张。因为HTTPS需要四次握手。。。嗯，在TCP和HTTPS都握手完后，大概需要1750ms.是建立一个HTTP连接的两倍。为了安全，就肯定要牺牲时间效率。&lt;/p&gt;
-&lt;p&gt;此外，由于TCP需要侦测当前最佳的转发路由，所以在传送大量的数据时，需要不停地去调整以便得到最佳速度。这种算法被称为&lt;code&gt;慢启动&lt;/code&gt;。注意到，慢启动在数据链路层传输质量差的网络上表现的更差，无线网络就是典型的例子。(4G说，怪我咯)。&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;通过TCP释放连接的过程，我们也知道可能存在问题&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;如果发送方完成数据发送，接受方自然会停止发送 ACK 确认。在最后四个报文传输的过程中，快速重发算法是没有办法处理这四个报文的数据包的丢失问题的（因为不会收到三个相同的确认 ACK，所以不能界定传输丢包）。在常规网络环境下，四个数据包相当于 5.7kB 的数据规模。总之，在这最后 5.7kB 的传输的过程中，快速重发机制是无效的。针对这种情况，TCP 会启用其他机制来侦测丢包问题。对于这种情况，重传操作可能要消耗几秒钟去执行，这并不奇怪&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;hr&gt;
-&lt;p&gt;&lt;em&gt;超时处理&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;在APP实际处理中，经常发生网络请求超时的现象。许多APP大概在15秒后收不到反馈就会提示超时信息。这种设计其实并不是很友好。我们知道，只有TCP连接还在，TCP都会保证将请求发送出去并会等待响应的返回，只是时间长短的问题。&lt;/p&gt;
-&lt;p&gt;个人在这里参考了一些APP的做法，觉得应该在每次请求的时候设置一个计时器，当计时器到达倒数完成后，可以提示用户是否继续网络请求，如果取消就将TCP连接断开，如果继续就继续等待网络请求响应。&lt;/p&gt;
-&lt;p&gt;##最后&lt;/p&gt;
-&lt;p&gt;了解了IP TCP HTTPS后，接下来想阅读一些文章怎么从这些方面入手去优化网络请求。在互联网时代，数据和网络是承载产品的基础。因此，网络，怎么深入学习都不过分。&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;h1 id=&quot;IP-TCP-HTTPs-随便谈&quot;&gt;&lt;a href=&quot;#IP-TCP-HTTPs-随便谈&quot; class=&quot;headerlink&quot; title=&quot;IP TCP HTTPs 随便谈&quot;&gt;&lt;/a&gt;IP TCP HTTPs 随便谈&lt;/h1&gt;&lt;p&gt;在总结自己的技能书的缺点后，
-    
-    </summary>
-    
-      <category term="Network" scheme="http://csbzhixing.github.io/categories/Network/"/>
     
     
   </entry>
