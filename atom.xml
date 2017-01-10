@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://csbzhixing.github.io/"/>
-  <updated>2017-01-08T08:19:03.000Z</updated>
+  <updated>2017-01-10T15:15:07.000Z</updated>
   <id>http://csbzhixing.github.io/</id>
   
   <author>
@@ -16,11 +16,462 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>持久化学习系列2</title>
+    <link href="http://csbzhixing.github.io/2017/01/10/%E6%8C%81%E4%B9%85%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%972/"/>
+    <id>http://csbzhixing.github.io/2017/01/10/持久化学习系列2/</id>
+    <published>2017-01-10T15:10:33.000Z</published>
+    <updated>2017-01-10T15:15:07.000Z</updated>
+    
+    <content type="html">&lt;h1 id=&quot;PINCache&quot;&gt;&lt;a href=&quot;#PINCache&quot; class=&quot;headerlink&quot; title=&quot;PINCache&quot;&gt;&lt;/a&gt;PINCache&lt;/h1&gt;&lt;p&gt;第二篇是关于最经典的KV缓存解决方案&lt;code&gt;PINCache&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&quot;客户端的存储&quot;&gt;&lt;a href=&quot;#客户端的存储&quot; class=&quot;headerlink&quot; title=&quot;客户端的存储&quot;&gt;&lt;/a&gt;客户端的存储&lt;/h2&gt;&lt;p&gt;在正式讲解&lt;code&gt;PINCache&lt;/code&gt;前，先来谈谈客户端什么时候需要做存储。&lt;/p&gt;
+&lt;p&gt;总所周知，现在的APP越来越依赖网络，在离开网络的情况下，绝大多数的APP都成了摆设。然而，优秀的APP已经有自己的一套设计，避免在无网或者弱网的情况下完全失去作用。例如微信这样的强网络要求的APP,在失去网络的情况依然能够浏览本地缓存的聊天信息和朋友圈记录。优秀的APP，应该根据自己的业务需求，选择合适的存储方案。对于一般体量的APP来说，利用KV形式的存储是最好不过的选择。&lt;/p&gt;
+&lt;p&gt;KV，即Key-Value形式的存储。通常客户端的信息是由后端给出的json解析的,使用Key-Value正是方便了这种格式。&lt;/p&gt;
+&lt;h2 id=&quot;PINCache-1&quot;&gt;&lt;a href=&quot;#PINCache-1&quot; class=&quot;headerlink&quot; title=&quot;PINCache&quot;&gt;&lt;/a&gt;PINCache&lt;/h2&gt;&lt;p&gt;&lt;code&gt;PINCache&lt;/code&gt;是脱胎于&lt;code&gt;TMCache&lt;/code&gt;，解决了&lt;code&gt;TMCache&lt;/code&gt;中的线程死锁问题。&lt;code&gt;PINCache&lt;/code&gt;中依然设计了&lt;code&gt;memoryCache&lt;/code&gt;和&lt;code&gt;diskCache&lt;/code&gt;两种，分别解决了临时存储和长期持久化的问题。&lt;br&gt;在&lt;code&gt;PINCache&lt;/code&gt;的github主页上，提出在iOS上如果没有特别的情况，尽可能使用&lt;code&gt;diskCache&lt;/code&gt;，原因是每次iOS应用启动，都会造成&lt;code&gt;memoryCache&lt;/code&gt;中的内容被清空。在下面，会对比下内存缓存和磁盘缓存的优缺点，以及&lt;code&gt;PINCache&lt;/code&gt;是如何实现的，&lt;/p&gt;
+&lt;h2 id=&quot;文件结构&quot;&gt;&lt;a href=&quot;#文件结构&quot; class=&quot;headerlink&quot; title=&quot;文件结构&quot;&gt;&lt;/a&gt;文件结构&lt;/h2&gt;&lt;p&gt;&lt;img src=&quot;../media/14838580770949.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;从图上可以看到，&lt;code&gt;PINCache&lt;/code&gt;的实现并不复杂，除去&lt;code&gt;PINCache&lt;/code&gt;本身实现对外的方法外，总共只有八个实现文件。&lt;/p&gt;
+&lt;h3 id=&quot;PINMemoryCache&quot;&gt;&lt;a href=&quot;#PINMemoryCache&quot; class=&quot;headerlink&quot; title=&quot;PINMemoryCache&quot;&gt;&lt;/a&gt;PINMemoryCache&lt;/h3&gt;&lt;p&gt;&lt;code&gt;PINMemoryCache&lt;/code&gt;为实现内存缓存的类。什么是内存缓存，我们可以理解为通过一个&lt;code&gt;NSMutableDictionary&lt;/code&gt;来临时存储对象。实现一个内存缓存难度不大，通常需要完成以下几个事情：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;选择合适的存储结构&lt;/li&gt;
+&lt;li&gt;选择和实现对应的读写方法&lt;/li&gt;
+&lt;li&gt;选择和实现淘汰方法&lt;/li&gt;
+&lt;li&gt;处理系统内存警告&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;了解了以上步骤，我们来看看&lt;code&gt;PINMemoryCache&lt;/code&gt;是怎么解决上面的问题&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;选择&lt;code&gt;NSMutableDictionary&lt;/code&gt;作为存储结构&lt;/li&gt;
+&lt;li&gt;采用&lt;code&gt;NSMutableDictionary&lt;/code&gt;的读写方法&lt;/li&gt;
+&lt;li&gt;通过两个&lt;code&gt;NSMutableDictionary&lt;/code&gt;分别记录&lt;code&gt;date&lt;/code&gt;和&lt;code&gt;cost&lt;/code&gt;,实现时间和内容的管理。&lt;/li&gt;
+&lt;li&gt;收到内存警告后，清空内存中所有的对象，清空缓存。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;看上去不难？在笔者看来，实现内存缓存的难度主要是2，3点。在这里，&lt;code&gt;PINMemoryCache&lt;/code&gt;主要考虑的是如何解决多线程安全的问题，以及缓存淘汰问题。&lt;/p&gt;
+&lt;h4 id=&quot;多线程安全&quot;&gt;&lt;a href=&quot;#多线程安全&quot; class=&quot;headerlink&quot; title=&quot;多线程安全&quot;&gt;&lt;/a&gt;多线程安全&lt;/h4&gt;&lt;p&gt;由于缓存的特殊性，读写必须考虑到多线程安全的问题。如果一个线程改变了缓存中的某个值，而别的线正好需要这个值，处理不好轻则造成数据出错，重则造成程序崩溃。&lt;/p&gt;
+&lt;p&gt;在&lt;code&gt;PINMemoryCache&lt;/code&gt;中，使用了&lt;code&gt;pthread_mutex_t&lt;/code&gt;来保证线程安全。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;pthread_mutex_t&lt;/code&gt;为互斥锁，当锁上的时候，其他线程就无法访问被锁上的资源&lt;/p&gt;
+&lt;p&gt;使用&lt;code&gt;pthread_mutex_t&lt;/code&gt;需要注意几点。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;必须在&lt;code&gt;dealloc&lt;/code&gt;方法中主动释放&lt;/strong&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    __unused int result = pthread_mutex_destroy(&amp;amp;_mutex);
+    NSCAssert(result == 0, @&amp;quot;Failed to destroy lock in PINMemoryCache %p. Code: %d&amp;quot;, (void *)self, result);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt; 单独使用&lt;code&gt;pthread_mutex_t&lt;/code&gt;容易造成&lt;strong&gt;死锁&lt;/strong&gt;，同时也坑你造成效率不高，可以通过实现对应的递归锁来避免&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;pthread_mutexattr_t attr;
+pthread_mutexattr_init(&amp;amp;attr);
+pthread_mutexattr_settype(&amp;amp;attr,PTHREAD_MUTEX_RECURSIVE);
+pthread_mutex_init(&amp;amp;lock, &amp;amp;attr);
+pthread_mutexattr_destroy(&amp;amp;attr);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在完成锁的初始化后，就需要考虑什么时候要加锁解锁了&lt;/p&gt;
+&lt;p&gt;为了避免&lt;strong&gt;data race&lt;/strong&gt;的情况，在这里，&lt;code&gt;PINMemoryCache&lt;/code&gt;选择了对所有读写操作都进行加锁。同时，采用副本的形式避免读取的数据被篡改。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (__nullable id)objectForKey:(NSString *)key
+{
+    if (!key)
+        return nil;
+
+    NSDate *now = [[NSDate alloc] init];
+    [self lock];
+        id object = nil;
+        // If the cache should behave like a TTL cache, then only fetch the object if there&amp;#39;s a valid ageLimit and  the object is still alive
+        if (!self-&amp;gt;_ttlCache || self-&amp;gt;_ageLimit &amp;lt;= 0 || fabs([[_dates objectForKey:key] timeIntervalSinceDate:now]) &amp;lt; self-&amp;gt;_ageLimit) {
+            object = _dictionary[key];
+        }
+    [self unlock];
+
+    if (object) {
+        [self lock];
+            _dates[key] = now;
+        [self unlock];
+    }
+
+    return object;
+}
+
+
+- (void)setObject:(id)object forKey:(NSString *)key withCost:(NSUInteger)cost
+{
+    if (!key || !object)
+        return;
+
+    [self lock];
+        PINMemoryCacheObjectBlock willAddObjectBlock = _willAddObjectBlock;
+        PINMemoryCacheObjectBlock didAddObjectBlock = _didAddObjectBlock;
+        NSUInteger costLimit = _costLimit;
+    [self unlock];
+
+    if (willAddObjectBlock)
+        willAddObjectBlock(self, key, object);
+
+    [self lock];
+        NSNumber* oldCost = _costs[key];
+        if (oldCost)
+            _totalCost -= [oldCost unsignedIntegerValue];
+
+        _dictionary[key] = object;
+        _dates[key] = [[NSDate alloc] init];
+        _costs[key] = @(cost);
+
+        _totalCost += cost;
+    [self unlock];
+
+    if (didAddObjectBlock)
+        didAddObjectBlock(self, key, object);
+
+    if (costLimit &amp;gt; 0)
+        [self trimToCostByDate:costLimit];
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;通过这两个读写方法，我们发现，&lt;code&gt;PINMemoryCache&lt;/code&gt;对任何涉及属性操作的地方都进行了锁操作，避免了&lt;strong&gt;data race&lt;/strong&gt;的情况。&lt;/p&gt;
+&lt;h4 id=&quot;缓存淘汰&quot;&gt;&lt;a href=&quot;#缓存淘汰&quot; class=&quot;headerlink&quot; title=&quot;缓存淘汰&quot;&gt;&lt;/a&gt;缓存淘汰&lt;/h4&gt;&lt;p&gt;缓存淘汰，也就是第三点。如果保证缓存中数据有效性，保证缓存搞笑的利用是所有缓存应该考虑的问题。通常来讲，我们应该从缓存利用率上来着手，只保留常被使用的数据，淘汰长期不需要的数据。LRU就会常用的一种缓存淘汰算法。在这里，&lt;code&gt;PINMemoryCache&lt;/code&gt;通过时间和空间来实现的LRU算法。&lt;/p&gt;
+&lt;p&gt;在上面贴出的读写中，读的时候，更新&lt;code&gt;date&lt;/code&gt;中key对应的时间。在写的时候，记录或更新key对应时间。&lt;/p&gt;
+&lt;p&gt;当触发缓存删除操作的时候，优先删除占用空间大和使用时间靠前的的内容。&lt;/p&gt;
+&lt;p&gt;至此，&lt;code&gt;PINMemoryCache&lt;/code&gt;的内容基本就分析完了。内存缓存的实现，只要考虑清楚上面列的四个内容，我认为就不难做到，剩下的就是实现细节和性能的考量了。&lt;/p&gt;
+&lt;h2 id=&quot;PINDiskCache&quot;&gt;&lt;a href=&quot;#PINDiskCache&quot; class=&quot;headerlink&quot; title=&quot;PINDiskCache&quot;&gt;&lt;/a&gt;PINDiskCache&lt;/h2&gt;&lt;p&gt;&lt;code&gt;PINDiskCache&lt;/code&gt;实现的磁盘缓存。我们知道，磁盘的读取速度要远小于内存读取。大量的磁盘I/O会降低程序的运行效率。虽然如此，面对大体量的数据以及需要长期存储的数据，我们只能考虑存储在磁盘上。同时，由于iOS系统的特殊性，选择存储在磁盘上往往是我们的第一选择。&lt;/p&gt;
+&lt;p&gt;和&lt;code&gt;memory cache&lt;/code&gt;不同，磁盘I/O需要考虑的问题要更多一点，除了上面再&lt;code&gt;memory cache&lt;/code&gt;讲到的几点外，还需要考虑一下几点。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;实现方式。磁盘存储一般分为三种：文件读写，数据库，mmap文件内存映射。&lt;code&gt;PINDiskCache&lt;/code&gt;使用的是文件读写的方式&lt;/li&gt;
+&lt;li&gt;存储位置。iOS文件系统不同位置建议存储的内容不同。是放在cache文件夹中还是temp文件中取决于开发者对存储文件的态度。&lt;/li&gt;
+&lt;li&gt;文件系统的细节。避免和其他文件产生冲突，必须考虑拥有自身的标记。&lt;/li&gt;
+&lt;li&gt;数据序列化&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;看上去磁盘缓存的实现的确要难上很多问题，在内存缓存的基础上依然要考虑这么多问题。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;PINDiskCache&lt;/code&gt;在这四个问题上，充分考虑了oc语言已经iOS已经MAC OS系统的特性。首先采用文件读写的方式，依然考虑了数据的特性。文件读写的方式非常适合用于存储数据规模小的情况，同时实现方便，性能稳定也是选择的原因之一。但是使用文件存储也有不小的弱点：方便扩展、没有元数据、难以实现较好的淘汰算法、数据统计缓慢。&lt;/p&gt;
+&lt;p&gt;2，3，4点将在下面实现细节中会讲到。&lt;/p&gt;
+&lt;h3 id=&quot;实现细节&quot;&gt;&lt;a href=&quot;#实现细节&quot; class=&quot;headerlink&quot; title=&quot;实现细节&quot;&gt;&lt;/a&gt;实现细节&lt;/h3&gt;&lt;h4 id=&quot;线程安全&quot;&gt;&lt;a href=&quot;#线程安全&quot; class=&quot;headerlink&quot; title=&quot;线程安全&quot;&gt;&lt;/a&gt;线程安全&lt;/h4&gt;&lt;p&gt;线程安全依然是绕不过去的一个坎，在&lt;code&gt;PINDiskCache&lt;/code&gt;里，除了需要对付一般的&lt;strong&gt;data race&lt;/strong&gt;，还需要处理磁盘I/O带来的问题。&lt;/p&gt;
+&lt;p&gt;在这里，&lt;code&gt;PINDiskCache&lt;/code&gt;使用的是&lt;code&gt;NSConditionLock&lt;/code&gt;条件锁。在代码中有如下定义：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;typedef NS_ENUM(NSUInteger, PINDiskCacheCondition) {
+    PINDiskCacheConditionNotReady = 0,
+    PINDiskCacheConditionReady = 1,
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可见，条件锁中并不涉及到具体的实例对象，而是一个常量来作为锁的条件。在这里，个人认为直接用递归锁差别也不是很大，不知道为何这里选择使用了条件锁。（或许有一天知道了会回来补。&lt;/p&gt;
+&lt;p&gt;在使用中，所有对成员变量操作的地方都进行的锁操作。(实际上有些地方是不需要用的)&lt;/p&gt;
+&lt;h3 id=&quot;读写&quot;&gt;&lt;a href=&quot;#读写&quot; class=&quot;headerlink&quot; title=&quot;读写&quot;&gt;&lt;/a&gt;读写&lt;/h3&gt;&lt;p&gt;磁盘读写如果不注意极其容易造成死锁。&lt;/p&gt;
+&lt;p&gt;写：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (void)setObject:(id &amp;lt;NSCoding&amp;gt;)object forKey:(NSString *)key fileURL:(NSURL **)outFileURL
+{
+    if (!key || !object)
+        return;
+
+    #if TARGET_OS_IPHONE
+      NSDataWritingOptions writeOptions = NSDataWritingAtomic | self.writingProtectionOption;
+    #else
+      NSDataWritingOptions writeOptions = NSDataWritingAtomic;
+    #endif
+
+    NSURL *fileURL = [self encodedFileURLForKey:key];
+
+    [self lock];
+        PINDiskCacheObjectBlock willAddObjectBlock = self-&amp;gt;_willAddObjectBlock;
+        if (willAddObjectBlock) {
+            [self unlock];
+                willAddObjectBlock(self, key, object);
+            [self lock];
+        }
+
+        //We unlock here so that we&amp;#39;re not locked while serializing.
+        [self unlock];
+            NSData *data = _serializer(object, key);
+        [self lock];
+
+        NSError *writeError = nil;
+
+        BOOL written = [data writeToURL:fileURL options:writeOptions error:&amp;amp;writeError];
+        PINDiskCacheError(writeError);
+
+        if (written) {
+            NSError *error = nil;
+            NSDictionary *values = [fileURL resourceValuesForKeys:@[ NSURLContentModificationDateKey, NSURLTotalFileAllocatedSizeKey ] error:&amp;amp;error];
+            PINDiskCacheError(error);
+
+            NSNumber *diskFileSize = [values objectForKey:NSURLTotalFileAllocatedSizeKey];
+            if (diskFileSize) {
+                NSNumber *prevDiskFileSize = [self-&amp;gt;_sizes objectForKey:key];
+                if (prevDiskFileSize) {
+                    self.byteCount = self-&amp;gt;_byteCount - [prevDiskFileSize unsignedIntegerValue];
+                }
+                [self-&amp;gt;_sizes setObject:diskFileSize forKey:key];
+                self.byteCount = self-&amp;gt;_byteCount + [diskFileSize unsignedIntegerValue]; // atomic
+            }
+            NSDate *date = [values objectForKey:NSURLContentModificationDateKey];
+            if (date) {
+                [self-&amp;gt;_dates setObject:date forKey:key];
+            }
+
+            if (self-&amp;gt;_byteLimit &amp;gt; 0 &amp;amp;&amp;amp; self-&amp;gt;_byteCount &amp;gt; self-&amp;gt;_byteLimit)
+                [self trimToSizeByDate:self-&amp;gt;_byteLimit block:nil];
+        } else {
+            fileURL = nil;
+        }
+
+        PINDiskCacheObjectBlock didAddObjectBlock = self-&amp;gt;_didAddObjectBlock;
+        if (didAddObjectBlock) {
+            [self unlock];
+                didAddObjectBlock(self, key, object);
+            [self lock];
+        }
+    [self unlock];
+
+    if (outFileURL) {
+        *outFileURL = fileURL;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;读：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (__nullable id &amp;lt;NSCoding&amp;gt;)objectForKey:(NSString *)key fileURL:(NSURL **)outFileURL
+{
+    NSDate *now = [[NSDate alloc] init];
+
+    if (!key)
+        return nil;
+
+    id &amp;lt;NSCoding&amp;gt; object = nil;
+    NSURL *fileURL = [self encodedFileURLForKey:key];
+
+    [self lock];
+        if (!self-&amp;gt;_ttlCache || self-&amp;gt;_ageLimit &amp;lt;= 0 || fabs([[_dates objectForKey:key] timeIntervalSinceDate:now]) &amp;lt; self-&amp;gt;_ageLimit) {
+            // If the cache should behave like a TTL cache, then only fetch the object if there&amp;#39;s a valid ageLimit and  the object is still alive
+            NSData *objectData = [[NSData alloc] initWithContentsOfFile:[fileURL path]];
+
+            if (objectData) {
+              //Be careful with locking below. We unlock here so that we&amp;#39;re not locked while deserializing, we re-lock after.
+              [self unlock];
+              @try {
+                  object = _deserializer(objectData, key);
+              }
+              @catch (NSException *exception) {
+                  NSError *error = nil;
+                  [self lock];
+                      [[NSFileManager defaultManager] removeItemAtPath:[fileURL path] error:&amp;amp;error];
+                  [self unlock];
+                  PINDiskCacheError(error);
+              }
+              [self lock];
+            }
+            if (object &amp;amp;&amp;amp; !self-&amp;gt;_ttlCache) {
+                [self asynchronouslySetFileModificationDate:now forURL:fileURL];
+            }
+        }
+    [self unlock];
+
+    if (outFileURL) {
+        *outFileURL = fileURL;
+    }
+
+    return object;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt; 在序列化和反序列化的地方解锁，之后再上锁，目的是避免死锁问题(序列化失败等)。&lt;/p&gt;
+&lt;p&gt; 在读写之后，改变文件的最后修改时间，作为一个参考依据。&lt;/p&gt;
+&lt;p&gt; 在写入的时候，先尝试将数据写入到磁盘，然后读取写入的文件的信息，比较文件的大小是否和写入的数据大小相同&lt;/p&gt;
+&lt;h3 id=&quot;异步操作&quot;&gt;&lt;a href=&quot;#异步操作&quot; class=&quot;headerlink&quot; title=&quot;异步操作&quot;&gt;&lt;/a&gt;异步操作&lt;/h3&gt;&lt;p&gt;在&lt;code&gt;PINDiskCache&lt;/code&gt;中大量使用了异步操作。比如读取文件后修改文件时间：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (void)asynchronouslySetFileModificationDate:(NSDate *)date forURL:(NSURL *)fileURL
+{
+    __weak PINDiskCache *weakSelf = self;
+    [self.operationQueue addOperation:^{
+        PINDiskCache *strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf lock];
+                [strongSelf _locked_setFileModificationDate:date forURL:fileURL];
+            [strongSelf unlock];
+        }
+    } withPriority:PINOperationQueuePriorityLow];
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这里用的&lt;code&gt;operationQueue&lt;/code&gt;就是在下面要讲到&lt;code&gt;PINCache&lt;/code&gt;自己实现的一套异步方案&lt;/p&gt;
+&lt;h3 id=&quot;淘汰方法&quot;&gt;&lt;a href=&quot;#淘汰方法&quot; class=&quot;headerlink&quot; title=&quot;淘汰方法&quot;&gt;&lt;/a&gt;淘汰方法&lt;/h3&gt;&lt;p&gt;&lt;code&gt;PINDiskCache&lt;/code&gt;仍然根据文件大小和最近修改时间来作为淘汰的依据。&lt;/p&gt;
+&lt;h2 id=&quot;PINOperationQueue&quot;&gt;&lt;a href=&quot;#PINOperationQueue&quot; class=&quot;headerlink&quot; title=&quot;PINOperationQueue&quot;&gt;&lt;/a&gt;PINOperationQueue&lt;/h2&gt;&lt;p&gt;&lt;code&gt;PINOperationQueue&lt;/code&gt;是&lt;code&gt;PINCache&lt;/code&gt;实现的一个并发控制方案。实现了最大并发数，取消，优先级管理。在&lt;code&gt;PINDiskCache&lt;/code&gt;中大量使用了&lt;code&gt;PINOperationQueue&lt;/code&gt;来达到并发行为的控制。&lt;/p&gt;
+&lt;h3 id=&quot;实现细节-1&quot;&gt;&lt;a href=&quot;#实现细节-1&quot; class=&quot;headerlink&quot; title=&quot;实现细节&quot;&gt;&lt;/a&gt;实现细节&lt;/h3&gt;&lt;p&gt;&lt;code&gt;PINOperationQueue&lt;/code&gt;是对外公开的操作，主要是通过下面方法添加操作&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (id &amp;lt;PINOperationReference&amp;gt;)addOperation:(PINOperationBlock)operation
+                              withPriority:(PINOperationQueuePriority)priority
+                                identifier:(NSString *)identifier
+                            coalescingData:(nullable id)coalescingData
+                      dataCoallescingBlock:(nullable PINOperationDataCoallescingBlock)dataCoallescingBlock
+                                completion:(nullable dispatch_block_t)completion;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;其中&lt;code&gt;dataCoallescingBlock&lt;/code&gt;和&lt;code&gt;coalescingData&lt;/code&gt;提供了联合数据处理的能力，例如&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (void)trimToDate:(NSDate *)trimDate block:(PINDiskCacheBlock)block
+{
+    PINOperationBlock operation = ^(id data){
+        [self trimToDate:(NSDate *)data];
+    };
+
+    dispatch_block_t completion = nil;
+    if (block) {
+        completion = ^{
+            block(self);
+        };
+    }
+
+    [self.operationQueue addOperation:operation
+                         withPriority:PINOperationQueuePriorityLow
+                           identifier:PINDiskCacheOperationIdentifierTrimToDate
+                       coalescingData:trimDate
+                  dataCoallescingBlock:PINDiskTrimmingDateCoallescingBlock
+                           completion:completion];
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这个方法中，&lt;code&gt;DiskCache&lt;/code&gt;会去清除指定时间的数据，在这里，添加到&lt;code&gt;PINOperationQueue&lt;/code&gt;的时候，将&lt;code&gt;trimDate&lt;/code&gt;作为联合数据传入。这里的联合数据，可以认为是block之外的一个负载。&lt;/p&gt;
+&lt;h3 id=&quot;初始化&quot;&gt;&lt;a href=&quot;#初始化&quot; class=&quot;headerlink&quot; title=&quot;初始化&quot;&gt;&lt;/a&gt;初始化&lt;/h3&gt;&lt;p&gt;通过初始化可以得知，&lt;code&gt;PINOperationQueue&lt;/code&gt;是怎么实现上述功能的。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt; pthread_mutex_t _lock;
+  //increments with every operation to allow cancelation
+  NSUInteger _operationReferenceCount;
+  NSUInteger _maxConcurrentOperations;
+
+  dispatch_group_t _group;
+
+  dispatch_queue_t _serialQueue;
+  BOOL _serialQueueBusy;
+
+  dispatch_semaphore_t _concurrentSemaphore;
+  dispatch_queue_t _concurrentQueue;
+  dispatch_queue_t _semaphoreQueue;
+
+  NSMutableOrderedSet&amp;lt;PINOperation *&amp;gt; *_queuedOperations;
+  NSMutableOrderedSet&amp;lt;PINOperation *&amp;gt; *_lowPriorityOperations;
+  NSMutableOrderedSet&amp;lt;PINOperation *&amp;gt; *_defaultPriorityOperations;
+  NSMutableOrderedSet&amp;lt;PINOperation *&amp;gt; *_highPriorityOperations;
+
+  NSMapTable&amp;lt;id&amp;lt;PINOperationReference&amp;gt;, PINOperation *&amp;gt; *_referenceToOperations;
+  NSMapTable&amp;lt;NSString *, PINOperation *&amp;gt; *_identifierToOperations;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;通过&lt;code&gt;PINOperationQueue&lt;/code&gt;的成员变量，可以得知：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;通过&lt;code&gt;dispatch_semaphore_t&lt;/code&gt;来实现并发数控制。&lt;code&gt;dispatch_semaphore_t&lt;/code&gt;是信号量&lt;/li&gt;
+&lt;li&gt;通过&lt;code&gt;NSMutableOrderedSet&lt;/code&gt;实现了优先级和顺序管理。&lt;code&gt;NSMutableOrderedSet&lt;/code&gt;是具有排序功能的集合类。&lt;/li&gt;
+&lt;li&gt;通过&lt;code&gt;NSMapTable&lt;/code&gt;实现了绑定id和操作。&lt;code&gt;NSMapTable&lt;/code&gt;类似&lt;code&gt;NSdictionry&lt;/code&gt;，区别在于&lt;code&gt;NSMapTable&lt;/code&gt;是可变的，同时键值可以为弱引用，当任何一项为nil的时候将这一项移除。同时，&lt;code&gt;NSMapTable&lt;/code&gt;可以存储任意指针，通过指针来进行相等性和散列校验&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;初始化代码如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (instancetype)initWithMaxConcurrentOperations:(NSUInteger)maxConcurrentOperations concurrentQueue:(dispatch_queue_t)concurrentQueue
+{
+  if (self = [super init]) {
+    NSAssert(maxConcurrentOperations &amp;gt; 1, @&amp;quot;Max concurrent operations must be greater than 1. If it&amp;#39;s one, just use a serial queue!&amp;quot;);
+    _maxConcurrentOperations = maxConcurrentOperations;
+    _operationReferenceCount = 0;
+
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&amp;amp;attr);
+    //mutex must be recursive to allow scheduling of operations from within operations
+    pthread_mutexattr_settype(&amp;amp;attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&amp;amp;_lock, &amp;amp;attr);
+
+    _group = dispatch_group_create();
+
+    _serialQueue = dispatch_queue_create(&amp;quot;PINOperationQueue Serial Queue&amp;quot;, DISPATCH_QUEUE_SERIAL);
+
+    _concurrentQueue = concurrentQueue;
+
+    //Create a queue with max - 1 because this plus the serial queue add up to max.
+    _concurrentSemaphore = dispatch_semaphore_create(_maxConcurrentOperations - 1);
+    _semaphoreQueue = dispatch_queue_create(&amp;quot;PINOperationQueue Serial Semaphore Queue&amp;quot;, DISPATCH_QUEUE_SERIAL);
+
+    _queuedOperations = [[NSMutableOrderedSet alloc] init];
+    _lowPriorityOperations = [[NSMutableOrderedSet alloc] init];
+    _defaultPriorityOperations = [[NSMutableOrderedSet alloc] init];
+    _highPriorityOperations = [[NSMutableOrderedSet alloc] init];
+
+    _referenceToOperations = [NSMapTable weakToWeakObjectsMapTable];
+    _identifierToOperations = [NSMapTable weakToWeakObjectsMapTable];
+  }
+  return self;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在这里，实现了一个递归锁。递归锁允许在未释放锁的时候反复的上锁，当解锁次数和等于上锁的次数的时候才&lt;code&gt;PINOperationQueue&lt;/code&gt;可能在一个多次加锁。&lt;/p&gt;
+&lt;h4 id=&quot;并发&quot;&gt;&lt;a href=&quot;#并发&quot; class=&quot;headerlink&quot; title=&quot;并发&quot;&gt;&lt;/a&gt;并发&lt;/h4&gt;&lt;p&gt;&lt;code&gt;PINOperationQueue&lt;/code&gt;最大特色就是实现了并发管理操作，提供cancel，wait, Priority的功能，通过实现来看看怎么做到的。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;- (void)scheduleNextOperations:(BOOL)onlyCheckSerial&lt;/code&gt;方法为派发operation的地方私有方法。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;scheduleNextOperations&lt;/code&gt;执行的分为两块&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;  [self lock];
+    //get next available operation in order, ignoring priority and run it on the serial queue
+    if (_serialQueueBusy == NO) {
+      PINOperation *operation = [self locked_nextOperationByQueue];
+      if (operation) {
+        _serialQueueBusy = YES;
+        dispatch_async(_serialQueue, ^{
+          operation.block(operation.data);
+          for (dispatch_block_t completion in operation.completions) {
+            completion();
+          }
+          dispatch_group_leave(_group);
+
+          [self lock];
+            _serialQueueBusy = NO;
+          [self unlock];
+
+          //see if there are any other operations
+          [self scheduleNextOperations:YES];
+        });
+      }
+    }
+  [self unlock];
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在这里，&lt;code&gt;locked_nextOperationByQueue&lt;/code&gt;从&lt;code&gt;_queuedOperations&lt;/code&gt;取出第一个operation，然后异步派发到&lt;code&gt;_serialQueue&lt;/code&gt;中执行。可以看出，这里本质是串行取出operation然后再派发到&lt;code&gt;_serialQueue&lt;/code&gt;异步执行。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;  dispatch_async(_semaphoreQueue, ^{
+      dispatch_semaphore_wait(_concurrentSemaphore, DISPATCH_TIME_FOREVER);
+      [self lock];
+        PINOperation *operation = [self locked_nextOperationByPriority];
+      [self unlock];
+
+      if (operation) {
+        dispatch_async(_concurrentQueue, ^{
+          operation.block(operation.data);
+          for (dispatch_block_t completion in operation.completions) {
+            completion();
+          }
+          dispatch_group_leave(_group);
+          dispatch_semaphore_signal(_concurrentSemaphore);
+        });
+      } else {
+        dispatch_semaphore_signal(_concurrentSemaphore);
+      }
+  });
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在这里，实现了并发，从&lt;code&gt;locked_nextOperationByPriority&lt;/code&gt;方法中根据优先级获得一个operation，异步派发到&lt;code&gt;_concurrentQueue&lt;/code&gt;中执行。这里通过信号量来管理并发数，当信号量为0的时候就会一直等待。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;locked_nextOperationByPriority&lt;/code&gt;中从&lt;code&gt;_highPriorityOperations&lt;/code&gt;取，取不到的情况下就从下一个优先级的set中取。&lt;/p&gt;
+&lt;p&gt;看懂了&lt;code&gt;scheduleNextOperations&lt;/code&gt;，再看&lt;code&gt;locked_cancelOperation&lt;/code&gt;就不难了。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;objc&quot;&gt;- (BOOL)locked_cancelOperation:(id &amp;lt;PINOperationReference&amp;gt;)operationReference
+{
+  BOOL success = NO;
+  PINOperation *operation = [_referenceToOperations objectForKey:operationReference];
+  if (operation) {
+    NSMutableOrderedSet *queue = [self operationQueueWithPriority:operation.priority];
+    if ([queue containsObject:operation]) {
+      success = YES;
+      [queue removeObject:operation];
+      [_queuedOperations removeObject:operation];
+      dispatch_group_leave(_group);
+    }
+  }
+  return success;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;取消操作，主要根据operationRef来取出操作，然后从所在的优先级队列中删除对应的operation。注意到，如果这个operation已经被派发到执行队列上了，就无法取消了。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;PINOperationGroup&lt;/code&gt;是在&lt;code&gt;PINOperationQueue&lt;/code&gt;之上再实现的包装。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;PINOperationQueue&lt;/code&gt;和&lt;code&gt;PINOperationGroup&lt;/code&gt;可以看做是&lt;code&gt;PINCache&lt;/code&gt;使用的GCD实现一套与NSOperation相似的功能。通过学习阅读这一块，可以加深对GCD异步处理的理解。&lt;/p&gt;
+&lt;h2 id=&quot;尾声&quot;&gt;&lt;a href=&quot;#尾声&quot; class=&quot;headerlink&quot; title=&quot;尾声&quot;&gt;&lt;/a&gt;尾声&lt;/h2&gt;&lt;p&gt;&lt;code&gt;PINCache&lt;/code&gt;是这个系列的第二篇，个人感觉收获很大，对整个key-value缓存实现的一个思路有了更清楚的认识。&lt;/p&gt;
+&lt;p&gt;下一篇，打算看看&lt;code&gt;YYCache&lt;/code&gt;,主要关注点是如何实现缓存淘汰算法和优化性能的。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;PINCache&quot;&gt;&lt;a href=&quot;#PINCache&quot; class=&quot;headerlink&quot; title=&quot;PINCache&quot;&gt;&lt;/a&gt;PINCache&lt;/h1&gt;&lt;p&gt;第二篇是关于最经典的KV缓存解决方案&lt;code&gt;PINCache&lt;/code&gt;&lt;/p&gt;
+&lt;h
+    
+    </summary>
+    
+    
+      <category term="iOS" scheme="http://csbzhixing.github.io/tags/iOS/"/>
+    
+  </entry>
+  
+  <entry>
     <title>持久化学习系列1</title>
     <link href="http://csbzhixing.github.io/2017/01/08/%E6%8C%81%E4%B9%85%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%971/"/>
     <id>http://csbzhixing.github.io/2017/01/08/持久化学习系列1/</id>
     <published>2017-01-08T08:16:57.000Z</published>
-    <updated>2017-01-08T08:19:03.000Z</updated>
+    <updated>2017-01-10T15:11:03.000Z</updated>
     
     <content type="html">&lt;p&gt;&lt;code&gt;SPTPersistentCache&lt;/code&gt;是&lt;strong&gt;spotify&lt;/strong&gt;开源的一套持久化框架。&lt;code&gt;SPTPersistentCache&lt;/code&gt;主要解决&lt;code&gt;NSData&lt;/code&gt;存储到文件系统的过程。&lt;/p&gt;
 &lt;h2 id=&quot;亮点&quot;&gt;&lt;a href=&quot;#亮点&quot; class=&quot;headerlink&quot; title=&quot;亮点&quot;&gt;&lt;/a&gt;亮点&lt;/h2&gt;&lt;ul&gt;
@@ -144,6 +595,8 @@
     </summary>
     
     
+      <category term="iOS" scheme="http://csbzhixing.github.io/tags/iOS/"/>
+    
   </entry>
   
   <entry>
@@ -151,7 +604,7 @@
     <link href="http://csbzhixing.github.io/2016/12/31/2016%EF%BC%8C%E6%B3%A8%E5%AE%9A%E4%B8%8D%E5%B9%B3%E5%87%A1/"/>
     <id>http://csbzhixing.github.io/2016/12/31/2016，注定不平凡/</id>
     <published>2016-12-31T01:50:41.000Z</published>
-    <updated>2016-12-31T02:53:53.000Z</updated>
+    <updated>2017-01-10T15:11:13.000Z</updated>
     
     <content type="html">&lt;p&gt;2016年，注定是一个不一样的年份。年头到年尾，世界上发生了太多历史性的进程。一个英国脱欧，一个特朗普当选就足以让世人谈论上许多年。对于我个人，也是一个不同寻常的年份：今年我毕业了。&lt;/p&gt;
 &lt;h3 id=&quot;毕业了，我想谈谈教育&quot;&gt;&lt;a href=&quot;#毕业了，我想谈谈教育&quot; class=&quot;headerlink&quot; title=&quot;毕业了，我想谈谈教育&quot;&gt;&lt;/a&gt;毕业了，我想谈谈教育&lt;/h3&gt;&lt;p&gt;从上学第一天开始，我就想什么时候会结束这一段历程，想不到到来后却一点感觉没有。结束了学生身份，最大的感触就是：不再会有人照顾你了。&lt;/p&gt;
@@ -187,6 +640,8 @@
     </summary>
     
     
+      <category term="杂" scheme="http://csbzhixing.github.io/tags/%E6%9D%82/"/>
+    
   </entry>
   
   <entry>
@@ -194,7 +649,7 @@
     <link href="http://csbzhixing.github.io/2016/12/19/%E6%B5%85%E8%B0%88%E4%B8%80%E7%82%B9%E9%9D%A2%E8%AF%95%E4%BD%93%E9%AA%8C/"/>
     <id>http://csbzhixing.github.io/2016/12/19/浅谈一点面试体验/</id>
     <published>2016-12-19T01:50:41.000Z</published>
-    <updated>2016-12-31T01:51:16.000Z</updated>
+    <updated>2017-01-10T15:11:12.000Z</updated>
     
     <content type="html">&lt;h1 id=&quot;浅谈一点面试体验&quot;&gt;&lt;a href=&quot;#浅谈一点面试体验&quot; class=&quot;headerlink&quot; title=&quot;浅谈一点面试体验&quot;&gt;&lt;/a&gt;浅谈一点面试体验&lt;/h1&gt;&lt;p&gt;最近部门业务扩展，移动端终于迎来了难得招人的机会。在经历半个月的招聘体验后，感触良多，想总结下这半个月的体验以及一点想法&lt;/p&gt;
 &lt;h2 id=&quot;移动端怎么了&quot;&gt;&lt;a href=&quot;#移动端怎么了&quot; class=&quot;headerlink&quot; title=&quot;移动端怎么了&quot;&gt;&lt;/a&gt;移动端怎么了&lt;/h2&gt;&lt;p&gt; 在挂出简历了不到一天，邮箱就被上百封简历轰炸了。虽然对今天就业形势有一些耳闻，但是碰到如此情形还是有点惊讶。到昨天，整整收到了600多封iOS简历。iOS开发究竟怎么了？是苹果不行了吗？其实并不是iOS开发不行了，而是移动端的风口过了。在简历中，我看到了形形色色色的项目。从2C的教育，医疗，直播等等，到2B的IM，项目管理等等，这些项目都有一个特点 — 开发时间特别短。几乎没有一个项目是在一个人手里开发超过1年的。同时，几乎每个人手里都有四五个项目，甚至一个刚工作一年的人的简历里就写了四个项目。可见，在过去一两年，移动端开发过热导致许多公司盲目的上项目。其中印象深刻的是，光汽车蓝牙相关的APP就有十几个。不过在汽车上驾驶员使用手机的问题，就说有多少人真的需要一个APP来通过蓝牙控制汽车功能？这些项目往往在功能简单的同时，没有太多的技术难度，仅仅是为了完成公司产品而生成的。在面试的过程中，简单问了些蓝牙协议的实现，几乎100%的面试者都说通过三方实现的。随着投资热潮褪去，这些项目的一批批的死去，自然释放出了许多初级移动端开发(尤其iOS)。移动端并没有死去，而是走向理智，只是在风口上的猪掉了下来。&lt;/p&gt;
@@ -217,6 +672,8 @@
     
     </summary>
     
+    
+      <category term="杂" scheme="http://csbzhixing.github.io/tags/%E6%9D%82/"/>
     
   </entry>
   
@@ -2793,101 +3250,6 @@ XML中的所有空格和换行，都会当做具体内容处理
     </summary>
     
       <category term="Network" scheme="http://csbzhixing.github.io/categories/Network/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>重新认识ARC</title>
-    <link href="http://csbzhixing.github.io/2015/09/22/arc/"/>
-    <id>http://csbzhixing.github.io/2015/09/22/arc/</id>
-    <published>2015-09-22T09:48:06.000Z</published>
-    <updated>2015-09-24T09:04:36.000Z</updated>
-    
-    <content type="html">&lt;p&gt;第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么动力去研究了。现在得空了，是时候增强自己的技能树。当前的目标如下&lt;/p&gt;
-&lt;p&gt;&amp;lt;!--more--&amp;gt;  
-&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;增加网络编程的相关知识&lt;ul&gt;
-&lt;li&gt;TCP/IP HTTP HTTPS 协议的学习和了解&lt;/li&gt;
-&lt;li&gt;JSON和XML的解析&lt;/li&gt;
-&lt;li&gt;iOS自身关于网络请求相关的类和API&lt;/li&gt;
-&lt;li&gt;第三方库AFNetWorking源码阅读&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;增加iOS内核方面的知识&lt;ul&gt;
-&lt;li&gt;内存基本知识和管理方式&lt;/li&gt;
-&lt;li&gt;ARC&lt;/li&gt;
-&lt;li&gt;进程线程&lt;/li&gt;
-&lt;li&gt;RunTime&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;简单的看是两个大类七个点，但是感觉每一个点都非常多东西。目前暂时把1.1的点给补完了。不过任然需要投入大量的时间去复习。这里打算整合2.1和2.2。&lt;/p&gt;
-&lt;p&gt;##内存管理&lt;br&gt;学过计算机基础的人对于内存都不陌生，哪怕是没有计算机基础的人也明白内存对于电脑（终端）的重要性。内存管理，就是在程序运行的过程中，申请，使用，释放内存的过程。程序写的好不好，就看你在完成功能的同时是不是使用了尽可能少的内存。&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;堆和栈&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;在内存中，有两个重要的概念，分别是&lt;code&gt;堆和栈&lt;/code&gt;。这里不仅仅指代他们的数据结构。我们知道，一个函数执行的时候，他会被压入栈中。栈中的内存单元保存了函数的返回地址，局部变量，传参等数据。当函数被弹出栈的时候，一切数据都会被销毁。而&lt;code&gt;堆&lt;/code&gt;上的数据是由开发者自行申请管理的，生命周期由开发者自行掌握。&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;引用计数&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;学过OC的人都知道，在OC中管理内存的方法是&lt;code&gt;引用计数&lt;/code&gt;(Retain Counting)。通过对堆和栈的了解，我们可以得出OC上的对象&lt;em&gt;都是在堆上&lt;/em&gt;的。&lt;/p&gt;
-&lt;p&gt;在苹果开发文档里面有一张图很好的说明的通过引用计数来管理对象生命周期的过程。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/14429735006902.jpg&quot; alt=&quot;引用计数&quot;&gt;&lt;/p&gt;
-&lt;p&gt;同样，引用计数也遵循几大内存管理原则&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;谁申请谁拥有&lt;/li&gt;
-&lt;li&gt;肯以申请拥有一个存在的对象&lt;/li&gt;
-&lt;li&gt;当不需要的再拥有对象的时候，申请释放&lt;/li&gt;
-&lt;li&gt;不能释放不属于自己没有拥有的对象&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;##Automatic Reference Counting (ARC)&lt;/p&gt;
-&lt;p&gt;在学习iOS开发半年后，ARC给我留下了很深的印象。ARC是苹果在引用计数的基础上改善了编译器实现的功能。要了解ARC，首先要看看在没有ARC之前开发者是怎么去通过引用计数管理的。&lt;/p&gt;
-&lt;p&gt;在ARC之前，我们统称为&lt;code&gt;MRC（Manual Reference Counting&lt;/code&gt;，即手动引用技术。通过调用&lt;code&gt;retain&lt;/code&gt;和&lt;code&gt;release&lt;/code&gt;来管理对象的生命周期。有了ARC之后，在编译的过程中，编译器可以根据上下文估算对象的生命周期，以此来自动的添加&lt;code&gt;retain&lt;/code&gt;和&lt;code&gt;release&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;注意，ARC只对OC对象有作用，对于C的类型对象不则按照C的内存管理的方法去管理。&lt;/p&gt;
-&lt;p&gt;如果在工程中开启了使用ARC，那么就要遵循ARC定义的一些规范&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;不能显示的调用&lt;code&gt;dealloc&lt;/code&gt;,&lt;code&gt;ratain&lt;/code&gt;,&lt;code&gt;release&lt;/code&gt;,&lt;code&gt;retainCount&lt;/code&gt;,&lt;code&gt;autoRelease&lt;/code&gt;。&lt;/li&gt;
-&lt;li&gt;如果要复写&lt;code&gt;dealloc&lt;/code&gt;方法，不需要显示调用&lt;code&gt;[super dealloc]&lt;/code&gt;方法。&lt;/li&gt;
-&lt;li&gt;不能再使用&lt;code&gt;AutoReleasepool&lt;/code&gt;&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;&lt;em&gt;ARC下的修饰符&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;在@Property 中，有四种修饰符是ARC提供的，他们分别是&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;strong&lt;/li&gt;
-&lt;li&gt;weak&lt;/li&gt;
-&lt;li&gt;unsafe_unretained&lt;/li&gt;
-&lt;li&gt;__autoreleasing&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;其中，重点来谈谈strong和weak&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;strong。我们理解为强引用。当前的对象实际拥有这个对象。默认情况下ARC使用的strong来修饰。&lt;/li&gt;
-&lt;li&gt;weak。相对于strong的强引用，weak指的是弱引用。当引用的对象被释放掉的时候，当前引用对象会被自动置nil。weak通常被用来解决循环引用的问题。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;code&gt;__autoreleasing&lt;/code&gt;和&lt;code&gt;__unsafe_unretained&lt;/code&gt;在实际应用中是很少的。&lt;code&gt;__unsafe_unretained&lt;/code&gt;是为了兼容iOS4之前的版本，现在基本上不会使用了，主要是为了实现weak的功能。&lt;code&gt;__autoreleasing&lt;/code&gt;是表示在autorelease pool中自动释放对象的引用。&lt;/p&gt;
-&lt;h2 id=&quot;block-在ARC下&quot;&gt;&lt;a href=&quot;#block-在ARC下&quot; class=&quot;headerlink&quot; title=&quot;block 在ARC下&quot;&gt;&lt;/a&gt;block 在ARC下&lt;/h2&gt;&lt;p&gt;block在之前已经小小的讨论过了，出现的几个问题都有谈论到，这里主要从ARC的角度上再谈一谈。&lt;/p&gt;
-&lt;p&gt;block在ARC下最特殊的地方就是怎么去解决循环引用。在block的篇章中没有很详细讨论，原因也是没从内存的角度来看。这里详细讲下循环引用产生原因和在ARC下解决循环引用的方法。&lt;/p&gt;
-&lt;p&gt;&amp;gt;&lt;br&gt;You can use lifetime qualifiers to avoid strong reference cycles. For example, typically if you have a graph of objects arranged in a parent-child hierarchy and parents need to refer to their children and vice versa, then you make the parent-to-child relationship strong and the child-to-parent relationship weak. Other situations may be more subtle, particularly when they involve block objects.&lt;br&gt;&amp;gt;&lt;br&gt;In manual reference counting mode, &lt;strong&gt;block id x; has the effect of not retaining x. In ARC mode, &lt;/strong&gt;block id x; defaults to retaining x (just like all other values). To get the manual reference counting mode behavior under ARC, you could use &lt;strong&gt;unsafe_unretained &lt;/strong&gt;block id x;. As the name &lt;strong&gt;unsafe_unretained implies, however, having a non-retained variable is dangerous (because it can dangle) and is therefore discouraged. Two better options are to either use &lt;/strong&gt;weak (if you don’t need to support iOS 4 or OS X v10.6), or set the __block value to nil to break the retain cycle.&lt;br&gt;&amp;gt;&lt;br&gt;The following code fragment illustrates this issue using a pattern that is sometimes used in manual reference counting.&lt;/p&gt;
-&lt;p&gt;上面是苹果官方文档对循环引用的解释。通过引用计数，我们了解到，如果有两个对象，对彼此都是强引用的话，双方都无法释放对方，也就无法释放delloc对象，最终就造成了死循环。在iOS5以下的版本里面，我们可以通过手动使用&lt;code&gt;unsafe_unretained&lt;/code&gt;来使其中一个变量变成野指针。而在ARC下，我们通过使用weak来修饰其中一个变量，这样在block中就不存在双方强引用的抢矿。&lt;/p&gt;
-&lt;p&gt;但是，上面的处理方法有个问题。我们不知道weak修饰的对象什么时候会被释放掉了，有可能在执行block里面的对象在之前就已经被释放掉了。在AFNetWorking中，提供了一个非常好的解决思路&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;/media/14429947239639.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
-&lt;p&gt;上面方法中，在block外先将self用&lt;code&gt;weak&lt;/code&gt;引用一个weakSelf，进入block后再使用一个&lt;code&gt;_strong_typeof&lt;/code&gt;去创建一个strong引用对象。这样的做法既能避免产生循环引用，也能避免weak对象提前被释放掉。&lt;/p&gt;
-&lt;p&gt;##ARC与Toll-Free Bridging&lt;/p&gt;
-&lt;p&gt;Toll-Free Briding保证了在程序中，可以方便和谐的使用Core Foundation类型的对象和Objective-C类型的对象。但是，我们知道，到了ARC的时候，两者的内存管理方法不同了。对于一种对象，我们不能用该两种内存管理方法去管理。所以在进入ARC之后，Toll-Free Bridging也进行了相应的变化。&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;__bridge&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;只是申明了类型转变，并没有改变内存管理方法。&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;__bridge_retained（修饰符） or CFBridgingRetain（函数）&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;表示将指针类型转变的同时，将内存管理的责任由原来的Objective-C交给Core Foundation来处理，也就是，将ARC转变为MRC。&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;__bridge_transfer（修饰符） or CFBridgingRelease（函数）&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;这个修饰符和函数的功能和上面那个__bridge_retained相反，它表示将管理的责任由Core Foundation转交给Objective-C，即将管理方式由MRC转变为ARC。&lt;/p&gt;
-&lt;p&gt;上面就是要谈的ARC的内容了。其实ARC的坑比起MRC已经少了很多了，对于我们可怜的程序员来说已经是很大的解放了。&lt;/p&gt;
-&lt;p&gt;这里对于内存管理仅仅是基于OC简单的谈了谈，觉得还是不够深刻，主要是自己在这方面的知识的确很欠缺。读了&lt;br&gt;&lt;a href=&quot;http://casatwy.com/ccheng-xu-de-nei-cun-guan-li.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;C程序的内存管理&lt;/a&gt;这篇文章学到了很多，在这里也安利一下。&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;第一次接触ARC还是在第一次拿到项目的时候。学习OC的时候使用的教材主要是通过MRC来讲解Retain Counting(引用计数)的。后面只是简单的了解了下ARC是编译器在编译的过程中自动去估算对象的生命周期来自动添加retain和realse的。解放了双手，也就没有什么
-    
-    </summary>
-    
-      <category term="Objective-C" scheme="http://csbzhixing.github.io/categories/Objective-C/"/>
     
     
   </entry>

@@ -267,6 +267,1255 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2016/08/19/Method Swizzle 与 AOP/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="csbzhixing">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="学海无涯">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/19/Method Swizzle 与 AOP/" itemprop="url">
+                  Method Swizzle 与 AOP
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-08-19T23:03:29+08:00">
+                2016-08-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Method-Swizzle"><a href="#Method-Swizzle" class="headerlink" title="Method Swizzle"></a>Method Swizzle</h2><p><code>Method Swizzle</code>是基于runtime实现“黑魔法”。</p>
+<p>写这篇主要是源于上周一次项目bug fix。</p>
+<p>项目基于React Native 0.20版本开发，在调用相机拍照后，由于照片自身带有了旋转信息，因此照片在客户看来不是“正的”。</p>
+<pre><code>- (void)imagePickerController:(UIImagePickerController *)picker
+didFinishPickingMediaWithInfo:(NSDictionary&lt;NSString *, id&gt; *)info
+{
+  NSString *mediaType = info[UIImagePickerControllerMediaType];
+  BOOL isMovie = [mediaType isEqualToString:(NSString *)kUTTypeMovie];
+  NSString *key = isMovie ? UIImagePickerControllerMediaURL : UIImagePickerControllerReferenceURL;
+  NSURL *imageURL = info[key];
+  if (imageURL) {
+    [self _dismissPicker:picker args:@[imageURL.absoluteString]];
+    return;
+  }
+
+  // This is a newly taken image, and doesn&#39;t have a URL yet.
+  // We need to save it to the image store first.
+  UIImage *originalImage = info[UIImagePickerControllerOriginalImage];
+
+  // WARNING: Using ImageStoreManager may cause a memory leak because the
+  // image isn&#39;t automatically removed from store once we&#39;re done using it.
+  [_bridge.imageStoreManager storeImage:originalImage withBlock:^(NSString *tempImageTag) {
+    [self _dismissPicker:picker args:tempImageTag ? @[tempImageTag] : nil];
+  }];
+}
+</code></pre><p>可以看到其实就是需要对<code>originalImage</code>进行方向修正。</p>
+<p>然后跟踪了RN的实现，发现他是存在应用的临时变量里面，可是用的是CGImage。意味着我们即使取出来了这个Image，也无法获知这个Image的方向信息。当时第一反应是。。我自己来实现一个选择器。。。不过这个工作量略大，而且可能会造成很多不知原因的坑。晚上洗澡的时候，突然想到可以可以通过Method swizzle的方式去实现。</p>
+<p>新建了一个category，在<code>+(void)load</code>方法的替换了<code>imagePickerController</code>方法，测试一下，OK。</p>
+<h3 id="什么时候用"><a href="#什么时候用" class="headerlink" title="什么时候用"></a>什么时候用</h3><p><code>Method Swizzle</code>是把锋利的刀，用的好，削铁如泥；用的不好，害人害己。</p>
+<p>一般而言，如果能有好的方法解决，不推荐使用<code>Method Swizzle</code>。原因就是难以跟踪问题。如A实现一个方法<code>run</code>。一个开发在<code>A(B)</code>这个category里面替换成了<code>runFast</code>，而另一个开发在<code>A(C)</code>里面替换成了<code>runSlow</code>。那我们调用<code>run</code>方法的时候到底是什么结果？</p>
+<h3 id="该怎么用"><a href="#该怎么用" class="headerlink" title="该怎么用"></a>该怎么用</h3><p>替换方法应该是在运行时确定唯一的，如果存在多次不确定的<code>Method Swizzle</code>，我们就无法知道最后获取的IMP来源于来个方法。因此在哪里替换，怎么替换，对于不同类型的方法都不一样。</p>
+<h4 id="普通实例方法"><a href="#普通实例方法" class="headerlink" title="普通实例方法"></a>普通实例方法</h4><p>替换普通实例方法比较简单，创建了一个对应类的分类，在分类中实现<code>+(void)load</code>方法，在<code>+(void)load</code>方法中进行替换。</p>
+<pre><code>+ (void)load {
+    Class originalClass = NSClassFromString(@&quot;Car&quot;);
+    Class swizzledClass = [self class];
+    SEL originalSelector = NSSelectorFromString(@&quot;run:&quot;);
+    SEL swizzledSelector = @selector(xxx_run:);
+    Method originalMethod = class_getInstanceMethod(originalClass, originalSelector);
+    Method swizzledMethod = class_getInstanceMethod(swizzledClass, swizzledSelector);
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    class_replaceMethod(originalClass,swizzledSelector,originalIMP,originalType);
+    class_replaceMethod(originalClass,originalSelector,swizzledIMP,swizzledType);
+}
+</code></pre><p>首先要知道为何在<code>+(void)load</code>中实现替换。<code>+(void)load</code>这个方法首先是在运行时执行，切只执行一次，因此就符合了我们在<code>在程序运行期只执行一次替换</code>的想法。其次，<code>+(void)load</code>的执行顺序是<code>父类-&gt;子类-&gt;分类</code>的顺序，且不覆盖。因此，分类的<code>+(void)load</code>不会影响类的<code>+(void)load</code>也是我们正需要的。</p>
+<h4 id="类方法"><a href="#类方法" class="headerlink" title="类方法"></a>类方法</h4><p>实现类方法的实现思路也是一样的，不同的是我们不从实例方法列表中去获取相关方法实现</p>
+<pre><code>+ (void)load {
+    Class cls = [self class];
+    SEL originalSelector = @selector(dictionary);
+    SEL swizzledSelector = @selector(xxx_dictionary);
+
+    // 使用class_getClassMethod来获取类方法的Method
+    Method originalMethod = class_getClassMethod(cls, originalSelector);
+    Method swizzledMethod = class_getClassMethod(cls, swizzledSelector);
+    if (!originalMethod || !swizzledMethod) {
+        return;
+    }
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    // 类方法添加,需要将方法添加到MetaClass中
+    Class metaClass = objc_getMetaClass(class_getName(cls));
+    class_replaceMethod(metaClass,originalSelector,swizzledIMP,swizzledType);
+    class_replaceMethod(metaClass,swizzledSelector,originalIMP,originalType);
+}
+</code></pre><p>区别有2点</p>
+<ol>
+<li><code>class_getClassMethod(Class cls, SEL name)</code>替换掉<code>class_getInstanceMethod(Class cls, SEL name)</code>。看得出方法的差异。</li>
+<li>实例方法的内容是记录在class的method list上的，而类方法是记录在meta-class 上的。</li>
+</ol>
+<h4 id="修改类簇"><a href="#修改类簇" class="headerlink" title="修改类簇"></a>修改类簇</h4><pre><code>+ (void)load {
+    Class originalClass = NSClassFromString(@&quot;__NSDictionaryM&quot;);
+    Class swizzledClass = [self class];
+    SEL originalSelector = @selector(setObject:forKey:);
+    SEL swizzledSelector = @selector(safe_setObject:forKey:);
+    Method originalMethod = class_getInstanceMethod(originalClass, originalSelector);
+    Method swizzledMethod = class_getInstanceMethod(swizzledClass, swizzledSelector);
+
+    IMP originalIMP = method_getImplementation(originalMethod);
+    IMP swizzledIMP = method_getImplementation(swizzledMethod);
+    const char *originalType = method_getTypeEncoding(originalMethod);
+    const char *swizzledType = method_getTypeEncoding(swizzledMethod);
+
+    class_replaceMethod(originalClass,swizzledSelector,originalIMP,originalType);
+    class_replaceMethod(originalClass,originalSelector,swizzledIMP,swizzledType);
+}
+
+- (void)safe_setObject:(id)anObject forKey:(id&lt;NSCopying&gt;)aKey {
+    if (anObject &amp;&amp; aKey) {
+        [self safe_setObject:anObject forKey:aKey];
+    }
+    else if (aKey) {
+        [(NSMutableDictionary *)self removeObjectForKey:aKey];
+    }
+}
+</code></pre><p><a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/DevPedia-CocoaCore/ClassCluster.html" target="_blank" rel="external">官方文档</a><br>中详细讲解了什么是类簇。这里我们替换的是<code>__NSDictionaryM</code>中对应的<code>setObject:forKey:</code></p>
+<h2 id="AOP-和-Method-Swizzle"><a href="#AOP-和-Method-Swizzle" class="headerlink" title="AOP 和 Method Swizzle"></a>AOP 和 Method Swizzle</h2><p>有一定开发经验的人一定听说过AOP。用一句个人觉得比较经典的话来概括<code>这种在运行时，动态地将代码切入到类的指定方法、指定位置上的编程思想就是面向切面的编程</code>。这里来看，通过Method Swizzle正好来实现AOP。在这方面，github上有一个实现非常好的开源库<a href="https://github.com/steipete/Aspects" target="_blank" rel="external">Aspects</a></p>
+<p>这里的话，会用它来做一下分析，怎么去实现AOP。</p>
+<h3 id="功能分析"><a href="#功能分析" class="headerlink" title="功能分析"></a>功能分析</h3><p><code>Aspects</code>这个库实现了AOP,那么实现到什么地步，能做到什么样的功能，可以从头文件定义中略知一二</p>
+<pre><code>typedef NS_OPTIONS(NSUInteger, AspectOptions) {
+    AspectPositionAfter   = 0,            /// Called after the original implementation (default)
+    AspectPositionInstead = 1,            /// Will replace the original implementation.
+    AspectPositionBefore  = 2,            /// Called before the original implementation.
+
+    AspectOptionAutomaticRemoval = 1 &lt;&lt; 3 /// Will remove the hook after the first execution.
+};
+</code></pre><p>定义了<code>AspectOptions</code>，从名字看出，分别可以做到将新方法插入到老方法之前/之后，替换原有的方法，仅在第一次替换原来的方法。</p>
+<pre><code>@protocol AspectToken &lt;NSObject&gt;
+
+/// Deregisters an aspect.
+/// @return YES if deregistration is successful, otherwise NO.
+- (BOOL)remove;
+
+@end
+
+/// The AspectInfo protocol is the first parameter of our block syntax.
+@protocol AspectInfo &lt;NSObject&gt;
+
+/// The instance that is currently hooked.
+- (id)instance;
+
+/// The original invocation of the hooked method.
+- (NSInvocation *)originalInvocation;
+
+/// All method arguments, boxed. This is lazily evaluated.
+- (NSArray *)arguments;
+
+@end
+</code></pre><p>两个协议，实现后可以实现撤销插入/ 获得插入的实例信息，原有方法内容和参数列表。</p>
+<pre><code>@interface NSObject (Aspects)
+
+/// Adds a block of code before/instead/after the current `selector` for a specific class.
+///
+/// @param block Aspects replicates the type signature of the method being hooked.
+/// The first parameter will be `id&lt;AspectInfo&gt;`, followed by all parameters of the method.
+/// These parameters are optional and will be filled to match the block signature.
+/// You can even use an empty block, or one that simple gets `id&lt;AspectInfo&gt;`.
+///
+/// @note Hooking static methods is not supported.
+/// @return A token which allows to later deregister the aspect.
++ (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
+/// Adds a block of code before/instead/after the current `selector` for a specific instance.
+- (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
+@end
+</code></pre><p>对NSObject定义了一个分类，只要两个方法，分别是对类方法和实例方法的操作。</p>
+<p>可以看到，Aspect的实现功能还是很强大的。在提供基本Method swizzle的基础上还实现了对不同插入位置的功能，提供可撤回的替换。</p>
+<h3 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h3><p>在自己实现<code>Method Swizzle</code>的时候，我们也会考虑到，如果我需要恢复被替换的方法怎么做？如果我仅仅想在某个方法执行前或执行后执行一个方法呢？比如我需要在所有的<code>viewDidLoad</code>中插入一个log语句，这时候用<code>Method Swizzle</code>显然是不合适，而<code>Aspect</code>能做到的，也是让我们好奇的，来看看具体的实现方法。</p>
+<pre><code>+ (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(id)block
+                            error:(NSError **)error {
+    return aspect_add((id)self, selector, options, block, error);
+}
+
+/// @return A token which allows to later deregister the aspect.
+- (id&lt;AspectToken&gt;)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(id)block
+                            error:(NSError **)error {
+    return aspect_add(self, selector, options, block, error);
+}
+</code></pre><p>两个公开API进来后都是调用<code>static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSError **error)</code>这个静态方法，区别就是对类方法中替换要在self前用id修饰。</p>
+<pre><code>static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSError **error) {
+    NSCParameterAssert(self);
+    NSCParameterAssert(selector);
+    NSCParameterAssert(block);
+
+    __block AspectIdentifier *identifier = nil;
+    aspect_performLocked(^{
+        if (aspect_isSelectorAllowedAndTrack(self, selector, options, error)) {
+            AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
+            identifier = [AspectIdentifier identifierWithSelector:selector object:self options:options block:block error:error];
+            if (identifier) {
+                [aspectContainer addAspect:identifier withOptions:options];
+
+                // Modify the class to allow message interception.
+                aspect_prepareClassAndHookSelector(self, selector, error);
+            }
+        }
+    });
+    return identifier;
+}
+</code></pre><p>方法中首先定义了一个<code>AspectIdentifier</code>类型的实例变量：</p>
+<pre><code>@interface AspectIdentifier : NSObject
++ (instancetype)identifierWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block error:(NSError **)error;
+- (BOOL)invokeWithInfo:(id&lt;AspectInfo&gt;)info;
+@property (nonatomic, assign) SEL selector;
+@property (nonatomic, strong) id block;
+@property (nonatomic, strong) NSMethodSignature *blockSignature;
+@property (nonatomic, weak) id object;
+@property (nonatomic, assign) AspectOptions options;
+@end
+</code></pre><p>可以看到这个类的定义就是对Aspect定义的。</p>
+<p>随后执行<code>aspect_performLocked</code>：</p>
+<pre><code>    static void aspect_performLocked(dispatch_block_t block) {
+    static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
+    OSSpinLockLock(&amp;aspect_lock);
+    block();
+    OSSpinLockUnlock(&amp;aspect_lock);
+}
+</code></pre><p>方法中创建了一个<code>OSSpinLockLock</code>自旋锁，对block执行进行保护。</p>
+<blockquote>
+<p>自旋锁是在多处理器系统(SMP)上为保护一段关键代码的执行或者关键数据的一种保护机制，是实现synchronization的一种手段。</p>
+</blockquote>
+<p>传入的block中，首先先执行<code>aspect_isSelectorAllowedAndTrack</code>方法</p>
+<p><code>aspect_isSelectorAllowedAndTrack</code>比较长，从字面含义上来讲就是是否允许插入和追踪。</p>
+<p>代码就不贴了。。简单说下思路。</p>
+<p>我们知道有些方法是无法被替换的，有些hook的方法对插入的位置很敏感(好像很污的感觉)。这个方法就是对这些黑名单进行判断</p>
+<p>首先是不能替换的，有<code>release</code>,<code>retain</code>,<code>autorelease</code>,<code>forwardInvocation</code></p>
+<p>只能在添加block到hook方法前的：<code>dealloc</code></p>
+<p>被hook的类响应SEL的。。。喂你再去检查下好吧</p>
+<p>接下来被hook的是不是元类，如果不是的话就可以愉快的返回YES啦。</p>
+<p>如果是元类。。稍微麻烦点。梳理一下逻辑如下</p>
+<p><code>swizzledClassesDict</code>是一个dictionary，里面存放的已经是以当前类为key，以<code>AspectTracker</code>为value的键值对。<code>AspectTracker</code>定义如下：</p>
+<pre><code>@interface AspectTracker : NSObject
+- (id)initWithTrackedClass:(Class)trackedClass;
+@property (nonatomic, strong) Class trackedClass;
+@property (nonatomic, readonly) NSString *trackedClassName;
+@property (nonatomic, strong) NSMutableSet *selectorNames;
+@property (nonatomic, strong) NSMutableDictionary *selectorNamesToSubclassTrackers;
+- (void)addSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (BOOL)subclassHasHookedSelectorName:(NSString *)selectorName;
+- (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName;
+@end
+</code></pre><p>意义如名字一样，实现的是一个跟踪对象。这个对象里面存放了跟踪的类，类的名字，选择器的名称已经子类跟踪对象的选择器。</p>
+<p>获得<code>tracker</code>后，判断是否已经hook了子类的相同选择器方法，注意只能在继承链上hook一次相同选择器的方法。</p>
+<p>随后递归父类，查看是否在继承链上已经hook过了。</p>
+<p>如果上述过程都能顺利进行下来的话，说明可以hook啦，这时候递归父类，将selector添加到tracker里面。</p>
+<p>回到上面的<code>aspect_performLocked</code>中，这时候我们得知是能hook啦，这时候根据传进来的<code>self</code>和<code>selector</code>创建一个<code>AspectsContainer</code>。<code>AspectsContainer</code>的定义如下：</p>
+<pre><code>@interface AspectsContainer : NSObject
+- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)injectPosition;
+- (BOOL)removeAspect:(id)aspect;
+- (BOOL)hasAspects;
+@property (atomic, copy) NSArray *beforeAspects;
+@property (atomic, copy) NSArray *insteadAspects;
+@property (atomic, copy) NSArray *afterAspects;
+@end
+</code></pre><p>这里有三个属性，都是array类型，从名字不难看到，存的是hook前，被hook的，hook后的。</p>
+<p>创建<code>AspectsContainer</code>之后，对<code>identifier</code>初始化，如果成功初始化，向<code>AspectsContainer</code>添加<code>identifier</code>。</p>
+<pre><code>- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)options {
+    NSParameterAssert(aspect);
+    NSUInteger position = options&amp;AspectPositionFilter;
+    switch (position) {
+        case AspectPositionBefore:  self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionInstead: self.insteadAspects = [(self.insteadAspects?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionAfter:   self.afterAspects   = [(self.afterAspects  ?:@[]) arrayByAddingObject:aspect]; break;
+    }
+}
+</code></pre><p>判断option，将<code>AspectIdentifier</code>添加到对应的array</p>
+<p>最后，执行<code>aspect_prepareClassAndHookSelector</code></p>
+<p><code>aspect_prepareClassAndHookSelector</code>是整个<code>Aspect</code>里面最核心的部分了，前面的行为都是判断是否能hook和做相应的缓存操作，在这里才是真正的执行hook的地方。</p>
+<pre><code>static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
+    NSCParameterAssert(selector);
+    Class klass = aspect_hookClass(self, error);
+    Method targetMethod = class_getInstanceMethod(klass, selector);
+    IMP targetMethodIMP = method_getImplementation(targetMethod);
+    if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
+        // Make a method alias for the existing method implementation, it not already copied.
+        const char *typeEncoding = method_getTypeEncoding(targetMethod);
+        SEL aliasSelector = aspect_aliasForSelector(selector);
+        if (![klass instancesRespondToSelector:aliasSelector]) {
+            __unused BOOL addedAlias = class_addMethod(klass, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
+            NSCAssert(addedAlias, @&quot;Original implementation for %@ is already copied to %@ on %@&quot;, NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+        }
+
+        // We use forwardInvocation to hook in.
+        class_replaceMethod(klass, selector, aspect_getMsgForwardIMP(self, selector), typeEncoding);
+        AspectLog(@&quot;Aspects: Installed hook for -[%@ %@].&quot;, klass, NSStringFromSelector(selector));
+    }
+}
+</code></pre><p>思路和我们自己动手实现<code>Method Swizzle</code>是差不多的，过程也是获取到被hook的class，然后通过<code>selector</code>获取到指定函数指针<code>IMP</code>。然后将传入的方法(block)替换掉<code>IMP</code>。</p>
+<p>首先执行的是一个<code>aspect_hookClass</code>方法，返回一个Class对象。</p>
+<p>整体的思路如下</p>
+<pre><code>Class statedClass = self.class;
+    Class baseClass = object_getClass(self);
+</code></pre><p>如果对runtime不熟悉的人可能不知道这两者的有什么不同。简单的说，<code>self.class</code>返回的是这个Object<br>所属的类，而<code>object_getClass</code>返回的是这个Object的元类，也就是类对象的类（很绕口）。接下来，就来判断元类是否被修改过（元类的类名被添加了特有的后缀），如果没有修改过，将对象的类进行hook：</p>
+<pre><code>static void _aspect_modifySwizzledClasses(void (^block)(NSMutableSet *swizzledClasses)) {
+    static NSMutableSet *swizzledClasses;
+    static dispatch_once_t pred;
+    dispatch_once(&amp;pred, ^{
+        swizzledClasses = [NSMutableSet new];
+    });
+    @synchronized(swizzledClasses) {
+        block(swizzledClasses);
+    }
+}
+
+static Class aspect_swizzleClassInPlace(Class klass) {
+    NSCParameterAssert(klass);
+    NSString *className = NSStringFromClass(klass);
+
+    _aspect_modifySwizzledClasses(^(NSMutableSet *swizzledClasses) {
+        if (![swizzledClasses containsObject:className]) {
+            aspect_swizzleForwardInvocation(klass);
+            [swizzledClasses addObject:className];
+        }
+    });
+    return klass;
+}
+
+static NSString *const AspectsForwardInvocationSelectorName = @&quot;__aspects_forwardInvocation:&quot;;
+static void aspect_swizzleForwardInvocation(Class klass) {
+    NSCParameterAssert(klass);
+    // If there is no method, replace will act like class_addMethod.
+    IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, &quot;v@:@&quot;);
+    if (originalImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, &quot;v@:@&quot;);
+    }
+    AspectLog(@&quot;Aspects: %@ is now aspect aware.&quot;, NSStringFromClass(klass));
+}
+</code></pre><p>理解起来不困难，用一个mutableSet存储类名，如果<code>swizzledClasses</code>不在set里面的话，执行<code>aspect_swizzleForwardInvocation</code>。这个方法就是替换<code>forwardInvocation</code>这方法，目的是替换掉<code>forwardInvocation</code>方法转发，采用自定以的<code>__aspects_forwardInvocation</code><br>核心就是下面两句：</p>
+<pre><code>IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, &quot;v@:@&quot;);
+    if (originalImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, &quot;v@:@&quot;);
+    }
+</code></pre><p><code>__ASPECTS_ARE_BEING_CALLED__</code>是最关键的方法，这个方法就是决定我们要替换的方法如何执行的地方。</p>
+<pre><code>static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL selector, NSInvocation *invocation) {
+    NSCParameterAssert(self);
+    NSCParameterAssert(invocation);
+    SEL originalSelector = invocation.selector;
+    SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
+    invocation.selector = aliasSelector;
+    AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
+    AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
+    AspectInfo *info = [[AspectInfo alloc] initWithInstance:self invocation:invocation];
+    NSArray *aspectsToRemove = nil;
+
+    // Before hooks.
+    aspect_invoke(classContainer.beforeAspects, info);
+    aspect_invoke(objectContainer.beforeAspects, info);
+
+    // Instead hooks.
+    BOOL respondsToAlias = YES;
+    if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
+        aspect_invoke(classContainer.insteadAspects, info);
+        aspect_invoke(objectContainer.insteadAspects, info);
+    }else {
+        Class klass = object_getClass(invocation.target);
+        do {
+            if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
+                [invocation invoke];
+                break;
+            }
+        }while (!respondsToAlias &amp;&amp; (klass = class_getSuperclass(klass)));
+    }
+
+    // After hooks.
+    aspect_invoke(classContainer.afterAspects, info);
+    aspect_invoke(objectContainer.afterAspects, info);
+
+    // If no hooks are installed, call original implementation (usually to throw an exception)
+    if (!respondsToAlias) {
+        invocation.selector = originalSelector;
+        SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+        if ([self respondsToSelector:originalForwardInvocationSEL]) {
+            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+        }else {
+            [self doesNotRecognizeSelector:invocation.selector];
+        }
+    }
+
+    // Remove any hooks that are queued for deregistration.
+    [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
+}
+</code></pre><p>这个方法里，实际上替换的就是<code>forwardInvocation:</code>这个runtime方法，自造了一个调用方法。<br>目的就是从原有方法和hook方法去做处理。</p>
+<p>过程就是先用临时变量获取<code>invocation</code>的seletor，将<code>invocation</code>的selecor替换成aliasSelector。通过传入的参数构造<code>AspectInfo</code>。取得<code>objectContainer</code>和<code>classContainer</code>（都是<code>AspectsContainer</code>）类型的。调用<code>aspect_invoke</code></p>
+<p><code>aspect_invoke</code>是一个宏方法（其实这里也不用写成宏）。</p>
+<pre><code>#define aspect_invoke(aspects, info) \
+for (AspectIdentifier *aspect in aspects) {\
+    [aspect invokeWithInfo:info];\
+    if (aspect.options &amp; AspectOptionAutomaticRemoval) { \
+        aspectsToRemove = [aspectsToRemove?:@[] arrayByAddingObject:aspect]; \
+    } \
+}
+</code></pre><p>调用了<code>invokeWithInfo</code>判断aspect的option，如果需要一出，就讲他从对应的container中移除。<br><code>invokeWithInfo</code>的方法如下：</p>
+<pre><code>- (BOOL)invokeWithInfo:(id&lt;AspectInfo&gt;)info {
+    NSInvocation *blockInvocation = [NSInvocation invocationWithMethodSignature:self.blockSignature];
+    NSInvocation *originalInvocation = info.originalInvocation;
+    NSUInteger numberOfArguments = self.blockSignature.numberOfArguments;
+
+    // Be extra paranoid. We already check that on hook registration.
+    if (numberOfArguments &gt; originalInvocation.methodSignature.numberOfArguments) {
+        AspectLogError(@&quot;Block has too many arguments. Not calling %@&quot;, info);
+        return NO;
+    }
+
+    // The `self` of the block will be the AspectInfo. Optional.
+    if (numberOfArguments &gt; 1) {
+        [blockInvocation setArgument:&amp;info atIndex:1];
+    }
+
+    void *argBuf = NULL;
+    for (NSUInteger idx = 2; idx &lt; numberOfArguments; idx++) {
+        const char *type = [originalInvocation.methodSignature getArgumentTypeAtIndex:idx];
+        NSUInteger argSize;
+        NSGetSizeAndAlignment(type, &amp;argSize, NULL);
+
+        if (!(argBuf = reallocf(argBuf, argSize))) {
+            AspectLogError(@&quot;Failed to allocate memory for block invocation.&quot;);
+            return NO;
+        }
+
+        [originalInvocation getArgument:argBuf atIndex:idx];
+        [blockInvocation setArgument:argBuf atIndex:idx];
+    }
+
+    [blockInvocation invokeWithTarget:self.block];
+
+    if (argBuf != NULL) {
+        free(argBuf);
+    }
+    return YES;
+}
+</code></pre><p>这个部分就是从原有方法中取出参数列表赋给block，在这过程总检查是否block不符合原来方法。将<code>self.block</code>设为<code>blockInvocation</code>的target。</p>
+<p>回到<code>aspect_hookClass</code>，在上面特殊情况处理之后，就是一般情况，这时候创建动态子类，类名以<code>AspectsSubclassSuffix</code>为指定后缀。<code>aspect_hookedGetClass</code>中替换掉<code>Class</code>方法，使其返回的是<code>statedClass(被hook的类)</code>，这里将动态生成的子类的<code>Class</code>和<code>Meta Class</code>都替换成<code>statedClass</code>，最后将<code>subclass</code>注册进去，最后将<code>subclass</code>设置成<code>self</code>的类。这样就完成了hook的过程，<code>self</code>执行的方法和信息都被我们hook到了。</p>
+<p>回到<code>aspect_prepareClassAndHookSelector</code>（感觉从很深的子树回来真的很不容易），接下来我们获得了我们要hook的<code>Method</code>和<code>IMP</code>,我们要判断是否有对应的IMP</p>
+<pre><code>static BOOL aspect_isMsgForwardIMP(IMP impl) {
+    return impl == _objc_msgForward
+#if !defined(__arm64__)
+    || impl == (IMP)_objc_msgForward_stret
+#endif
+    ;
+}
+</code></pre><p><code>_objc_msgForward_stret</code>和<code>_objc_msgForward</code>的区别在<a href="http://sealiesoftware.com/blog/archive/2008/10/30/objc_explain_objc_msgSend_stret.html" target="_blank" rel="external">这篇文章</a>里面有讲解，简单的引用JSPatch作者的解释</p>
+<blockquote>
+<p>大多数CPU在执行C函数时会把前几个参数放进寄存器里，对 obj_msgSend 来说前两个参数固定是 self / _cmd，它们会放在寄存器上，在最后执行完后返回值也会保存在寄存器上，取这个寄存器的值就是返回值。普通的返回值(int/pointer)很小，放在寄存器上没问题，但有些 struct 是很大的，寄存器放不下，所以要用另一种方式，在一开始申请一段内存，把指针保存在寄存器上，返回值往这个指针指向的内存写数据，所以寄存器要腾出一个位置放这个指针，self / _cmd 在寄存器的位置就变了。objc_msgSend 不知道 self / _cmd 的位置变了，所以要用另一个方法 objc_msgSend_stret 代替。原理大概就是这样。在 NSMethodSignature 的 debugDescription 上打出了是否 special struct，只能通过这字符串判断。所以最终的处理是，在非 arm64 下，是 special struct 就走 _objc_msgForward_stret，否则走 _objc_msgForward。</p>
+</blockquote>
+<p>这里如果IMP == _objc_msgForward，说明找不到 class / selector 对应的 IMP，如果能找到的话，我们就可以进行下一步了。</p>
+<p>首先要创建一个<code>aliasSelector</code>选择器，用这个选择器去添加<code>targetMethod</code>对应的<code>IMP</code>。这个目的么，自然是保存下来将要被替换方法的实现。</p>
+<p>接下来，<code>class_replaceMethod</code>替换掉我们需要hook的方法，使用了<code>aspect_getMsgForwardIMP</code>如下：</p>
+<pre><code>static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
+    IMP msgForwardIMP = _objc_msgForward;
+#if !defined(__arm64__)
+    // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
+    // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
+    // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
+    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
+    Method method = class_getInstanceMethod(self.class, selector);
+    const char *encoding = method_getTypeEncoding(method);
+    BOOL methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
+    if (methodReturnsStructValue) {
+        @try {
+            NSUInteger valueSize = 0;
+            NSGetSizeAndAlignment(encoding, &amp;valueSize, NULL);
+
+            if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
+                methodReturnsStructValue = NO;
+            }
+        } @catch (__unused NSException *e) {}
+    }
+    if (methodReturnsStructValue) {
+        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    }
+#endif
+    return msgForwardIMP;
+}
+</code></pre><p>这里对arm64做了特殊处理，原因就是上文提到实现问题，对返回的struct做特殊的处理。</p>
+<p>至此，整个hook的过程就结束了，我们已经将需要hook的方法替换成了我们需要的实现。</p>
+<h3 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h3><p>写完后才发现整个思路虽然很清晰，但是跨越很大，如果去处理这个hook的类和方法需要做许多判断，然后将原有的类和方法的信息保存下来，以便于恢复，最后通过<code>class_replaceMethod</code>的方法替换掉了<code>forwardInvocation:</code>。这样通过实现了最后消息转发过程中hook，执行我们注入的方法了。</p>
+<p>至于恢复被hook的方法，思路也很简单了，从cache中获取origin method，替换掉hook方法就行了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>Aspect</code>的实现是基于对runtime强大的理解，通过hook<code>forwardInvocation</code>方法，做到了对消息转发的改变，任何对象不能处理的方法最后都会到<code>forwardInvovation</code>中，在这里我们能执行hook的方法和选择执行的时间，也达到了<code>AOP</code>的思想。</p>
+<p><code>Method Swizzle</code>也好，<code>Aspect</code>也好，都是依赖对runtime的认识理解，尤其是<code>Aspect</code>，在学习代码的过程也增长了自己对语言的认知和理解。</p>
+<p>在此，项目中也用上了<code>JSPatch</code>，试想如果结合<code>Aspect</code>，通过runtime强大的功能，我们几乎能做到任何时间(坏坏的事情不要想哦)。未来如果有很好的用例，也会分享出来。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2016/08/15/用GCD来实现个Timer/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="csbzhixing">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="学海无涯">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/15/用GCD来实现个Timer/" itemprop="url">
+                  用GCD来实现个Timer
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-08-15T00:04:39+08:00">
+                2016-08-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##少用NSTimer</p>
+<p>在iOS中开发中，定时器是经常用到的工具。一般情况下，我们都会去使用<code>NSTimer</code>这个类。然而，这个类一旦使用不当的话，会给我们造成很多无法预见的坑。</p>
+<p><code>NSTimer</code>有哪些坑，一个个来数一数</p>
+<h3 id="Timer必须作用在一个运行中的runloop"><a href="#Timer必须作用在一个运行中的runloop" class="headerlink" title="Timer必须作用在一个运行中的runloop"></a>Timer必须作用在一个运行中的<code>runloop</code></h3><p>用过<code>NSTimer</code>的都知道，在创建了<code>NSTimer</code>之后，必须将NSTimer加入到runloop中。如果是在主线程的还好，因为主线程默认是有runLoop的（实际上一般很少会在主线程开timer）。如果是在子线程，那么就要手动激活runLoop先，不然就调用时无效的。</p>
+<h3 id="操作必须在同一个线程中"><a href="#操作必须在同一个线程中" class="headerlink" title="操作必须在同一个线程中"></a>操作必须在同一个线程中</h3><p>NSTimer的创建与撤销必须在同一个线程操作、performSelector的创建与撤销必须在同一个线程操作</p>
+<h3 id="内存泄漏"><a href="#内存泄漏" class="headerlink" title="内存泄漏"></a>内存泄漏</h3><p>一般用NSTimer最容易出现的问题。首先来分析为什么会出现这个情况。</p>
+<p>通常，我们创建一个<code>NSTimer</code>的方法是调用以下的API：</p>
+<pre><code>+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
++ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo;
+
+- (instancetype)initWithFireDate:(NSDate *)date interval:(NSTimeInterval)ti target:(id)t selector:(SEL)s userInfo:(nullable id)ui repeats:(BOOL)rep NS_DESIGNATED_INITIALIZER;
+</code></pre><p>这个时候，target会被timer持有，引用计数+1。</p>
+<p>此时，如果直接销毁target，即使在target的deallco里面调用了[timer invaild]也无用。因为timer和target相关，因此必须提前调用[timer invaild]。这种BUG最常见的的就是一个<code>UIViewController</code>pop的时候，timer没有被invaild，结果<code>UIViewController</code>没有被销毁，导致了内存泄漏。</p>
+<blockquote>
+<p>This method is the only way to remove a timer from an NSRunLoop object. The NSRunLoop object removes its strong reference to the timer, either just before the invalidate method returns or at some later point.</p>
+<p>If it was configured with target and user info objects, the receiver removes its strong references to those objects as well.<br>You must send this message from the thread on which the timer was installed. If you send this message from another thread, the input source associated with the timer may not be removed from its run loop, which could prevent the thread from exiting properly.</p>
+</blockquote>
+<p>注意到官方文档中提到，runLoop会持有NSTimer的引用，因此除了调用<code>invaild</code>方法外，没有别的方法.</p>
+<p>##用GCD代替NSTimer</p>
+<p>用过GCD的都说好，可以说把GCD玩的很溜的话，很多异步并行问题都能解决，在这里我们就要去解决NSTimer的坑的问题。这里用三个开源库来抛砖引玉，讲讲不同的实现由什么优缺点。</p>
+<p>###RNTimer</p>
+<p>这个库很老了，12年后就没有更新了，内容也很简单，只有两个文件，因为代码很少，直接上源码了</p>
+<h4 id="源码摘要"><a href="#源码摘要" class="headerlink" title="源码摘要"></a>源码摘要</h4><pre><code class="Objective-C">
+@interface RNTimer : NSObject
+
+/**---------------------------------------------------------------------------------------
+ @name Creating a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Creates and returns a new repeating RNTimer object and starts running it
+
+ After `seconds` seconds have elapsed, the timer fires, executing the block.
+ You will generally need to use a weakSelf pointer to avoid a retain loop.
+ The timer is attached to the main GCD queue.
+
+ @param seconds The number of seconds between firings of the timer. Must be greater than 0.
+ @param block Block to execute. Must be non-nil
+
+ @return A new RNTimer object, configured according to the specified parameters.
+*/
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds block:(dispatch_block_t)block;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Firing a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Causes the block to be executed.
+
+ This does not modify the timer. It will still fire on schedule.
+*/
+- (void)fire;
+
+
+/**---------------------------------------------------------------------------------------
+ @name Stopping a Timer
+ -----------------------------------------------------------------------------------------
+*/
+
+/** Stops the receiver from ever firing again
+
+ Once invalidated, a timer cannot be reused.
+
+*/
+
+
+@interface RNTimer ()
+@property (nonatomic, readwrite, copy) dispatch_block_t block;
+@property (nonatomic, readwrite, assign) dispatch_source_t source;
+@end
+
+@implementation RNTimer
+@synthesize block = _block;
+@synthesize source = _source;
+
++ (RNTimer *)repeatingTimerWithTimeInterval:(NSTimeInterval)seconds
+                                                                            block:(void (^)(void))block {
+    NSParameterAssert(seconds);
+    NSParameterAssert(block);
+
+    RNTimer *timer = [[self alloc] init];
+    timer.block = block;
+    timer.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                0, 0,
+                                                                                dispatch_get_main_queue());
+    uint64_t nsec = (uint64_t)(seconds * NSEC_PER_SEC);
+    dispatch_source_set_timer(timer.source,
+                                                        dispatch_time(DISPATCH_TIME_NOW, nsec),
+                                                        nsec, 0);
+    dispatch_source_set_event_handler(timer.source, block);
+    dispatch_resume(timer.source);
+    return timer;
+}
+
+- (void)invalidate {
+    if (self.source) {
+        dispatch_source_cancel(self.source);
+        dispatch_release(self.source);
+        self.source = nil;
+    }
+    self.block = nil;
+}
+
+- (void)dealloc {
+    [self invalidate];
+}
+
+- (void)fire {
+    self.block();
+}
+</code></pre>
+<h4 id="实现分析"><a href="#实现分析" class="headerlink" title="实现分析"></a>实现分析</h4><p>实现很简单，用的是最基本的方法，即创建了一个<code>dispatch_source_t</code>，传入<code>block</code>，然后通过<code>dispatch_source_set_timer</code>将timer添加到<code>dispatch_source</code>，设置事件处理为传入的block,然后执行timer。</p>
+<p>提供两个和<code>NSTimer</code>一样的方法，<code>invalidate</code>和<code>fire</code>。<code>fire</code>会立即执行block，但是不会使timer失效，依然会按照预定计划执行。</p>
+<p>在API定义上，保持了和<code>NSTimer</code>一样的定义，所以切换起来没有压力。但是简单也以为这功能不完善。</p>
+<ol>
+<li>无法暂停挂起timer</li>
+<li>无法指定线程</li>
+<li>无法添加新的任务到timer中</li>
+</ol>
+<h3 id="MSWeakTimer"><a href="#MSWeakTimer" class="headerlink" title="MSWeakTimer"></a>MSWeakTimer</h3><p><code>MSWeakTimer</code>的API设计成和<code>NSTimer</code>一样，调用的方法也一致，直接使用并没有什么副作用。</p>
+<pre><code class="Objective-C">
+- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                         /**
+ * Creates an `MSWeakTimer` object and schedules it to start ticking inmediately.
+ */
++ (instancetype)scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval
+                                                                                target:(id)target
+                                                                            selector:(SEL)selector
+                                                                            userInfo:(id)userInfo
+                                                                             repeats:(BOOL)repeats
+                                                                 dispatchQueue:(dispatch_queue_t)dispatchQueue;
+
+                                                                 /**
+ * Starts the timer if it hadn&#39;t been schedule yet.
+ * @warning calling this method on an already scheduled timer results in undefined behavior.
+ */
+- (void)schedule;
+
+/**
+ * Sets the amount of time after the scheduled fire date that the timer may fire to the given interval.
+ * @discussion Setting a tolerance for a timer allows it to fire later than the scheduled fire date, improving the ability of the system to optimize for increased power savings and responsiveness. The timer may fire at any time between its scheduled fire date and the scheduled fire date plus the tolerance. The timer will not fire before the scheduled fire date. For repeating timers, the next fire date is calculated from the original fire date regardless of tolerance applied at individual fire times, to avoid drift. The default value is zero, which means no additional tolerance is applied. The system reserves the right to apply a small amount of tolerance to certain timers regardless of the value of this property.
+ As the user of the timer, you will have the best idea of what an appropriate tolerance for a timer may be. A general rule of thumb, though, is to set the tolerance to at least 10% of the interval, for a repeating timer. Even a small amount of tolerance will have a significant positive impact on the power usage of your application. The system may put a maximum value of the tolerance.
+ */
+@property (atomic, assign) NSTimeInterval tolerance;
+
+/**
+ * Causes the timer to be fired synchronously manually on the queue from which you call this method.
+ * You can use this method to fire a repeating timer without interrupting its regular firing schedule.
+ * If the timer is non-repeating, it is automatically invalidated after firing, even if its scheduled fire date has not arrived.
+ */
+- (void)fire;
+
+/**
+ * You can call this method on repeatable timers in order to stop it from running and trying
+ * to call the delegate method.
+ * @note `MSWeakTimer` won&#39;t invoke the `selector` on `target` again after calling this method.
+ * You can call this method from any queue, it doesn&#39;t have to be the queue from where you scheduled it.
+ * Since it doesn&#39;t retain the delegate, unlike a regular `NSTimer`, your `dealloc` method will actually be called
+ * and it&#39;s easier to place the `invalidate` call there, instead of figuring out a safe place to do it.
+ */
+- (void)invalidate;
+
+- (id)userInfo;
+</code></pre>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>先来看初始化方法：</p>
+<pre><code>- (id)initWithTimeInterval:(NSTimeInterval)timeInterval
+                                        target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(id)userInfo
+                                     repeats:(BOOL)repeats
+                         dispatchQueue:(dispatch_queue_t)dispatchQueue
+{
+        NSParameterAssert(target);
+        NSParameterAssert(selector);
+        NSParameterAssert(dispatchQueue);
+
+        if ((self = [super init]))
+        {
+                self.timeInterval = timeInterval;
+                self.target = target;
+                self.selector = selector;
+                self.userInfo = userInfo;
+                self.repeats = repeats;
+
+                NSString *privateQueueName = [NSString stringWithFormat:@&quot;com.mindsnacks.msweaktimer.%p&quot;, self];
+                self.privateSerialQueue = dispatch_queue_create([privateQueueName cStringUsingEncoding:NSASCIIStringEncoding], DISPATCH_QUEUE_SERIAL);
+                dispatch_set_target_queue(self.privateSerialQueue, dispatchQueue);
+
+                self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+                                                                                        0,
+                                                                                        0,
+                                                                                        self.privateSerialQueue);
+        }
+
+        return self;
+}
+</code></pre><p>将传入的参数复制给当前类的属性，然后初始化<code>privateSerialQueue</code>，<code>privateSerialQueue</code>的名称是<code>privateQueueName</code>，可变参数为当前对象的内存地址。调用<code>dispatch_set_target_queue</code>将传参的<code>dispatchQueue</code>优先级赋给<code>privateSerialQueue</code>。最后，初始化<code>timer</code>。</p>
+<p>然后看执行函数</p>
+<pre><code>- (void)schedule
+{
+        [self resetTimerProperties];
+
+        __weak MSWeakTimer *weakSelf = self;
+
+        dispatch_source_set_event_handler(self.timer, ^{
+                [weakSelf timerFired];
+        });
+
+        dispatch_resume(self.timer);
+}
+</code></pre><p>首先调用了<code>resetTimerProperties</code></p>
+<pre><code>- (void)resetTimerProperties
+{
+        int64_t intervalInNanoseconds = (int64_t)(self.timeInterval * NSEC_PER_SEC);
+        int64_t toleranceInNanoseconds = (int64_t)(self.tolerance * NSEC_PER_SEC);
+
+        dispatch_source_set_timer(self.timer,
+                                                            dispatch_time(DISPATCH_TIME_NOW, intervalInNanoseconds),
+                                                            (uint64_t)intervalInNanoseconds,
+                                                            toleranceInNanoseconds
+                                                            );
+}
+</code></pre><p><code>resetTimerProperties</code>重置<code>timer</code>。</p>
+<p><code>intervalInNanoseconds</code>和<code>toleranceInNanoseconds</code></p>
+<p>充当<code>interval</code>和<code>leeway</code></p>
+<p>在执行完<code>resetTimerProperties</code>后，<code>dispatch_source_set_event_handler</code>一个block到<code>timer</code>，执行<code>timerFired</code>：</p>
+<pre><code>- (void)timerFired
+{
+        // Checking attomatically if the timer has already been invalidated.
+        if (OSAtomicAnd32OrigBarrier(1, &amp;_timerFlags.timerIsInvalidated))
+        {
+                return;
+        }
+
+        // We&#39;re not worried about this warning because the selector we&#39;re calling doesn&#39;t return a +1 object.
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored &quot;-Warc-performSelector-leaks&quot;
+                [self.target performSelector:self.selector withObject:self];
+        #pragma clang diagnostic pop
+
+        if (!self.repeats)
+        {
+                [self invalidate];
+        }
+}
+</code></pre><p>这里<code>OSAtomicAnd32OrigBarrier</code>是个值得关注的函数。</p>
+<p><code>OSAtomicAnd32OrigBarrier</code>是一个原子操作的布尔与运算，且带有内存屏障。<code>OSAtomicAnd32OrigBarrier</code>保证了在与操作之前数据结构的存储结构发生改变。</p>
+<p>详细的只是可以参考下面这篇文章</p>
+<p><a href="">http://southpeak.github.io/blog/2014/10/17/osatomicyuan-zi-cao-zuo/</a></p>
+<p>在这里，<code>_timerFlags.timerIsInvalidated</code>与1做与操作，如果返回return 则返回，如果不是，执行.</p>
+<p>这里如果不加入<code>invalidate</code>的话，恐怕说不清楚为什么这里要做这个判断</p>
+<pre><code>- (void)invalidate
+{
+        // We check with an atomic operation if it has already been invalidated. Ideally we would synchronize this on the private queue,
+        // but since we can&#39;t know the context from which this method will be called, dispatch_sync might cause a deadlock.
+        if (!OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated))
+        {
+                dispatch_source_t timer = self.timer;
+                dispatch_async(self.privateSerialQueue, ^{
+                        dispatch_source_cancel(timer);
+                        ms_release_gcd_object(timer);
+                });
+        }
+}
+</code></pre><pre><code>    if (!OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated))
+</code></pre><p><code>OSAtomicTestAndSetBarrier</code>和<code>OSAtomicAnd32OrigBarrier</code>正好可以作为一个相对操作。</p>
+<p><code>OSAtomicTestAndSetBarrier(7, &amp;_timerFlags.timerIsInvalidated)</code>会指定变量中的一个bit，把它设置为‘1’并返回旧值。如果要指定32bit integer最低位，n应该是7。因此如果第一次调用<code>OSAtomicTestAndSetBarrier</code>的话，返回false同时话将<code>timerIsInvalidated</code>置成1.由于原子操作和内存屏障，这个方法不会和<code>OSAtomicAnd32OrigBarrier</code>一同执行。如果执行到<code>timerFired</code>的时候，<code>OSAtomicAnd32OrigBarrier(1, &amp;_timerFlags.timerIsInvalidated)</code>返回true，就会返回了。通过这个方法保证了在调用<code>invalidate</code>后将timer失效。</p>
+<p><code>timerFired</code>如果能执行，则通过<code>performSelector</code>来调用对用的<code>SEL</code></p>
+<p>在<code>invalidate</code>中，如果需要释放，需要调用<code>dispatch_async</code>。原因是我们虽然通过原子操作保证了<code>invalidated</code>，但是我们无法确定当前的上下文情况，使用<code>dispatch_async</code>可能会造成死锁。</p>
+<p>主流程分析就是如此，<code>MSWeakTimer</code>最值得关注的就是上面讲解决线程同步的方法。</p>
+<p><code>MSWeakTimer</code>解决了前面提到的问题中无法添加指定线程（实际上也不是添加到那个线程，而是新开了一个线程）。由于模仿的是<code>NSTimer</code>的API，所以另外两个方法也没有解决。</p>
+<h2 id="我的实现-–-ZXGCDTimer"><a href="#我的实现-–-ZXGCDTimer" class="headerlink" title="我的实现 – ZXGCDTimer"></a>我的实现 – ZXGCDTimer</h2><p>在参考了上面的两个开源库后，自己动手撸了一个简单的基于GCD的Timer。基本解决了上面提到了三个问题。</p>
+<p>代码地址：<a href="">https://github.com/csbzhixing/ZXGCDTimer</a></p>
+<p>思路是，通过<code>ZXGCDTimerManager</code>提供对外操作包括创建，执行，取消，挂起，回复功能。每个timer通过<code>ZXGCDTimer</code>为单位去管理，以<code>timerName</code>去区分不同的timer。支持自定义线程，支持新增Action。</p>
+<p>由于是自己处于研究目的写的，可能存在各种问题，也欢迎大家提出批评和指正。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2016/04/07/post/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="csbzhixing">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="学海无涯">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/04/07/post/" itemprop="url">
+                  一年
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-07T00:03:44+08:00">
+                2016-04-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <pre><code>转眼间，我已经实习一年了。
+转眼间，要大学毕业了。
+
+</code></pre><p>如果不看日历，不去想时间，似乎和一年前的这个时候也没有什么不同。一样的担心，一样的焦虑。<br>一年前，因为自己陷入了学习的盲区，不知道如何去提升自己，只好想办法找个实习，想说自己找找自己的学习的方向。这么一做，就是一年过去了。</p>
+<p>实习的一年，可以说很辛苦，也很充实。辛苦是因为不仅仅要完成自己学习上的东西，还要去完成工作上的事情，这点对我来说的确是不小的挑战。大学的前两年里面，每天白天上上课，晚上搞下作业，然后就可以快乐的玩耍了。然而到了实习，白天的工作就足以让自己心力交瘁，晚上回到学校后还有许多课业要补习。即使如此，我也没有后悔。如果不是实习，我现在可能还在盲目不知道怎么去找工作；如果不是实习，自己可能现在还在纠结自己未来在哪个方向前进；如果不是实习，可能现在还有改不掉的一堆学生气。</p>
+<pre><code>时间不会让人成长，只有痛苦可以
+
+
+</code></pre><p>还记得刚开始实习的时候特别痛苦。用学校那套学习方法进入工作肯定是行不通的。所以开始的一个月，在iOS上并没有什么长进。硬生生的啃了几本书也然并卵。到了第二个月，接触了项目，有了目标，一点点的去实现一个个目标，结合原理，才真正有了一点点突破。</p>
+<pre><code>知识永远学不完，钱永远赚不完，找到自己的路就行
+
+
+</code></pre><p>十月份换了个实习，回到了深圳。一个原因是原来的公司人员变动，自己也觉得平台太小已经没法接触更多的东西了，除此外回到深圳也可以解放自己更多时间来学习。于是乎很幸运的来到了现在的公司。在这里，从头开发了多个APP，接触了React Native。从一个辅助慢慢成为一个独立的开发。这个时候，很多同学已经确定下来了Offer.看着同学一个个比较自己的offer的时候，自己的心态也有点小小的波动。但是，最后，还是决定扎下来。现有的平台对于自己来说是足够的。一方面身边有足够厉害的人能够提携自己，一方面在项目和时间上能够让自己去深入学习和提高。比较1K,2k这点差距，技术积累和做人的学习恐怕才是最重要的。    </p>
+<pre><code>一年后
+
+
+</code></pre><p>虽然前不久才写完新年总结，之后也好久没有更新什么技术文章，这个总结也算另开一个头。已经从毕设中解放的我有更多时间去深入iOS和js了。希望在一年后的今天，能够在两个技术栈上都有不小的成就。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2016/01/02/2016/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="csbzhixing">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="学海无涯">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/01/02/2016/" itemprop="url">
+                  2016
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-01-02T00:51:17+08:00">
+                2016-01-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Hello-2016-Goodbye-2015"><a href="#Hello-2016-Goodbye-2015" class="headerlink" title="Hello 2016, Goodbye 2015"></a>Hello 2016, Goodbye 2015</h1><p>转眼就一年过去了。感觉2015过的飞快。过年的时候去阳江好像就再前不久，如今已经是2016年。想起来今天过得特别快，大概是因为自己已经开始工作了吧。</p>
+<p>在三月份，也就是大三下学期的时候，发现自己学习进入了一个瓶颈。对待很多技术都感到很好奇，也感觉自己有想法在这个行业做下去，但是却找不到一个方向去深入地学习。于是乎，在妹子的鼓励下，决定找公司去实习，通过对实际商业生产的了解，调整自己的技术学习方向。然而就这么误打误撞地进入了iOS开发。在广州业速的六个月里面，我从一个只是听闻iOS开发和觉得macbook最牛逼的一个乡下人（好吧我承认这个是自嘲）到一个基本熟悉iOS的初级开发。在这过程中，得益于likid的指导和帮助，收获了许多学习上的心得。在之前自己的学习都是浅尝即止，并没有深入到技术的本质，所以导致了自己好像很多东西都知道，但是说起来却又好像什么都不太懂的样子。在学习iOS开发的过程中，也矫正了自己很多不良的习惯。其中是懂了baidu都是呵呵呵，要查资料还是谷歌大法好（好吧其实我学校不能翻墙，怎么去一个不存在的网站搜东西）。然后是github和stackoverflow两个社区了解也算知道了真正学技术应该去啥地方学习T T,原来我之前三年基本都白过了，还好知道的不晚。</p>
+<p>在十月的时候，在鹅厂无望后（主要是自己太水），决定回到深圳，来到了现在的这家公司。新公司给我最大的感受就是身边的大神特别多。其中最让我收益一个是charge对我在iOS开发上的指导，一个是春哥对我技术思考上的指导。在新公司里面，我不再把自己仅仅当做一个完成任务就好的实习生，而是更多地去作为一个团队的一份子。在这过程中，解决了之前很多从来都没思考也没有遇到过的问题，慢慢地能够更加独立地解决问题。虽然在新公司，加班的次数比起在广州多了不少，然而并没有让我觉得上班很无聊，似乎看来我还是适合干这行的，哈哈。在12月，新项目决定上React Native，这又给我了一个非常好的学习机会。在一周的时间学习了ES6和React Native的语法，写了几个简陋的组件，也算碰到了门槛。说不定2016年也会接触下安卓和前端开发。作为一个技术人，千万不能把自己限死在一个固定的平台上。掌握了基本的原则和思想，就应该能在所有的平台上都有所作为。学习能力和执行力永远是技术人的核心竞争力。</p>
+<p>得益于今年自己的实习有了一些小小的外快和大牛市一波行情。今年买了特别多得东西。从一堆耳机，几部手机，macbook和新台式，音响。虽然买了很多东西，但是基本上没有靠父母出什么钱。在消费观念上，一年里面也是波动了很多，从舍不得花钱，到乱花钱，到有目的的花钱。新一年里面，如果能顺利拿到offer，也要为未来考虑下了。虽然比起别人不用在外面租房省下了不少的开支，但不意味着自己能够乱花钱。希望能够在10年内尽早的完全独立。</p>
+<p>2015年，最大的收获就是想明白了，读书和锻炼这两样是绝对地收益终身的事情。于是乎，购入了kindle，买了跑鞋，开始了自己的精神和肉体的锻炼。这一年，读了杂七杂八的很多书，跑了快两百公里，感觉很不错，想在2016能够继续。只有保持健康的身体和清醒地大脑才能保持每天都能快乐地生活。</p>
+<p>2016年，是自己大学的最后一年。不出意外的话应该是在实习的过程中国不知不觉的结束自己的大学生涯。对于大学，对我个人而言，收获恐怕不多，唯有明白了自己没有选错自己未来从事的行业。想来，大学也算玩过，开心过，也不枉自己最后任性的青春。即将踏上社会，再也没有借口给自己找退路，只能和一切困难斗争下去。2016，应该是会是个值得纪念的年份。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/12/03/xcode-color/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -478,1850 +1727,11 @@ pod &#39;CocoaLumberjack&#39;
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/11/13/leetcode2/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/11/13/leetcode2/" itemprop="url">
-                  一周刷题总结 - 2
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-11-13T22:08:35+08:00">
-                2015-11-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/数据结构/" itemprop="url" rel="index">
-                    <span itemprop="name">数据结构</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>又到了一周题目总结时间。到现在为止总共完成了三十道题，每天大概做1-3题。感觉这个步骤还是比较适合自己的进度的。</p>
-<ul>
-<li>leetcode 9</li>
-</ul>
-<p>给出一个Int值，判断是否是回文数字。</p>
-<p>我们可以想到，如果是字符串的话，我们可以通过字符串的处理方式来处理，但这里是一个数字。我们可以从回文的定义知道，如果我们将整个数字反转过来，如果仍然等于原来的数字，那么这个数字就是回文数。</p>
-<p>代码如下</p>
-<pre><code class="C">bool isPalindrome(int x) {
-    if(x&lt;0) return false;
-    if(x&lt;10) return true;
-
-    int y=0,temp = x;
-
-    while(temp)
-    {
-        y = y*10 + (temp%10);
-        temp/=10;
-    }
-
-    return x==y;
-}
-</code></pre>
-<ul>
-<li>leetcode 26</li>
-</ul>
-<p>移除一个数组中重复的数字。</p>
-<p>根据题意，我们只需要将重复的数字不停地移动到数组末尾，然后缩短数组大小就可以了。</p>
-<pre><code class="C">int removeDuplicates(int* nums, int numsSize) {
-
-    if(numsSize&lt;2) return numsSize;
-
-    int cur = 0;int temp = nums[0];
-
-    for(int i = 1;i&lt;numsSize;i++)
-    {
-        if(nums[i] == temp) continue;
-        else
-        {
-            nums[cur+1] = nums[i];
-            cur++;
-            temp = nums[i];
-        }
-    }    
-    return cur+1;
-}
-</code></pre>
-<ul>
-<li>leetcode 136</li>
-</ul>
-<p>给出一个数组，找出数组中唯一一个只出现了一次的数，其他的数都出现了两次，要求线性时间内完成且不能用额外的空间。</p>
-<p>这道题给的难度分类是中等，但是我看了下题目的通过率很高，说明又很巧妙地方法。我自己在开始做得时候想到的都都要用额外的存储空间。在看了别人的方法后才知道原来可以用异或方法，因为异或方法相当于交换了两个数。所以我们要做得就是遍历一次数组，用一个数与每个数组的数异或，最后保留的数就是唯一一个出现了一次的数。</p>
-<pre><code class="C">int removeDuplicates(int* nums, int numsSize) {
-
-    if(numsSize&lt;2) return numsSize;
-
-    int cur = 0;int temp = nums[0];
-
-    for(int i = 1;i&lt;numsSize;i++)
-    {
-        if(nums[i] == temp) continue;
-        else
-        {
-            nums[cur+1] = nums[i];
-            cur++;
-            temp = nums[i];
-        }
-    }
-
-    return cur+1;
-}
-</code></pre>
-<p>同样地,leetcode还给出了一道相似的题目，就是</p>
-<ul>
-<li>leetcode 260</li>
-</ul>
-<p>这道题目和上面的题目基本一样，唯独不同的是给出的数组中有两个数只出现了一次。</p>
-<p>题目中提到了，要在线性时间内完成，我们还是要考虑从上面的题目中怎么改进就可以完成这道题目。</p>
-<pre><code class="C">int* singleNumber(int* nums, int numsSize, int* returnSize) {
-    int i, *result = calloc(*returnSize = 2, sizeof(int));
-    for(i = 0; i &lt; numsSize; result[0] ^= nums[i++]);
-    for(i = 0; i &lt; numsSize; i++)
-        if(nums[i] &amp; result[0] &amp; -result[0])
-            result[1] ^= nums[i];
-    result[0] ^= result[1];
-    return result;
-}
-</code></pre>
-<p>这个方法，首先找出了一个result[0]，这个是保存了两个出现了一次的的数字的异或结果a xor b;<br>我们知道 如果a != b的话，那么a xor b就会保准他们每个数字的一部分的二进制。<br>那么第二部我们通过异或就可以刷选出一个结果。<br>通过 a xor b的结果再异或，就可以得出另一个结果。</p>
-<p>通过上面两道题目可以得出，简简单单的异或有时候可是非常强大的。</p>
-<p>##小结</p>
-<p>虽然每周做得题目不止这么多，但是受限时间，只能慢慢整理，优先整理我觉得值得思考的题目。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/11/10/rac/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/11/10/rac/" itemprop="url">
-                  rac
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-11-10T00:39:45+08:00">
-                2015-11-10
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Objective-C/" itemprop="url" rel="index">
-                    <span itemprop="name">Objective-C</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="RAC学习"><a href="#RAC学习" class="headerlink" title="RAC学习"></a>RAC学习</h1><p>RAC，ReactiveCocoa,是github上一个非常有名的开源库，实习了在iOS上的函数式编程。在2.x版本之前库是使用Objective-C 实现的，在3.x版本之后使用swift实现。目前最新的版本是4.04;</p>
-<p>##RAC的改变</p>
-<p>RAC通过信号将不同的部分联系在了一起。</p>
-<p>RAC统一了对KVO、UI Event、Network request、Async work的处理，因为它们本质上都是值的变化(Values over time)。</p>
-<p>###KVO</p>
-<p>RAC通过监测属性的值的改变来做相关的操作。不过使用的是block。</p>
-<pre><code class="Objective-C">[RACAble(self.username) subscribeNext:^(NSString *newName) {
-    NSLog(@&quot;%@&quot;, newName);
-}];
-</code></pre>
-<p>看起来比KVO要容易的多，我们不用关注去创建和释放KVO。同时，我们还可以将信号串联起来，达成更多的目的。</p>
-<pre><code class="Objective-C">// 只有当名字以&#39;j&#39;开头，才会被记录
-[[RACAble(self.username)
-   filter:^(NSString *newName) {
-       return [newName hasPrefix:@&quot;j&quot;];
-   }]
-   subscribeNext:^(NSString *newName) {
-       NSLog(@&quot;%@&quot;, newName);
-   }];
-</code></pre>
-<p>###UI Event</p>
-<p>根据UI发生的改变做相应的处理，如果不用RAC的话，我们可能需要有很多步骤。比如检查输入框中的输入是否合法的时候，我们可以通过添加action，当键入的时候就讲输入框的值拿出来检查。这里我们只需要很简单的一段block就可以了。</p>
-<pre><code class="Objective-C">RAC(self.logInButton, enabled) = [RACSignal
-        combineLatest:@[
-            self.usernameTextField.rac_textSignal,
-            self.passwordTextField.rac_textSignal,
-            RACObserve(LoginManager.sharedManager, loggingIn),
-            RACObserve(self, loggedIn)
-        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
-            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
-        }];
-</code></pre>
-<p>每次当text的值改变的时候，自动向数据流中添加新的数据。如果有subscriber订阅者的时候，就会自动触发。</p>
-<p>###网络异步</p>
-<p>当我们有需求的时候，可以自己创建<code>RACSubject</code>类型。我们可以认为<code>RACSubject</code>是一个具有高度自定义的信号(是RACSignal的子类)；</p>
-<p>当我们要进行一个网络请求的时候，可以通过创建信号的方式，让相关的成员订阅该信号，就可以在请求返回的时候执行相关的方法了。</p>
-<pre><code class="Objective-C">
-- (void)doTest
-{
-    RACSubject *subject = [self doRequest];
-
-    [subject subscribeNext:^(NSString *value){
-        NSLog(@&quot;value:%@&quot;, value);
-    }];
-}
-
-- (RACSubject *)doRequest
-{
-    RACSubject *subject = [RACSubject subject];
-    // 模拟2秒后得到请求内容
-    // 只触发1次
-    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
-    // subscribeNext就是定义了一个接收体
-    [[[[RACSignal interval:2] take:1] map:^id(id _){
-        // the value is from url request
-        NSString *value = @&quot;content fetched from web&quot;;
-        [subject sendNext:value];
-        return nil;
-    }] subscribeNext:^(id _){}];
-    return subject;
-}
-</code></pre>
-<p>##常见的概念</p>
-<p>###Signal and Subscriber</p>
-<p>在RAC中，最重要的概念就是信号和订阅者。信号必须有了订阅者才会被获取到（热信号），如果不是，则是处于冷藏状态（冷信号）。</p>
-<p>当信号获得了相关数据后，就会执行订阅者的<code>sendNext, sendComplete, sendError</code>方法。订阅者也有相关的方法来获取相关的数据，比如<code>[signal subscribeNext:error:completed]</code>。这个时候只要没有<code>sendError</code>和<code>sendComplete</code>传过来，就会有源源不断的数据。</p>
-<pre><code class="Objective-C">[RACObserve(self, username) subscribeNext: ^(NSString *newName){
-    NSLog(@&quot;newName:%@&quot;, newName);
-}];
-</code></pre>
-<p>RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve。</p>
-<p>信号是可以被处理的，通常有以下几种处理信号的方式</p>
-<ol>
-<li>map 修改</li>
-<li>filter 过滤</li>
-<li>combine 组合</li>
-<li>chain 串联</li>
-</ol>
-<pre><code class="Objective-C">
-RAC(self.logInButton, enabled) = [RACSignal
-        combineLatest:@[
-            self.usernameTextField.rac_textSignal,
-            self.passwordTextField.rac_textSignal,
-            RACObserve(LoginManager.sharedManager, loggingIn),
-            RACObserve(self, loggedIn)
-        ] reduce:^(NSString *username, NSString *password, NSNumber *loggingIn, NSNumber *loggedIn) {
-            return @(username.length &gt; 0 &amp;&amp; password.length &gt; 0 &amp;&amp; !loggingIn.boolValue &amp;&amp; !loggedIn.boolValue);
-        }];
-</code></pre>
-<p>上面这个例子就是通过组合了四个信号来处理一个复杂的兴矿。</p>
-<p>###冷信号和热信号</p>
-<p>上面提到过冷热信号的问题，简单的来说就是一个信号是否有订阅者的关系。</p>
-<p>注意，如果一个信号有多个订阅者的时候，signal里面的block会被执行多次，要控制的话就要通过replay的方法去控制。</p>
-<p>###UI Category</p>
-<p>RAC提供了很多category的方法来为我们增加了便利，比如上文的rac_textSignal就是对label的一个方法。具体的可以通过自己在实践中摸索，这里有两个要特别注意的。</p>
-<p>我们知道常用的组件当中，最麻烦的就是tableview 的应用。在RAC中，我们可以通过跟踪<code>NSArray</code>来跟踪数据源，这样在新的数据增加的时候或者旧的数据被移除的时候我们就可以更新tableview。</p>
-<p>还有个很特殊的情况就是cell在重载时候。RAC提供了一个方法<code>rac_prepareForReuseSignal</code>，它的作用是在cell即将被重用的时候，告诉cell。我们可以想多，如果每个cell上面都有多个button，每次重载的时候都要去addTarget,被重用的时候又要去移除这些target，下面是我看到的一个实例代码，可以很好地解决这个问题</p>
-<pre><code class="Objective-C">[[[self.cancelButton
-    rac_signalForControlEvents:UIControlEventTouchUpInside]
-    takeUntil:self.rac_prepareForReuseSignal]
-    subscribeNext:^(UIButton *x) {
-    // do other things
-}];
-</code></pre>
-<p>还有个很常用的地方就是button。我们知道button的点击可能会根据不同的状态有不同的行为。RAC提供了一个category，有一个方法<code>rac_command</code>。这样每次button按下后都是返回一个信号，这样我们可以更灵活地处理这个button的状态。</p>
-<pre><code class="Objective-C">
-voteButton.rac_command = [[RACCommand alloc] initWithEnabled:self.viewModel.voteCommand.enabled signalBlock:^RACSignal *(id input) {
-    // Assume that we&#39;re logged in at first. We&#39;ll replace this signal later if not.
-    RACSignal *authSignal = [RACSignal empty];
-
-    if ([[PXRequest apiHelper] authMode] == PXAPIHelperModeNoAuth) {
-        // Not logged in. Replace signal.
-        authSignal = [[RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscriber) {
-            @strongify(self);
-
-            FRPLoginViewController *viewController = [[FRPLoginViewController alloc] initWithNibName:@&quot;FRPLoginViewController&quot; bundle:nil];
-            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
-
-            [self presentViewController:navigationController animated:YES completion:^{
-                [subscriber sendCompleted];
-            }];
-
-            return nil;
-        }]];
-    }
-
-    return [authSignal then:^RACSignal *{
-        @strongify(self);
-        return [[self.viewModel.voteCommand execute:nil] ignoreValues];
-    }];
-}];
-[voteButton.rac_command.errors subscribeNext:^(id x) {
-    [x subscribeNext:^(NSError *error) {
-        [SVProgressHUD showErrorWithStatus:[error localizedDescription]];
-    }];
-}];
-</code></pre>
-<p>上面的这段代码提供了一个投票的按钮的事件处理。首先判断是否已经登录了，如果没有登录，则弹出登陆框。如果登录了，就发送HTTP请求。</p>
-<p>对于数据结构，通知中心，NSObject都有不同的category。不过我还没研究那么深，所以有心得的时候会再来说说。</p>
-<p>##小结<br>由于刚好要做毕设，本来大家的建议最好是拿以前的项目来提交，这样的话比较省事，但是我觉得这个是一个机会，能够让自己去研究一些新的技术，也可以让自己去接触一些可能在公司中接触的不到的方面。通过一周的学习，对RAC已经有了一点点心得，接下来会在毕设项目中大量使用。</p>
-<p>后面可能还是想结合网络请求来看看怎么使用RAC，毕竟多数的业务都是网络请求-&gt;数据组织-&gt;页面展示-&gt;交互的过程。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/11/06/week-code-1/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/11/06/week-code-1/" itemprop="url">
-                  一周刷题总结 - 1
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-11-06T22:36:06+08:00">
-                2015-11-06
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/数据结构/" itemprop="url" rel="index">
-                    <span itemprop="name">数据结构</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>上周开始复习算法和数据结构，一周每天在睡前都拿出不少时间去学习，做了一些题目，想来每周都应该把相关的题目总结一下，才能更好的去学习。</p>
-<ul>
-<li>237    Delete Node in a Linked List</li>
-</ul>
-<p>这是上次笔记里面写过的内容，但是我自己写得时候又出现了问题，看来简单的问题业不能去忽略。</p>
-<pre><code class="c">/**
- * Definition for singly-linked list.
- * struct ListNode {
- *     int val;
- *     struct ListNode *next;
- * };
- */
-void deleteNode(struct ListNode* node) {
-    if(node == NULL) return;
-    struct ListNode *temp = node-&gt;next;
-    node-&gt;val = temp-&gt;val;
-    node-&gt;next = temp-&gt;next;
-    free(temp);
-}
-</code></pre>
-<ul>
-<li>171    Excel Sheet Column Number</li>
-</ul>
-<p>简单的来说就是一个26进制的数，没什么难点</p>
-<pre><code class="c">int titleToNumber(char* s) {
-    int length = strlen(s);
-
-    int all = 0;
-
-    for(int i=0;i&lt;length;i++)
-    {
-        all=((s[i]-&#39;A&#39;)+1) + all * 26;
-    }
-
-    return all;
-}
-</code></pre>
-<ul>
-<li>169    Majority Element</li>
-</ul>
-<p>出现超过n/2的数，通过遍历就可以了</p>
-<pre><code class="c">
-int majorityElement(int* nums, int numsSize) {
-    int time=0,maj;
-    for(int i=0;i&lt;numsSize;i++)
-    {
-        if(time == 0)
-        {
-            maj = nums[i];
-        }
-        if(nums[i]==maj) 
-        {
-            time++;
-        }
-       else{
-         time--;  
-       } 
-    }
-    return maj;
-}
-</code></pre>
-<ul>
-<li>206    Reverse Linked List</li>
-</ul>
-<p>反转链表，基础题目</p>
-<pre><code class="c">/**
- * Definition for singly-linked list.
- * struct ListNode {
- *     int val;
- *     struct ListNode *next;
- * };
- */
-struct ListNode* reverseList(struct ListNode* head) {
-
-    struct ListNode* pre = NULL;
-    struct ListNode* cur = head;
-    struct ListNode* next = NULL;
-
-    while(cur)
-    {
-        next = cur-&gt;next;
-        cur-&gt;next = pre;
-        pre = cur;
-        cur = next;
-    }
-    return pre;
-}
-</code></pre>
-<ul>
-<li>263    Ugly Number</li>
-</ul>
-<p>简单的递归问题</p>
-<pre><code class="c">
-bool isUgly(int num) {
-
-    if(num&lt;1) return false;
-
-    if(num%2==0)
-    {
-        num/=2;
-        return isUgly(num);
-    }
-
-     if(num%3==0)
-    {
-        num/=3;
-        return isUgly(num);
-    }
-
-     if(num%5==0)
-    {
-        num/=5;
-        return isUgly(num);
-    }
-
-    if(num == 1) return true;
-
-    return false;
-
-}
-</code></pre>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/11/01/runtime/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/11/01/runtime/" itemprop="url">
-                  runtime
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-11-01T10:07:27+08:00">
-                2015-11-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Objective-C/" itemprop="url" rel="index">
-                    <span itemprop="name">Objective-C</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>从开始写博客的时候，就由一个准备把Runtime好好研究整理出来。后来发现写runtime得文章太多了，而且自己研究的也算不上有多么深入，写出来估计很多错误- —–（因为主要是给自己看得）。最近在项目中，第一次用到了runtime解决了一个实际问题，这启发我，我的文章应该从怎么利用runtime去解决实际的问题，给自己提供一个解决问题的新思路。</p>
-<p>##runtime 关联对象</p>
-<p>从关联对象说起，是因为在最近的项目中用到了这个方法。当时的场景是，我需要创建一个category，里面需要一个block对象。然而我们知道，我们不能在category中添加成员变量。如果我们尝试添加的话，编译器会报错。当然，使用全局变量能解决这个问题，但明显是一个很优雅的方法，也很容易造成错误。Objective-C针对这一中问题，提供了一个解决方案，就是<code>关联对象(Associated Object)。</code></p>
-<p>我们可以想象，关联对象就是一个key - value的模型，把对象通过特定的Key链接到相关的实例上。不过由于使用的是C的借口，所以key是一个void指针。同时，我们要需要为这个关联对象设定内存管理策略。相关的内存的管理策略如下:</p>
-<pre><code>OBJC_ASSOCIATION_ASSIGN
-
-OBJC_ASSOCIATION_RETAIN_NONATOMIC
-
-OBJC_ASSOCIATION_COPY_NONATOMIC
-
-OBJC_ASSOCIATION_RETAIN
-
-OBJC_ASSOCIATION_COPY
-</code></pre><p>对<code>OBJC_ASSOCIATION_ASSIGN</code>的，当关联对象所关联的实例被释放掉后，对象不会被释放掉。而<code>OBJC_ASSOCIATION_RETAIN</code>和<code>OBJC_ASSOCIATION_COPY</code>两个的话，在实例被释放掉同时，关联对象也会被release掉。当我们用同一个key去关联另外的实例对象的时候，也会自动释放掉之前关联的对象。这种情况下，先前的关联对象会被妥善地处理掉，并且新的对象会使用它的内存。</p>
-<p>关联对象的的runtime函数如下</p>
-<pre><code>// 设置关联对象
-
-void objc_setAssociatedObject ( id object, const void *key, id value, objc_AssociationPolicy policy );
-
-
-
-// 获取关联对象
-
-id objc_getAssociatedObject ( id object, const void *key );
-
-
-
-// 移除关联对象
-
-void objc_removeAssociatedObjects ( id object );
-</code></pre><p>下面就给出在项目中实际遇到的问题给做一个例子。</p>
-<p>首先在头文件中定义了以下内容。</p>
-<p><img src="/media/14463463210542.jpg" alt=""></p>
-<p>可以看到，这个category是为了扩展vc，让vc具有一个弹出系统通讯录的功能。</p>
-<p>在.m文件中，如下实现block关联对象</p>
-<p><img src="/media/14463464447032.jpg" alt=""></p>
-<p>然后就像正常的对象一样操作就行了</p>
-<p><img src="/media/14463464914602.jpg" alt=""></p>
-<p><img src="/media/14463464837182.jpg" alt=""></p>
-<p>在上面看到，我对关联对象使用的key是用了<code>@selector()</code>。那为什么可以使用SEL来代替设定一个固定的key呢？</p>
-<h2 id="方法与消息"><a href="#方法与消息" class="headerlink" title="方法与消息"></a>方法与消息</h2><ul>
-<li>SEL</li>
-</ul>
-<p>又叫选择器，是表示一个方法的selector的指针，其定义如下：</p>
-<p><code>typedef struct objc_selector *SEL;</code><br>objc_selector结构体的详细定义没有在&lt;objc/runtime.h&gt;头文件中找到。方法的selector用于表示运行时方法的名字。Objective-C在编译时，会依据每一个方法的名字、参数序列，生成一个唯一的整型标识(Int类型的地址)，这个标识就是SEL。</p>
-<ul>
-<li>IMP</li>
-</ul>
-<p>通过SEL找到函数后，就可以获取到该函数的IMP。IMP实际上是一个函数指针，指向方法实现的首地址。其定义如下</p>
-<pre><code>id (*IMP)(id, SEL, ...)
-</code></pre><p>通过取得IMP，我们可以跳过runtime的消息传递机制，直接通过IMP执行指向的函数实现。这样一来可以提高效率，省去了消息传递中的一系列过程</p>
-<pre><code>回答上面的问题
-
-我们知道，在同一个类文件里面，不能存在同一个名字的方法，即使是参数类型不同业不行。同理，同一个类文件里面不能存在同一个名字的对象，所以set方法是唯一的，所以可以使用SEL来获取唯一的整理标识来作为key。
-</code></pre><p>##下面是看的一些文章的摘录和自己的一项心得，主要是给自己做一个备忘。</p>
-<p>选择器相关的操作函数包括：</p>
-<pre><code>// 返回给定选择器指定的方法的名称
-const char * sel_getName ( SEL sel );
-// 在Objective-C Runtime系统中注册一个方法，将方法名映射到一个选择器，并返回这个选择器
-
-SEL sel_registerName ( const char *str );
-
-
-
-// 在Objective-C Runtime系统中注册一个方法
-
-SEL sel_getUid ( const char *str );
-
-
-
-// 比较两个选择器
-
-BOOL sel_isEqual ( SEL lhs, SEL rhs );
-</code></pre><p>方法操作的函数如下</p>
-<pre><code>// 调用指定方法的实现
-// receiver不能为空
-// 比method_getImplementation和method_getName更快
-
-id method_invoke ( id receiver, Method m, ... );
-
-
-
-// 调用返回一个数据结构的方法的实现
-
-void method_invoke_stret ( id receiver, Method m, ... );
-
-
-
-// 获取方法名
-// 返回一个SEL。如果要获取方法名得C字符串，要用sel_getName(method_getName(method))。
-
-SEL method_getName ( Method m );
-
-
-
-// 返回方法的实现
-// 注意该函数返回值是方法之前的实现。
-IMP method_getImplementation ( Method m );
-
-
-
-// 获取描述方法参数和返回值类型的字符串
-
-const char * method_getTypeEncoding ( Method m );
-
-
-
-// 获取方法的返回值类型的字符串
-
-char * method_copyReturnType ( Method m );
-
-
-
-// 获取方法的指定位置参数的类型字符串
-
-char * method_copyArgumentType ( Method m, unsigned int index );
-
-
-
-// 通过引用返回方法的返回值类型字符串
-
-void method_getReturnType ( Method m, char *dst, size_t dst_len );
-
-
-
-// 返回方法的参数的个数
-
-unsigned int method_getNumberOfArguments ( Method m );
-
-
-
-// 通过引用返回方法指定位置参数的类型字符串
-
-void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );
-
-
-
-// 返回指定方法的方法描述结构体
-
-struct objc_method_description * method_getDescription ( Method m );
-
-
-
-// 设置方法的实现
-
-IMP method_setImplementation ( Method m, IMP imp );
-
-
-
-// 交换两个方法的实现
-
-void method_exchangeImplementations ( Method m1, Method m2 );
-</code></pre><p>##方法调用流程</p>
-<p>在Objective-C中，消息会一直到运行时绑定的方法实现上。我们常用的[receiver message]会被runtime转换为一个函数调用<code>objc_msgSend</code>。如下</p>
-<p><code>objc_msgSend(receiver, selector)</code><br>如果消息中还有其它参数，则该方法的形式如下所示：</p>
-<p><code>objc_msgSend(receiver, selector, arg1, arg2, ...)</code></p>
-<p>这个函数在执行的过程中完成了所有动态绑定的过程。</p>
-<ol>
-<li>找到SEL对应的方法实现。由于一个方法可能在不同的类有不同的实现，所有我们要依赖于接受者的类来确定确切的实现。</li>
-<li>调用方法的实现，将参数传入。</li>
-<li>将方法的返回这作为的自己的返回值。</li>
-</ol>
-<p>一个基本消息的框架</p>
-<p><img src="/media/14463917464901.jpg" alt=""></p>
-<p>注意到，在<code>objc_msgSend</code>中有两个隐藏参数：</p>
-<ol>
-<li>消息接受对象</li>
-<li>方法的selecor</li>
-</ol>
-<p>隐藏是以为内在定义的方法中没有申明，是在编译期被插入实现代码的。</p>
-<p>##消息转发</p>
-<p>当一个对象能接受一个消息的时候，那么一切都会按照我们想得去做，但是如果不能接受消息的时候，会发生什么？一般情况下，如果不能相应[object message],编译期会报错。如果是以perform来调用的，那么在运行时才会确定object是否会接收消息，如果不行的话，就会造成程序崩溃。</p>
-<p>当然，我们可以通过<code>respondsToSelector:</code>来判断一下是否会响应这个消息，但是我们要用runtime来搞一搞，所以我们应该从<code>消息转发机制</code>来考虑。</p>
-<p>消息转发机制基本分为三个步骤</p>
-<ol>
-<li>动态方法解析</li>
-<li>备用接收者</li>
-<li>完成转发</li>
-</ol>
-<p>###动态方法解析</p>
-<p>当当对象接收到位置的消息时，首先会调用类的<code>+resolveInstanceMethod:(实例方法)</code>或者<code>+resolveClassMethod:(类方法)</code>。因此，我们可以去增加一个处理方法。在消息不能被对象接收的时候就运行这个方法，前提是这个方法已经被实现了。</p>
-<pre><code>void functionForMethod1(id self, SEL _cmd) {
-
-   NSLog(@&quot;%@, %p&quot;, self, _cmd);
-
-}
-
-
-
-+ (BOOL)resolveInstanceMethod:(SEL)sel {
-
-
-
-    NSString *selectorString = NSStringFromSelector(sel);
-
-
-
-    if ([selectorString isEqualToString:@&quot;method1&quot;]) {
-
-        class_addMethod(self.class, @selector(method1), (IMP)functionForMethod1, &quot;@:&quot;);
-
-    }
-
-
-
-    return [super resolveInstanceMethod:sel];
-
-}
-</code></pre><h3 id="备用接收者"><a href="#备用接收者" class="headerlink" title="备用接收者"></a>备用接收者</h3><p>当我们的对象不能处理消息的时候，我们将消息转发到一个备用的对象，只要这个对象的类实现了这个方法<br><code>- (id)forwardingTargetForSelector:(SEL)aSelector</code></p>
-<p>如果返回的不是一个nil的话，那么这个对象就会被作为消息的心的接收者。而在外部看来，这个消息仍然被我们的发送的对象处理了。注意，这个方法返回的对象不是self自身，不然就是个无限循环了。</p>
-<pre><code>@interface SUTRuntimeMethodHelper : NSObject
-
-
-
-- (void)method2;
-
-
-
-@end
-
-
-
-@implementation SUTRuntimeMethodHelper
-
-
-
-- (void)method2 {
-
-    NSLog(@&quot;%@, %p&quot;, self, _cmd);
-
-}
-
-
-
-@end
-
-
-
-#pragma mark -
-
-
-
-@interface SUTRuntimeMethod () {
-
-    SUTRuntimeMethodHelper *_helper;
-
-}
-
-
-
-@end
-
-
-
-@implementation SUTRuntimeMethod
-
-
-
-+ (instancetype)object {
-
-    return [[self alloc] init];
-
-}
-
-
-
-- (instancetype)init {
-
-    self = [super init];
-
-    if (self != nil) {
-
-        _helper = [[SUTRuntimeMethodHelper alloc] init];
-
-    }
-
-
-
-    return self;
-
-}
-
-
-
-- (void)test {
-
-    [self performSelector:@selector(method2)];
-
-}
-
-
-
-- (id)forwardingTargetForSelector:(SEL)aSelector {
-
-
-
-    NSLog(@&quot;forwardingTargetForSelector&quot;);
-
-
-
-    NSString *selectorString = NSStringFromSelector(aSelector);
-
-
-
-    // 将消息转发给_helper来处理
-
-    if ([selectorString isEqualToString:@&quot;method2&quot;]) {
-
-        return _helper;
-
-    }
-
-
-
-    return [super forwardingTargetForSelector:aSelector];
-
-}
-
-
-
-@end
-</code></pre><p>###完成的消息转发</p>
-<p>如果上述的行为都不能解决的话，runtime在这时候会给对象最后一次机会：</p>
-<pre><code>- (void)forwardInvocation:(NSInvocation *)anInvocation
-</code></pre><blockquote>
-<p>这个时候，消息的所有未处理的内容都被封装到了anInvocation中，包括SEL,target，参数。我们在这里可以选着将消息转发给其他的对象。</p>
-<p>forwardInvocation:方法的实现有两个任务：</p>
-<p>定位可以响应封装在anInvocation中的消息的对象。这个对象不需要能处理所有未知消息。<br>使用anInvocation作为参数，将消息发送到选中的对象。anInvocation将会保留调用结果，运行时系统会提取这一结果并将其发送到消息的原始发送者。</p>
-</blockquote>
-<p>对于这一块，还没有具体的实践，毕竟到这一步，用runtime来解决不如好好回去check以下代码吧。</p>
-<p>##Method Swizze</p>
-<p>Method Swizzling是改变一个selector的实际实现的技术.这样，我们可以在runtime的时候修改类分发的队形的函数，修改对应的实现。</p>
-<p>例如，我们想在每一个<code>viewDidAppear</code>增加一个跟踪代码，观察哪个vc被调用了，那么我们就可以通过<code>Method Swizzling</code></p>
-<p>###Swizzling 注意事项</p>
-<p><code>Swizzling应该总是在+load中执行</code></p>
-<p>在Objective-C中，运行时会自动调用每个类的两个方法。+load会在类初始加载时调用，+initialize会在第一次调用类的类方法或实例方法之前被调用。这两个方法是可选的，且只有在实现了它们时才会被调用。由于method swizzling会影响到类的全局状态，因此要尽量避免在并发处理中出现竞争的情况。+load能保证在类的初始化过程中被加载，并保证这种改变应用级别的行为的一致性。相比之下，+initialize在其执行时不提供这种保证—事实上，如果在应用中没为给这个类发送消息，则它可能永远不会被调用。</p>
-<p>+load在父类，子类，分类的实现都会分别调用，所以+load更适合</p>
-<p>###Swizzling应该总是在dispatch_once中执行</p>
-<p>与上面相同，因为swizzling会改变全局状态，所以我们需要在运行时采取一些预防措施。原子性就是这样一种措施，它确保代码只被执行一次，不管有多少个线程。GCD的dispatch_once可以确保这种行为，我们应该将其作为method swizzling的最佳实践。</p>
-<p>###特别的地方</p>
-<p>&gt;</p>
-<ol>
-<li>总是调用方法的原始实现(除非有更好的理由不这么做)：API提供了一个输入与输出约定，但其内部实现是一个黑盒。Swizzle一个方法而不调用原始实现可能会打破私有状态底层操作，从而影响到程序的其它部分。</li>
-<li>避免冲突：给自定义的分类方法加前缀，从而使其与所依赖的代码库不会存在命名冲突。</li>
-<li>明白是怎么回事：简单地拷贝粘贴swizzle代码而不理解它是如何工作的，不仅危险，而且会浪费学习Objective-C运行时的机会。阅读Objective-C Runtime Reference和查看&lt;objc/runtime.h&gt;头文件以了解事件是如何发生的。</li>
-<li>小心操作：无论我们对Foundation, UIKit或其它内建框架执行Swizzle操作抱有多大信心，需要知道在下一版本中许多事可能会不一样。</li>
-</ol>
-<p>##总结</p>
-<p>runtime到这里，大概讲了下两个问题，方法转发和关联对象。觉得还是不够，因为很多东西写起来发现自己也不是很了解，暂且做一个笔记。</p>
-<p>这里感谢南峰子，写得runtime教程非常详细，给了我很多帮助。</p>
-<p>本文参考了大量下面三篇文章的内容。</p>
-<p><a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/" target="_blank" rel="external"></a></p>
-<p><a href="http://southpeak.github.io/blog/2014/11/03/objective-c-runtime-yun-xing-shi-zhi-san-:fang-fa-yu-xiao-xi-zhuan-fa/" target="_blank" rel="external"></a></p>
-<p><a href="http://southpeak.github.io/blog/2014/10/30/objective-c-runtime-yun-xing-shi-zhi-er-:cheng-yuan-bian-liang-yu-shu-xing/" target="_blank" rel="external"></a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/10/25/list/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/10/25/list/" itemprop="url">
-                  list
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-10-25T23:38:26+08:00">
-                2015-10-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/数据结构/" itemprop="url" rel="index">
-                    <span itemprop="name">数据结构</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="开始内功！"><a href="#开始内功！" class="headerlink" title="开始内功！"></a>开始内功！</h1><p>前几日和前老大谈了谈，总结起来内功不能不练。实习以来有三次想好好复习数据结构和算法，但是最后都半途而废。现在不应该再有任何理由了，不然以后再也没有时间好好去复习这些东西。从现在开始刷好题目，打好基础。</p>
-<p>##链表</p>
-<p>链表是线性表的一种。</p>
-<p>线性表是最简单基础的一种数据结构。线性表中的数据元素之间的关系是一对一的，除了头元素和尾元素之外，其他元素首尾相连。线性表有两种存储方式</p>
-<ol>
-<li>顺序存储方式</li>
-<li>链式存储方式</li>
-</ol>
-<p>数组是典型的顺序存储方式。链表是典型的链式存储方式。</p>
-<p>链式存储结构，指的是相邻的两个元素在内存中可能不是相邻的，每一个元素都有一个指针域，指针域存放的是下一个元素的指针。</p>
-<p>链式结构的优缺点：</p>
-<ul>
-<li><p>优点</p>
-<ol>
-<li>插入和删除的复杂度为O(1)</li>
-<li>不会浪费太多内存，在需要添加元素的时候才会申请内存，删除元素后释放内存。</li>
-</ol>
-</li>
-<li><p>缺点</p>
-<ol>
-<li>访问元素的时间复杂度最坏为O(N)</li>
-</ol>
-<p>链表就是链式存储的线性表。根据指针域的不同，链表分为单项链表，双向链表，循环链表等等</p>
-<p>一个简单的List定义</p>
-<pre><code class="C">struct list {
-int ver;
-struct list *next;
-};
-typedef struct list *listLink;
-// 插入
-void insert_list(listLink *, int);
-// 打印
-void print_list(listLink *, int);
-// 链表长
-int list_length(listLink);
-// 搜索一个特定的值
-listLink search_list(listLink, int);
-</code></pre>
-</li>
-</ul>
-<p>四个方法的实现</p>
-<p><img src="/media/14459585444278.jpg" alt=""></p>
-<p>##指针常出现的问题</p>
-<p>###反转链表</p>
-<p>反转链表，分为两种情况讨论，单向链表和双向链表</p>
-<ul>
-<li><p>单向链表</p>
-<ul>
-<li><p>考虑到访问某个节点的时候，要检查下一个节点是否为空。</p>
-</li>
-<li><p>要把反转后的最后一个节点（头节点）的指针指向null</p>
-</li>
-</ul>
-</li>
-</ul>
-<p>实现代码如下</p>
-<p><img src="/media/14459590472638.jpg" alt=""></p>
-<ul>
-<li>双向链表</li>
-</ul>
-<p>双向链表比较麻烦的地方在于Next和pre要呼唤，需要主要当前节点和上个节点的问题。</p>
-<p>###删除节点</p>
-<p>删除节点必须要知道被删除节点的前置节点，时间复杂度为O(1)</p>
-<p><img src="/media/14459596886157.jpg" alt=""></p>
-<p>###循环链表</p>
-<p>循环链表表现于尾元素的next指针指向head元素，所以我们可以通过快慢指针去校验。具体的方法会在下面的链表的技巧中提到.</p>
-<h2 id="链表的技巧"><a href="#链表的技巧" class="headerlink" title="链表的技巧"></a>链表的技巧</h2><p>###鲁棒性</p>
-<ul>
-<li>当访问链表中某个节点的next节点的时候，一点要先判断当前节点是否为空。</li>
-<li>全部操作结束后，判断是否有环。若有环，则置其中一端为Null;</li>
-</ul>
-<h3 id="Dummy-Node"><a href="#Dummy-Node" class="headerlink" title="Dummy Node"></a>Dummy Node</h3><p>假节点，伪头节点。Dummy <code>Node</code> 可以认为是一个假的头结点。我们可以构造一个<code>Dummy Node</code> ，使他的next指针指向Head node。使用<code>Dummy Node</code>目的是，在单向链表中，保正head不会再删除操作中丢失。此外，比较特殊的方法是用来进行删除head。</p>
-<p>Dummy Node可以处理对于head Node变化的情况。</p>
-<h2 id="快慢指针"><a href="#快慢指针" class="headerlink" title="快慢指针"></a>快慢指针</h2><p>快慢指针式解决很多链表的问题的关键。快慢指的是指针每次移动的步长。常用的快指针步长为2，慢指针步长为1.快慢指针同时从头结点开始移动陪你过。</p>
-<p>快慢指针的应用可以解决以下问题</p>
-<ol>
-<li>快速找出为止长度的链表的中间节点。我们让快指针的步长是慢指针的两倍。当快指针到达尾节点的时候，慢指针所指向的节点就是中间节点。</li>
-<li>判断单向链表是否成环。同样的原理，如果快指针 <code>*fase =NULL</code>的时候，说明链表是NULL结尾的。如果快指针等于慢指针的时候，则说明该链表成环。</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/10/23/afnetworking-1/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/10/23/afnetworking-1/" itemprop="url">
-                  AFNetworking 学习笔记 1
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-10-23T10:31:15+08:00">
-                2015-10-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##从3.0开始</p>
-<p>一转眼，AF已经更新到了3.0版本。目前cocoapods上的最新版本是3.0 beta1。在3.0的版本里面，AF全面地使用<code>NSURLSession</code>代替了<code>NSURLConnection</code>。之前花了一些时间学习<code>NSURLSession</code>，在这里的学习终于派上了用场。在这里主要学习3.0版本的使用。希望在项目中能够顺利地过度到AFNetwoking 3.0版本。此外，随着Objective-c慢慢被Swift替代，AFNetworking 3.0可能是最后一个大版本更新。本文会一直随着AN的更新继续更新，也是一个不断学习的过程。</p>
-<p>##结构</p>
-<p>在3.0时代，AFN精简了结构，全面使用了<code>NSURLSession</code>。</p>
-<p><img src="/media/14451531667191.jpg" alt=""><br>beta1里面只剩下了当前几个Manager。</p>
-<p><code>AFHTTPSessionManager</code>是<code>AFURLSessionManager</code>的子类。</p>
-<p>##AFURLSessionManager</p>
-<p><code>AFURLSessionManager</code>实现了以下几种<code>NSURLSession</code>的代理方法</p>
-<h4 id="NSURLSessionDelegate"><a href="#NSURLSessionDelegate" class="headerlink" title="NSURLSessionDelegate"></a><code>NSURLSessionDelegate</code></h4><ul>
-<li><code>URLSession:didBecomeInvalidWithError:</code></li>
-<li><code>URLSession:didReceiveChallenge:completionHandler:</code></li>
-<li><code>URLSessionDidFinishEventsForBackgroundURLSession:</code></li>
-</ul>
-<h4 id="NSURLSessionTaskDelegate"><a href="#NSURLSessionTaskDelegate" class="headerlink" title="NSURLSessionTaskDelegate"></a><code>NSURLSessionTaskDelegate</code></h4><ul>
-<li><code>URLSession:willPerformHTTPRedirection:newRequest:completionHandler:</code></li>
-<li><code>URLSession:task:didReceiveChallenge:completionHandler:</code></li>
-<li><code>URLSession:task:didSendBodyData:totalBytesSent:totalBytesExpectedToSend:</code></li>
-<li><code>URLSession:task:didCompleteWithError:</code></li>
-</ul>
-<h4 id="NSURLSessionDataDelegate"><a href="#NSURLSessionDataDelegate" class="headerlink" title="NSURLSessionDataDelegate"></a><code>NSURLSessionDataDelegate</code></h4><ul>
-<li><code>URLSession:dataTask:didReceiveResponse:completionHandler:</code></li>
-<li><code>URLSession:dataTask:didBecomeDownloadTask:</code></li>
-<li><code>URLSession:dataTask:didReceiveData:</code></li>
-<li><code>URLSession:dataTask:willCacheResponse:completionHandler:</code></li>
-</ul>
-<h4 id="NSURLSessionDownloadDelegate"><a href="#NSURLSessionDownloadDelegate" class="headerlink" title="NSURLSessionDownloadDelegate"></a><code>NSURLSessionDownloadDelegate</code></h4><ul>
-<li><code>URLSession:downloadTask:didFinishDownloadingToURL:</code></li>
-<li><code>URLSession:downloadTask:didWriteData:totalBytesWritten:totalBytesWritten:totalBytesExpectedToWrite:</code></li>
-<li><code>URLSession:downloadTask:didResumeAtOffset:expectedTotalBytes:</code></li>
-</ul>
-<p>###成员</p>
-<p>####属性</p>
-<p>在<code>AFURLSessionManager</code>中，主要的三个属性如下</p>
-<p><img src="/media/14451544109695.jpg" alt=""></p>
-<p><code>session</code>实现了会话，<code>operationQueue</code>是一个操作队列。<code>responseSerializer</code>是实现了<code>AFURLResponseSerialization</code>协议的一个对象。</p>
-<hr>
-<p>Manager中还包括了安全协议的对象和连通性的对象。这两个类将在后面谈到。</p>
-<p><img src="/media/14451545558576.jpg" alt=""></p>
-<hr>
-<p>下面是Task的内容，包含与当前<code>Session</code>中</p>
-<p><img src="/media/14451547233232.jpg" alt=""></p>
-<hr>
-<p>回调块队列，包括了在主队列和私有队列的两个部分</p>
-<p><img src="/media/14451548418504.jpg" alt=""></p>
-<p>####方法</p>
-<p> 初始化方法</p>
-<p> <img src="/media/14455211888103.jpg" alt=""></p>
-<hr>
-<p>创建一个<code>NSURLSessionDataTask</code>数据性任务</p>
-<p><img src="/media/14455212385758.jpg" alt=""></p>
-<hr>
-<p>创建<code>`NSURLSessionUploadTask</code> 上传任务</p>
-<p><img src="/media/14455213126912.jpg" alt=""><br><img src="/media/14455213190110.jpg" alt=""></p>
-<hr>
-<p>创建<code>NSURLSessionDownloadTask</code> 下载任务</p>
-<p><img src="/media/14455213738134.jpg" alt=""><br><img src="/media/14455213826398.jpg" alt=""></p>
-<hr>
-<p>获得一个特定任务的<code>progress进度</code></p>
-<p><img src="/media/14455214651069.jpg" alt=""><br><img src="/media/14455214692883.jpg" alt=""><br><img src="/media/14455214742512.jpg" alt=""></p>
-<hr>
-<p><code>Session Delegate Callbacks 设置会话代理回调</code></p>
-<p><img src="/media/14455217046547.jpg" alt=""><br><img src="/media/14455217113671.jpg" alt=""></p>
-<p><code>Task Delegate Callbacks 设置任务代理回调</code></p>
-<p>当任务需要一个新的请求体发送给服务器的时候。<br><img src="/media/14455219470133.jpg" alt=""></p>
-<p>当HTTP请求回调有重定向的的话设置这个Block<br><img src="/media/14455219533707.jpg" alt=""></p>
-<p>当一个请求需要特别的鉴权的时候设置这个challenge<br><img src="/media/14455219599178.jpg" alt=""></p>
-<p>设置一个block去追踪上传进度</p>
-<p><img src="/media/14455658294340.jpg" alt=""></p>
-<p>设置一个block当任务完成后执行<br><img src="/media/14455658635389.jpg" alt=""></p>
-<p>####<code>Setting Data Task Delegate Callbacks 设置数据任务代理的回调</code></p>
-<p>设置一个在数据任务获得response的时候回调block</p>
-<p><img src="/media/14455662011592.jpg" alt=""></p>
-<p>设置一个block当数据任务变成下载的任务的时候执行</p>
-<p><img src="/media/14455662317310.jpg" alt=""></p>
-<p>设置一个block当数据任务获得到数据的时候<br><img src="/media/14455662434172.jpg" alt=""></p>
-<p>设置一个block绝对是否缓存数据任务</p>
-<p><img src="/media/14455662958106.jpg" alt=""></p>
-<p>####<code>Download Task Delegate Callbacks 下载任务代理回调</code></p>
-<p>设置block当下载任务完成下载后</p>
-<p><img src="/media/14455666105437.jpg" alt=""></p>
-<p>设置block去追踪下载任务进度情况</p>
-<p><img src="/media/14455666301025.jpg" alt=""></p>
-<p>设置block当下载任务执行/恢复的时候 执行</p>
-<p><img src="/media/14455666958363.jpg" alt=""></p>
-<p>头文件的内容基本就是以上的了。可以看到整个AF的体系非常清晰完整，没有多余的东西，头文件只暴露了应该暴露的东西，值得我们去学习。</p>
-<p>##使用的例子</p>
-<p>###使用<code>AFURLSessionManager</code></p>
-<p>从源码中可以看到，<code>AFURLSessionManager</code>实现了</p>
-<pre><code class="Objective-c">NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate, NSURLSessionDownloadDelegate, NSSecureCoding, NSCopying
-</code></pre>
-<p>首先需要设置url和NSURLConfirguration</p>
-<p>这里是使用百度API商店的公开API<br><img src="/media/14453928846040.jpg" alt=""></p>
-<p>然后初始化Manager<img src="/media/14453929237373.jpg" alt=""></p>
-<p>设置ResponseSerializer<br><img src="/media/14453931412125.jpg" alt=""></p>
-<p>初始化request<br><img src="/media/14453932169242.jpg" alt=""></p>
-<p>对request进行相关设置<br><img src="/media/14453932396509.jpg" alt=""></p>
-<p>根据request生成对应的<code>NSURLSessionTask</code>。<br><img src="/media/14453935717679.jpg" alt=""></p>
-<p>执行任务<br><img src="/media/14453936154108.jpg" alt=""></p>
-<p>来看看执行后的信息</p>
-<p><img src="/media/14453937344699.jpg" alt=""></p>
-<p>这里由于使用的<code>AFHTTPResponseSerializer</code>(API的问题，仅仅支持text/plain)所以在获取的数据后，我们自己要json序列化。如果是设计好的API,直接使用<code>AFJSONRequestSerializer</code>就可以在回调中获取到json格式的数据了。</p>
-<p>可以看到，整个使用还是很方便的。我们可以根据自己的需求配置不同设置。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2015/10/09/other/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="csbzhixing">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="学海无涯">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/10/09/other/" itemprop="url">
-                  改变，一刻都不能停止
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-10-09T13:36:46+08:00">
-                2015-10-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/personal/" itemprop="url" rel="index">
-                    <span itemprop="name">personal</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="杂谈，生活，学习"><a href="#杂谈，生活，学习" class="headerlink" title="杂谈，生活，学习"></a>杂谈，生活，学习</h1><p>##从iTunes store说起</p>
-<p>9.30号凌晨，在我半睡半醒的时候，准备更新下一些APP。然后就发现了iTunes 提醒我要同意新的协议，当时很困就睡着了，没有想太多。早上起来，发现apple music可以用了！没错！免费三个月，续费十块钱一个月！然后看了下电影。一堆一块钱的正版电影你相信吗？？！。</p>
-<p>好吧，为何我那么激动吗，对于很多人是不理解的。相对于一些必须消费的商品。图书，音乐，电影，游戏，软件这些虚拟服务，在许多人眼里就是免费的午餐。从来没想到过我们为何要去为这些东西掏钱。所以，很多人并不看好苹果这次在大陆推行的这些服务。然而我认为，苹果这是以一己之力，将要改变中国人对版权的认识。为什么这么说？价格说明一切。</p>
-<p>如今，出去吃顿饭一个人动不动上百，一杯果汁奶茶都几十块钱的时代，却还在为一个优秀APP几十块钱而烦恼。入手新手机后，买了几款APP。其中有一个第三方微博客户端墨客。我家里很不理解为什么有微博客户端我还会去选择掏钱去买。我觉得，仅仅是干净舒适的UI设计就足够我花这个钱，而且再不用看到一大堆乱七八糟的推广，能够最快的看到自己需要的内容，这一切仅仅18块钱，难道不比买一包烟，喝一杯果汁来的值得吗？</p>
-<h2 id="新的工作，一样的生活"><a href="#新的工作，一样的生活" class="headerlink" title="新的工作，一样的生活"></a>新的工作，一样的生活</h2><p>国庆第一天，把宿舍几乎所有的东西都带回家了。8号到了新公司报道。在国庆的时候，好好的回顾了下以前的堕落的生活，顺便整理了下自己的学习和工作上的问题。发现自己任然有许多地方的欠缺。牛逼的人，总是有强迫症的。而我，似乎不能称为牛逼的人，就是因为没有强迫症。面对代码，能Copy/Paste的话就做了，没有想到怎么去重构，去思考怎么做的更好。面对重复的东西，总是尽可能去避免。不愿意耐心的去解决的困难的问题，总是想依赖其他的人的经验来解决。不踏过千千万万个坑，怎么能说自己是个出色的工程师？总不能一辈子都在搬砖吧。养成强迫症，才不会总是固守原来的生活。</p>
-<p>##深度和广度</p>
-<p>在面试的时候，和这家公司的团队老大有一番交流让我感触很深。搞技术的，除了要有深度，还要有广度。对于广度和深度，之前也和某老大谈过。全栈好不好，这个话恐怕只有自己到了那个层次才能谈谈。毕竟现在，哪怕仅仅是一个方面，自己都很难保证能解决多数的问题。如今进入到了这个团队，感受到了身边的牛人还真的很多，许多都是多面手。看来不能仅仅把自己的困在一个方面。多学多用给你才是王道。后面打算整理下自己的技能树，然后根据轻重来设计自己的学习路线。</p>
-<p>##让思维和身体都跑起来吧！</p>
-<p><img src="/media/14443703278870.jpg" alt=""></p>
-<p>坚持跑步已经有了两个月。虽然中间因为各种原因停顿了几次，这个月的跑量一直没上去。然而现在固定了下来，也要恢复到之前的运动模式。身体的运动，也改善了我思考的模式。不再会因为因为小小的事情而去分心。执行力也越来越好，也容易控制自己的情绪了。思维跟随的身体，一起奔跑的感觉，实在是太好不过了。</p>
-<p>最后一句话，送给自己。</p>
-<p>##一切不变的，就是改变</p>
-<p>˙</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2362,7 +1772,7 @@ listLink search_list(listLink, int);
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">29</span>
+              <span class="site-state-item-count">30</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2379,7 +1789,7 @@ listLink search_list(listLink, int);
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>

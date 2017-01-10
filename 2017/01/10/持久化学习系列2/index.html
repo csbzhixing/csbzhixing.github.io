@@ -1,0 +1,1140 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="iOS," />
+
+
+
+
+  
+
+
+  <link rel="alternate" href="/atom.xml" title="学海无涯" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="PINCache第二篇是关于最经典的KV缓存解决方案PINCache
+客户端的存储在正式讲解PINCache前，先来谈谈客户端什么时候需要做存储。
+总所周知，现在的APP越来越依赖网络，在离开网络的情况下，绝大多数的APP都成了摆设。然而，优秀的APP已经有自己的一套设计，避免在无网或者弱网的情况下完全失去作用。例如微信这样的强网络要求的APP,在失去网络的情况依然能够浏览本地缓存的聊天信息和朋友">
+<meta property="og:type" content="article">
+<meta property="og:title" content="持久化学习系列2">
+<meta property="og:url" content="http://csbzhixing.github.io/2017/01/10/持久化学习系列2/index.html">
+<meta property="og:site_name" content="学海无涯">
+<meta property="og:description" content="PINCache第二篇是关于最经典的KV缓存解决方案PINCache
+客户端的存储在正式讲解PINCache前，先来谈谈客户端什么时候需要做存储。
+总所周知，现在的APP越来越依赖网络，在离开网络的情况下，绝大多数的APP都成了摆设。然而，优秀的APP已经有自己的一套设计，避免在无网或者弱网的情况下完全失去作用。例如微信这样的强网络要求的APP,在失去网络的情况依然能够浏览本地缓存的聊天信息和朋友">
+<meta property="og:image" content="http://csbzhixing.github.io/../media/14838580770949.jpg">
+<meta property="og:updated_time" content="2017-01-10T15:15:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="持久化学习系列2">
+<meta name="twitter:description" content="PINCache第二篇是关于最经典的KV缓存解决方案PINCache
+客户端的存储在正式讲解PINCache前，先来谈谈客户端什么时候需要做存储。
+总所周知，现在的APP越来越依赖网络，在离开网络的情况下，绝大多数的APP都成了摆设。然而，优秀的APP已经有自己的一套设计，避免在无网或者弱网的情况下完全失去作用。例如微信这样的强网络要求的APP,在失去网络的情况依然能够浏览本地缓存的聊天信息和朋友">
+<meta name="twitter:image" content="http://csbzhixing.github.io/../media/14838580770949.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://csbzhixing.github.io/2017/01/10/持久化学习系列2/"/>
+
+
+
+
+
+  <title> 持久化学习系列2 | 学海无涯 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">学海无涯</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://csbzhixing.github.io/2017/01/10/持久化学习系列2/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="csbzhixing">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://p3.pstatp.com/large/ab000310321818ab99.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="学海无涯">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="学海无涯" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                持久化学习系列2
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-10T23:10:33+08:00">
+                2017-01-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="PINCache"><a href="#PINCache" class="headerlink" title="PINCache"></a>PINCache</h1><p>第二篇是关于最经典的KV缓存解决方案<code>PINCache</code></p>
+<h2 id="客户端的存储"><a href="#客户端的存储" class="headerlink" title="客户端的存储"></a>客户端的存储</h2><p>在正式讲解<code>PINCache</code>前，先来谈谈客户端什么时候需要做存储。</p>
+<p>总所周知，现在的APP越来越依赖网络，在离开网络的情况下，绝大多数的APP都成了摆设。然而，优秀的APP已经有自己的一套设计，避免在无网或者弱网的情况下完全失去作用。例如微信这样的强网络要求的APP,在失去网络的情况依然能够浏览本地缓存的聊天信息和朋友圈记录。优秀的APP，应该根据自己的业务需求，选择合适的存储方案。对于一般体量的APP来说，利用KV形式的存储是最好不过的选择。</p>
+<p>KV，即Key-Value形式的存储。通常客户端的信息是由后端给出的json解析的,使用Key-Value正是方便了这种格式。</p>
+<h2 id="PINCache-1"><a href="#PINCache-1" class="headerlink" title="PINCache"></a>PINCache</h2><p><code>PINCache</code>是脱胎于<code>TMCache</code>，解决了<code>TMCache</code>中的线程死锁问题。<code>PINCache</code>中依然设计了<code>memoryCache</code>和<code>diskCache</code>两种，分别解决了临时存储和长期持久化的问题。<br>在<code>PINCache</code>的github主页上，提出在iOS上如果没有特别的情况，尽可能使用<code>diskCache</code>，原因是每次iOS应用启动，都会造成<code>memoryCache</code>中的内容被清空。在下面，会对比下内存缓存和磁盘缓存的优缺点，以及<code>PINCache</code>是如何实现的，</p>
+<h2 id="文件结构"><a href="#文件结构" class="headerlink" title="文件结构"></a>文件结构</h2><p><img src="../media/14838580770949.jpg" alt=""></p>
+<p>从图上可以看到，<code>PINCache</code>的实现并不复杂，除去<code>PINCache</code>本身实现对外的方法外，总共只有八个实现文件。</p>
+<h3 id="PINMemoryCache"><a href="#PINMemoryCache" class="headerlink" title="PINMemoryCache"></a>PINMemoryCache</h3><p><code>PINMemoryCache</code>为实现内存缓存的类。什么是内存缓存，我们可以理解为通过一个<code>NSMutableDictionary</code>来临时存储对象。实现一个内存缓存难度不大，通常需要完成以下几个事情：</p>
+<ol>
+<li>选择合适的存储结构</li>
+<li>选择和实现对应的读写方法</li>
+<li>选择和实现淘汰方法</li>
+<li>处理系统内存警告</li>
+</ol>
+<p>了解了以上步骤，我们来看看<code>PINMemoryCache</code>是怎么解决上面的问题</p>
+<ol>
+<li>选择<code>NSMutableDictionary</code>作为存储结构</li>
+<li>采用<code>NSMutableDictionary</code>的读写方法</li>
+<li>通过两个<code>NSMutableDictionary</code>分别记录<code>date</code>和<code>cost</code>,实现时间和内容的管理。</li>
+<li>收到内存警告后，清空内存中所有的对象，清空缓存。</li>
+</ol>
+<p>看上去不难？在笔者看来，实现内存缓存的难度主要是2，3点。在这里，<code>PINMemoryCache</code>主要考虑的是如何解决多线程安全的问题，以及缓存淘汰问题。</p>
+<h4 id="多线程安全"><a href="#多线程安全" class="headerlink" title="多线程安全"></a>多线程安全</h4><p>由于缓存的特殊性，读写必须考虑到多线程安全的问题。如果一个线程改变了缓存中的某个值，而别的线正好需要这个值，处理不好轻则造成数据出错，重则造成程序崩溃。</p>
+<p>在<code>PINMemoryCache</code>中，使用了<code>pthread_mutex_t</code>来保证线程安全。</p>
+<p><code>pthread_mutex_t</code>为互斥锁，当锁上的时候，其他线程就无法访问被锁上的资源</p>
+<p>使用<code>pthread_mutex_t</code>需要注意几点。</p>
+<p><strong>必须在<code>dealloc</code>方法中主动释放</strong></p>
+<pre><code class="objc">
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    __unused int result = pthread_mutex_destroy(&amp;_mutex);
+    NSCAssert(result == 0, @&quot;Failed to destroy lock in PINMemoryCache %p. Code: %d&quot;, (void *)self, result);
+}
+</code></pre>
+<p> 单独使用<code>pthread_mutex_t</code>容易造成<strong>死锁</strong>，同时也坑你造成效率不高，可以通过实现对应的递归锁来避免</p>
+<pre><code class="objc">pthread_mutexattr_t attr;
+pthread_mutexattr_init(&amp;attr);
+pthread_mutexattr_settype(&amp;attr,PTHREAD_MUTEX_RECURSIVE);
+pthread_mutex_init(&amp;lock, &amp;attr);
+pthread_mutexattr_destroy(&amp;attr);
+</code></pre>
+<p>在完成锁的初始化后，就需要考虑什么时候要加锁解锁了</p>
+<p>为了避免<strong>data race</strong>的情况，在这里，<code>PINMemoryCache</code>选择了对所有读写操作都进行加锁。同时，采用副本的形式避免读取的数据被篡改。</p>
+<pre><code class="objc">- (__nullable id)objectForKey:(NSString *)key
+{
+    if (!key)
+        return nil;
+
+    NSDate *now = [[NSDate alloc] init];
+    [self lock];
+        id object = nil;
+        // If the cache should behave like a TTL cache, then only fetch the object if there&#39;s a valid ageLimit and  the object is still alive
+        if (!self-&gt;_ttlCache || self-&gt;_ageLimit &lt;= 0 || fabs([[_dates objectForKey:key] timeIntervalSinceDate:now]) &lt; self-&gt;_ageLimit) {
+            object = _dictionary[key];
+        }
+    [self unlock];
+
+    if (object) {
+        [self lock];
+            _dates[key] = now;
+        [self unlock];
+    }
+
+    return object;
+}
+
+
+- (void)setObject:(id)object forKey:(NSString *)key withCost:(NSUInteger)cost
+{
+    if (!key || !object)
+        return;
+
+    [self lock];
+        PINMemoryCacheObjectBlock willAddObjectBlock = _willAddObjectBlock;
+        PINMemoryCacheObjectBlock didAddObjectBlock = _didAddObjectBlock;
+        NSUInteger costLimit = _costLimit;
+    [self unlock];
+
+    if (willAddObjectBlock)
+        willAddObjectBlock(self, key, object);
+
+    [self lock];
+        NSNumber* oldCost = _costs[key];
+        if (oldCost)
+            _totalCost -= [oldCost unsignedIntegerValue];
+
+        _dictionary[key] = object;
+        _dates[key] = [[NSDate alloc] init];
+        _costs[key] = @(cost);
+
+        _totalCost += cost;
+    [self unlock];
+
+    if (didAddObjectBlock)
+        didAddObjectBlock(self, key, object);
+
+    if (costLimit &gt; 0)
+        [self trimToCostByDate:costLimit];
+}
+</code></pre>
+<p>通过这两个读写方法，我们发现，<code>PINMemoryCache</code>对任何涉及属性操作的地方都进行了锁操作，避免了<strong>data race</strong>的情况。</p>
+<h4 id="缓存淘汰"><a href="#缓存淘汰" class="headerlink" title="缓存淘汰"></a>缓存淘汰</h4><p>缓存淘汰，也就是第三点。如果保证缓存中数据有效性，保证缓存搞笑的利用是所有缓存应该考虑的问题。通常来讲，我们应该从缓存利用率上来着手，只保留常被使用的数据，淘汰长期不需要的数据。LRU就会常用的一种缓存淘汰算法。在这里，<code>PINMemoryCache</code>通过时间和空间来实现的LRU算法。</p>
+<p>在上面贴出的读写中，读的时候，更新<code>date</code>中key对应的时间。在写的时候，记录或更新key对应时间。</p>
+<p>当触发缓存删除操作的时候，优先删除占用空间大和使用时间靠前的的内容。</p>
+<p>至此，<code>PINMemoryCache</code>的内容基本就分析完了。内存缓存的实现，只要考虑清楚上面列的四个内容，我认为就不难做到，剩下的就是实现细节和性能的考量了。</p>
+<h2 id="PINDiskCache"><a href="#PINDiskCache" class="headerlink" title="PINDiskCache"></a>PINDiskCache</h2><p><code>PINDiskCache</code>实现的磁盘缓存。我们知道，磁盘的读取速度要远小于内存读取。大量的磁盘I/O会降低程序的运行效率。虽然如此，面对大体量的数据以及需要长期存储的数据，我们只能考虑存储在磁盘上。同时，由于iOS系统的特殊性，选择存储在磁盘上往往是我们的第一选择。</p>
+<p>和<code>memory cache</code>不同，磁盘I/O需要考虑的问题要更多一点，除了上面再<code>memory cache</code>讲到的几点外，还需要考虑一下几点。</p>
+<ol>
+<li>实现方式。磁盘存储一般分为三种：文件读写，数据库，mmap文件内存映射。<code>PINDiskCache</code>使用的是文件读写的方式</li>
+<li>存储位置。iOS文件系统不同位置建议存储的内容不同。是放在cache文件夹中还是temp文件中取决于开发者对存储文件的态度。</li>
+<li>文件系统的细节。避免和其他文件产生冲突，必须考虑拥有自身的标记。</li>
+<li>数据序列化</li>
+</ol>
+<p>看上去磁盘缓存的实现的确要难上很多问题，在内存缓存的基础上依然要考虑这么多问题。</p>
+<p><code>PINDiskCache</code>在这四个问题上，充分考虑了oc语言已经iOS已经MAC OS系统的特性。首先采用文件读写的方式，依然考虑了数据的特性。文件读写的方式非常适合用于存储数据规模小的情况，同时实现方便，性能稳定也是选择的原因之一。但是使用文件存储也有不小的弱点：方便扩展、没有元数据、难以实现较好的淘汰算法、数据统计缓慢。</p>
+<p>2，3，4点将在下面实现细节中会讲到。</p>
+<h3 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h3><h4 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h4><p>线程安全依然是绕不过去的一个坎，在<code>PINDiskCache</code>里，除了需要对付一般的<strong>data race</strong>，还需要处理磁盘I/O带来的问题。</p>
+<p>在这里，<code>PINDiskCache</code>使用的是<code>NSConditionLock</code>条件锁。在代码中有如下定义：</p>
+<pre><code class="objc">typedef NS_ENUM(NSUInteger, PINDiskCacheCondition) {
+    PINDiskCacheConditionNotReady = 0,
+    PINDiskCacheConditionReady = 1,
+};
+</code></pre>
+<p>可见，条件锁中并不涉及到具体的实例对象，而是一个常量来作为锁的条件。在这里，个人认为直接用递归锁差别也不是很大，不知道为何这里选择使用了条件锁。（或许有一天知道了会回来补。</p>
+<p>在使用中，所有对成员变量操作的地方都进行的锁操作。(实际上有些地方是不需要用的)</p>
+<h3 id="读写"><a href="#读写" class="headerlink" title="读写"></a>读写</h3><p>磁盘读写如果不注意极其容易造成死锁。</p>
+<p>写：</p>
+<pre><code class="objc">- (void)setObject:(id &lt;NSCoding&gt;)object forKey:(NSString *)key fileURL:(NSURL **)outFileURL
+{
+    if (!key || !object)
+        return;
+
+    #if TARGET_OS_IPHONE
+      NSDataWritingOptions writeOptions = NSDataWritingAtomic | self.writingProtectionOption;
+    #else
+      NSDataWritingOptions writeOptions = NSDataWritingAtomic;
+    #endif
+
+    NSURL *fileURL = [self encodedFileURLForKey:key];
+
+    [self lock];
+        PINDiskCacheObjectBlock willAddObjectBlock = self-&gt;_willAddObjectBlock;
+        if (willAddObjectBlock) {
+            [self unlock];
+                willAddObjectBlock(self, key, object);
+            [self lock];
+        }
+
+        //We unlock here so that we&#39;re not locked while serializing.
+        [self unlock];
+            NSData *data = _serializer(object, key);
+        [self lock];
+
+        NSError *writeError = nil;
+
+        BOOL written = [data writeToURL:fileURL options:writeOptions error:&amp;writeError];
+        PINDiskCacheError(writeError);
+
+        if (written) {
+            NSError *error = nil;
+            NSDictionary *values = [fileURL resourceValuesForKeys:@[ NSURLContentModificationDateKey, NSURLTotalFileAllocatedSizeKey ] error:&amp;error];
+            PINDiskCacheError(error);
+
+            NSNumber *diskFileSize = [values objectForKey:NSURLTotalFileAllocatedSizeKey];
+            if (diskFileSize) {
+                NSNumber *prevDiskFileSize = [self-&gt;_sizes objectForKey:key];
+                if (prevDiskFileSize) {
+                    self.byteCount = self-&gt;_byteCount - [prevDiskFileSize unsignedIntegerValue];
+                }
+                [self-&gt;_sizes setObject:diskFileSize forKey:key];
+                self.byteCount = self-&gt;_byteCount + [diskFileSize unsignedIntegerValue]; // atomic
+            }
+            NSDate *date = [values objectForKey:NSURLContentModificationDateKey];
+            if (date) {
+                [self-&gt;_dates setObject:date forKey:key];
+            }
+
+            if (self-&gt;_byteLimit &gt; 0 &amp;&amp; self-&gt;_byteCount &gt; self-&gt;_byteLimit)
+                [self trimToSizeByDate:self-&gt;_byteLimit block:nil];
+        } else {
+            fileURL = nil;
+        }
+
+        PINDiskCacheObjectBlock didAddObjectBlock = self-&gt;_didAddObjectBlock;
+        if (didAddObjectBlock) {
+            [self unlock];
+                didAddObjectBlock(self, key, object);
+            [self lock];
+        }
+    [self unlock];
+
+    if (outFileURL) {
+        *outFileURL = fileURL;
+    }
+}
+</code></pre>
+<p>读：</p>
+<pre><code class="objc">- (__nullable id &lt;NSCoding&gt;)objectForKey:(NSString *)key fileURL:(NSURL **)outFileURL
+{
+    NSDate *now = [[NSDate alloc] init];
+
+    if (!key)
+        return nil;
+
+    id &lt;NSCoding&gt; object = nil;
+    NSURL *fileURL = [self encodedFileURLForKey:key];
+
+    [self lock];
+        if (!self-&gt;_ttlCache || self-&gt;_ageLimit &lt;= 0 || fabs([[_dates objectForKey:key] timeIntervalSinceDate:now]) &lt; self-&gt;_ageLimit) {
+            // If the cache should behave like a TTL cache, then only fetch the object if there&#39;s a valid ageLimit and  the object is still alive
+            NSData *objectData = [[NSData alloc] initWithContentsOfFile:[fileURL path]];
+
+            if (objectData) {
+              //Be careful with locking below. We unlock here so that we&#39;re not locked while deserializing, we re-lock after.
+              [self unlock];
+              @try {
+                  object = _deserializer(objectData, key);
+              }
+              @catch (NSException *exception) {
+                  NSError *error = nil;
+                  [self lock];
+                      [[NSFileManager defaultManager] removeItemAtPath:[fileURL path] error:&amp;error];
+                  [self unlock];
+                  PINDiskCacheError(error);
+              }
+              [self lock];
+            }
+            if (object &amp;&amp; !self-&gt;_ttlCache) {
+                [self asynchronouslySetFileModificationDate:now forURL:fileURL];
+            }
+        }
+    [self unlock];
+
+    if (outFileURL) {
+        *outFileURL = fileURL;
+    }
+
+    return object;
+}
+</code></pre>
+<p> 在序列化和反序列化的地方解锁，之后再上锁，目的是避免死锁问题(序列化失败等)。</p>
+<p> 在读写之后，改变文件的最后修改时间，作为一个参考依据。</p>
+<p> 在写入的时候，先尝试将数据写入到磁盘，然后读取写入的文件的信息，比较文件的大小是否和写入的数据大小相同</p>
+<h3 id="异步操作"><a href="#异步操作" class="headerlink" title="异步操作"></a>异步操作</h3><p>在<code>PINDiskCache</code>中大量使用了异步操作。比如读取文件后修改文件时间：</p>
+<pre><code class="objc">- (void)asynchronouslySetFileModificationDate:(NSDate *)date forURL:(NSURL *)fileURL
+{
+    __weak PINDiskCache *weakSelf = self;
+    [self.operationQueue addOperation:^{
+        PINDiskCache *strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf lock];
+                [strongSelf _locked_setFileModificationDate:date forURL:fileURL];
+            [strongSelf unlock];
+        }
+    } withPriority:PINOperationQueuePriorityLow];
+}
+</code></pre>
+<p>这里用的<code>operationQueue</code>就是在下面要讲到<code>PINCache</code>自己实现的一套异步方案</p>
+<h3 id="淘汰方法"><a href="#淘汰方法" class="headerlink" title="淘汰方法"></a>淘汰方法</h3><p><code>PINDiskCache</code>仍然根据文件大小和最近修改时间来作为淘汰的依据。</p>
+<h2 id="PINOperationQueue"><a href="#PINOperationQueue" class="headerlink" title="PINOperationQueue"></a>PINOperationQueue</h2><p><code>PINOperationQueue</code>是<code>PINCache</code>实现的一个并发控制方案。实现了最大并发数，取消，优先级管理。在<code>PINDiskCache</code>中大量使用了<code>PINOperationQueue</code>来达到并发行为的控制。</p>
+<h3 id="实现细节-1"><a href="#实现细节-1" class="headerlink" title="实现细节"></a>实现细节</h3><p><code>PINOperationQueue</code>是对外公开的操作，主要是通过下面方法添加操作</p>
+<pre><code class="objc">- (id &lt;PINOperationReference&gt;)addOperation:(PINOperationBlock)operation
+                              withPriority:(PINOperationQueuePriority)priority
+                                identifier:(NSString *)identifier
+                            coalescingData:(nullable id)coalescingData
+                      dataCoallescingBlock:(nullable PINOperationDataCoallescingBlock)dataCoallescingBlock
+                                completion:(nullable dispatch_block_t)completion;
+</code></pre>
+<p>其中<code>dataCoallescingBlock</code>和<code>coalescingData</code>提供了联合数据处理的能力，例如</p>
+<pre><code class="objc">- (void)trimToDate:(NSDate *)trimDate block:(PINDiskCacheBlock)block
+{
+    PINOperationBlock operation = ^(id data){
+        [self trimToDate:(NSDate *)data];
+    };
+
+    dispatch_block_t completion = nil;
+    if (block) {
+        completion = ^{
+            block(self);
+        };
+    }
+
+    [self.operationQueue addOperation:operation
+                         withPriority:PINOperationQueuePriorityLow
+                           identifier:PINDiskCacheOperationIdentifierTrimToDate
+                       coalescingData:trimDate
+                  dataCoallescingBlock:PINDiskTrimmingDateCoallescingBlock
+                           completion:completion];
+}
+</code></pre>
+<p>这个方法中，<code>DiskCache</code>会去清除指定时间的数据，在这里，添加到<code>PINOperationQueue</code>的时候，将<code>trimDate</code>作为联合数据传入。这里的联合数据，可以认为是block之外的一个负载。</p>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><p>通过初始化可以得知，<code>PINOperationQueue</code>是怎么实现上述功能的。</p>
+<pre><code class="objc"> pthread_mutex_t _lock;
+  //increments with every operation to allow cancelation
+  NSUInteger _operationReferenceCount;
+  NSUInteger _maxConcurrentOperations;
+
+  dispatch_group_t _group;
+
+  dispatch_queue_t _serialQueue;
+  BOOL _serialQueueBusy;
+
+  dispatch_semaphore_t _concurrentSemaphore;
+  dispatch_queue_t _concurrentQueue;
+  dispatch_queue_t _semaphoreQueue;
+
+  NSMutableOrderedSet&lt;PINOperation *&gt; *_queuedOperations;
+  NSMutableOrderedSet&lt;PINOperation *&gt; *_lowPriorityOperations;
+  NSMutableOrderedSet&lt;PINOperation *&gt; *_defaultPriorityOperations;
+  NSMutableOrderedSet&lt;PINOperation *&gt; *_highPriorityOperations;
+
+  NSMapTable&lt;id&lt;PINOperationReference&gt;, PINOperation *&gt; *_referenceToOperations;
+  NSMapTable&lt;NSString *, PINOperation *&gt; *_identifierToOperations;
+</code></pre>
+<p>通过<code>PINOperationQueue</code>的成员变量，可以得知：</p>
+<ol>
+<li>通过<code>dispatch_semaphore_t</code>来实现并发数控制。<code>dispatch_semaphore_t</code>是信号量</li>
+<li>通过<code>NSMutableOrderedSet</code>实现了优先级和顺序管理。<code>NSMutableOrderedSet</code>是具有排序功能的集合类。</li>
+<li>通过<code>NSMapTable</code>实现了绑定id和操作。<code>NSMapTable</code>类似<code>NSdictionry</code>，区别在于<code>NSMapTable</code>是可变的，同时键值可以为弱引用，当任何一项为nil的时候将这一项移除。同时，<code>NSMapTable</code>可以存储任意指针，通过指针来进行相等性和散列校验</li>
+</ol>
+<p>初始化代码如下：</p>
+<pre><code class="objc">- (instancetype)initWithMaxConcurrentOperations:(NSUInteger)maxConcurrentOperations concurrentQueue:(dispatch_queue_t)concurrentQueue
+{
+  if (self = [super init]) {
+    NSAssert(maxConcurrentOperations &gt; 1, @&quot;Max concurrent operations must be greater than 1. If it&#39;s one, just use a serial queue!&quot;);
+    _maxConcurrentOperations = maxConcurrentOperations;
+    _operationReferenceCount = 0;
+
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&amp;attr);
+    //mutex must be recursive to allow scheduling of operations from within operations
+    pthread_mutexattr_settype(&amp;attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&amp;_lock, &amp;attr);
+
+    _group = dispatch_group_create();
+
+    _serialQueue = dispatch_queue_create(&quot;PINOperationQueue Serial Queue&quot;, DISPATCH_QUEUE_SERIAL);
+
+    _concurrentQueue = concurrentQueue;
+
+    //Create a queue with max - 1 because this plus the serial queue add up to max.
+    _concurrentSemaphore = dispatch_semaphore_create(_maxConcurrentOperations - 1);
+    _semaphoreQueue = dispatch_queue_create(&quot;PINOperationQueue Serial Semaphore Queue&quot;, DISPATCH_QUEUE_SERIAL);
+
+    _queuedOperations = [[NSMutableOrderedSet alloc] init];
+    _lowPriorityOperations = [[NSMutableOrderedSet alloc] init];
+    _defaultPriorityOperations = [[NSMutableOrderedSet alloc] init];
+    _highPriorityOperations = [[NSMutableOrderedSet alloc] init];
+
+    _referenceToOperations = [NSMapTable weakToWeakObjectsMapTable];
+    _identifierToOperations = [NSMapTable weakToWeakObjectsMapTable];
+  }
+  return self;
+}
+</code></pre>
+<p>在这里，实现了一个递归锁。递归锁允许在未释放锁的时候反复的上锁，当解锁次数和等于上锁的次数的时候才<code>PINOperationQueue</code>可能在一个多次加锁。</p>
+<h4 id="并发"><a href="#并发" class="headerlink" title="并发"></a>并发</h4><p><code>PINOperationQueue</code>最大特色就是实现了并发管理操作，提供cancel，wait, Priority的功能，通过实现来看看怎么做到的。</p>
+<p><code>- (void)scheduleNextOperations:(BOOL)onlyCheckSerial</code>方法为派发operation的地方私有方法。</p>
+<p><code>scheduleNextOperations</code>执行的分为两块</p>
+<pre><code class="objc">  [self lock];
+    //get next available operation in order, ignoring priority and run it on the serial queue
+    if (_serialQueueBusy == NO) {
+      PINOperation *operation = [self locked_nextOperationByQueue];
+      if (operation) {
+        _serialQueueBusy = YES;
+        dispatch_async(_serialQueue, ^{
+          operation.block(operation.data);
+          for (dispatch_block_t completion in operation.completions) {
+            completion();
+          }
+          dispatch_group_leave(_group);
+
+          [self lock];
+            _serialQueueBusy = NO;
+          [self unlock];
+
+          //see if there are any other operations
+          [self scheduleNextOperations:YES];
+        });
+      }
+    }
+  [self unlock];
+</code></pre>
+<p>在这里，<code>locked_nextOperationByQueue</code>从<code>_queuedOperations</code>取出第一个operation，然后异步派发到<code>_serialQueue</code>中执行。可以看出，这里本质是串行取出operation然后再派发到<code>_serialQueue</code>异步执行。</p>
+<pre><code class="objc">  dispatch_async(_semaphoreQueue, ^{
+      dispatch_semaphore_wait(_concurrentSemaphore, DISPATCH_TIME_FOREVER);
+      [self lock];
+        PINOperation *operation = [self locked_nextOperationByPriority];
+      [self unlock];
+
+      if (operation) {
+        dispatch_async(_concurrentQueue, ^{
+          operation.block(operation.data);
+          for (dispatch_block_t completion in operation.completions) {
+            completion();
+          }
+          dispatch_group_leave(_group);
+          dispatch_semaphore_signal(_concurrentSemaphore);
+        });
+      } else {
+        dispatch_semaphore_signal(_concurrentSemaphore);
+      }
+  });
+</code></pre>
+<p>在这里，实现了并发，从<code>locked_nextOperationByPriority</code>方法中根据优先级获得一个operation，异步派发到<code>_concurrentQueue</code>中执行。这里通过信号量来管理并发数，当信号量为0的时候就会一直等待。</p>
+<p><code>locked_nextOperationByPriority</code>中从<code>_highPriorityOperations</code>取，取不到的情况下就从下一个优先级的set中取。</p>
+<p>看懂了<code>scheduleNextOperations</code>，再看<code>locked_cancelOperation</code>就不难了。</p>
+<pre><code class="objc">- (BOOL)locked_cancelOperation:(id &lt;PINOperationReference&gt;)operationReference
+{
+  BOOL success = NO;
+  PINOperation *operation = [_referenceToOperations objectForKey:operationReference];
+  if (operation) {
+    NSMutableOrderedSet *queue = [self operationQueueWithPriority:operation.priority];
+    if ([queue containsObject:operation]) {
+      success = YES;
+      [queue removeObject:operation];
+      [_queuedOperations removeObject:operation];
+      dispatch_group_leave(_group);
+    }
+  }
+  return success;
+}
+</code></pre>
+<p>取消操作，主要根据operationRef来取出操作，然后从所在的优先级队列中删除对应的operation。注意到，如果这个operation已经被派发到执行队列上了，就无法取消了。</p>
+<p><code>PINOperationGroup</code>是在<code>PINOperationQueue</code>之上再实现的包装。</p>
+<p><code>PINOperationQueue</code>和<code>PINOperationGroup</code>可以看做是<code>PINCache</code>使用的GCD实现一套与NSOperation相似的功能。通过学习阅读这一块，可以加深对GCD异步处理的理解。</p>
+<h2 id="尾声"><a href="#尾声" class="headerlink" title="尾声"></a>尾声</h2><p><code>PINCache</code>是这个系列的第二篇，个人感觉收获很大，对整个key-value缓存实现的一个思路有了更清楚的认识。</p>
+<p>下一篇，打算看看<code>YYCache</code>,主要关注点是如何实现缓存淘汰算法和优化性能的。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag"># iOS</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/08/持久化学习系列1/" rel="next" title="持久化学习系列1">
+                <i class="fa fa-chevron-left"></i> 持久化学习系列1
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://p3.pstatp.com/large/ab000310321818ab99.jpg"
+               alt="csbzhixing" />
+          <p class="site-author-name" itemprop="name">csbzhixing</p>
+          <p class="site-description motion-element" itemprop="description">之行的博客</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">30</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/csbzhixing" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/csbzhixing/activities" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#PINCache"><span class="nav-number">1.</span> <span class="nav-text">PINCache</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#客户端的存储"><span class="nav-number">1.1.</span> <span class="nav-text">客户端的存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PINCache-1"><span class="nav-number">1.2.</span> <span class="nav-text">PINCache</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件结构"><span class="nav-number">1.3.</span> <span class="nav-text">文件结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PINMemoryCache"><span class="nav-number">1.3.1.</span> <span class="nav-text">PINMemoryCache</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#多线程安全"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">多线程安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缓存淘汰"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">缓存淘汰</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PINDiskCache"><span class="nav-number">1.4.</span> <span class="nav-text">PINDiskCache</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现细节"><span class="nav-number">1.4.1.</span> <span class="nav-text">实现细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#线程安全"><span class="nav-number">1.4.1.1.</span> <span class="nav-text">线程安全</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#读写"><span class="nav-number">1.4.2.</span> <span class="nav-text">读写</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#异步操作"><span class="nav-number">1.4.3.</span> <span class="nav-text">异步操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#淘汰方法"><span class="nav-number">1.4.4.</span> <span class="nav-text">淘汰方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PINOperationQueue"><span class="nav-number">1.5.</span> <span class="nav-text">PINOperationQueue</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现细节-1"><span class="nav-number">1.5.1.</span> <span class="nav-text">实现细节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初始化"><span class="nav-number">1.5.2.</span> <span class="nav-text">初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#并发"><span class="nav-number">1.5.2.1.</span> <span class="nav-text">并发</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾声"><span class="nav-number">1.6.</span> <span class="nav-text">尾声</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">csbzhixing</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.0"></script>
+
+
+
+</body>
+</html>
